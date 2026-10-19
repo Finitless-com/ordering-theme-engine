@@ -325,6 +325,170 @@
             }
         },
         {
+            "name": "own-colors-dropped",
+            "description": "A schema names its own colors: dropping one its components still paint is an alias error at each of them.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "delete",
+                        [
+                            "tokens",
+                            "color",
+                            "favorite"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "color",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "primary",
+                            "on_primary",
+                            "primary_subtle",
+                            "primary_pressed",
+                            "primary_text",
+                            "secondary",
+                            "on_secondary",
+                            "secondary_subtle",
+                            "secondary_pressed",
+                            "background",
+                            "surface",
+                            "surface_alt",
+                            "surface_raised",
+                            "overlay",
+                            "on_overlay",
+                            "inverse_surface",
+                            "on_inverse",
+                            "text_heading",
+                            "text",
+                            "text_muted",
+                            "text_disabled",
+                            "link",
+                            "border",
+                            "border_strong",
+                            "divider",
+                            "focus",
+                            "success",
+                            "on_success",
+                            "success_subtle",
+                            "warning",
+                            "on_warning",
+                            "warning_subtle",
+                            "danger",
+                            "on_danger",
+                            "danger_subtle",
+                            "info",
+                            "on_info",
+                            "info_subtle",
+                            "disabled",
+                            "rating"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.favorite.base.color.default",
+                        "code": "components.favorite.base.color.default.alias"
+                    },
+                    {
+                        "path": "components.wallet_balance.base.points_icon_color.default",
+                        "code": "components.wallet_balance.base.points_icon_color.default.alias"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "own-colors-added",
+            "description": "A color of the catalog the schema adds, offered to the focus ring too: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "danger_text"
+                        ],
+                        {
+                            "$value": "#B02A3E"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "color",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "primary",
+                            "on_primary",
+                            "primary_subtle",
+                            "primary_pressed",
+                            "primary_text",
+                            "secondary",
+                            "on_secondary",
+                            "secondary_subtle",
+                            "secondary_pressed",
+                            "background",
+                            "surface",
+                            "surface_alt",
+                            "surface_raised",
+                            "overlay",
+                            "on_overlay",
+                            "inverse_surface",
+                            "on_inverse",
+                            "text_heading",
+                            "text",
+                            "text_muted",
+                            "text_disabled",
+                            "link",
+                            "border",
+                            "border_strong",
+                            "divider",
+                            "focus",
+                            "success",
+                            "on_success",
+                            "success_subtle",
+                            "warning",
+                            "on_warning",
+                            "warning_subtle",
+                            "danger",
+                            "on_danger",
+                            "danger_subtle",
+                            "info",
+                            "on_info",
+                            "info_subtle",
+                            "disabled",
+                            "rating",
+                            "favorite",
+                            "danger_text"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
             "name": "tokens-required-unknown",
             "description": "A token missing, one the format does not have, and a group it does not have.",
             "schema": {
@@ -369,16 +533,8 @@
                 "code": "schema.invalid",
                 "errors": [
                     {
-                        "path": "tokens.radius.xl",
-                        "code": "tokens.radius.xl.required"
-                    },
-                    {
-                        "path": "tokens.color.brand",
-                        "code": "tokens.color.brand.unknown"
-                    },
-                    {
-                        "path": "tokens.extra",
-                        "code": "tokens.extra.unknown"
+                        "path": "tokens.focus_ring.color",
+                        "code": "tokens.focus_ring.color.type"
                     }
                 ],
                 "changes": null

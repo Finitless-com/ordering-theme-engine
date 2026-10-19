@@ -201,6 +201,7 @@ export function isNode(value: unknown): value is JsonMap {
 
 function tokens(groups: Json, fail: Fail): JsonMap {
   const answer: JsonMap = {}
+  const colors = Object.keys(children(get(groups, 'color') ?? {}))
   for (const [group, value] of entries(children(groups))) {
     const node = isArray(value) ? value : {}
     const shared = get(node, '$type')
@@ -212,7 +213,7 @@ function tokens(groups: Json, fail: Fail): JsonMap {
         continue
       }
       // The type and options the validator reads the token with.
-      const expected = tokenType(group, name)
+      const expected = tokenType(group, name, colors)
       const options = extension(token, 'options')
       if (expected !== null && ((get(token, '$type') ?? shared) !== expected[0] || !identical(options, expected[1] as Json))) {
         fail(path, 'type')

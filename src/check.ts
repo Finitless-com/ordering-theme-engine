@@ -1,5 +1,5 @@
 import {
-  LEVEL_OPTION_KINDS, OPTION_KINDS, OVERALL_GROUPS, PRODUCT_TYPES, PROPERTY_KINDS, SLOT_AXES, TOKENS, VERSION, alias, tokenNames,
+  LEVEL_OPTION_KINDS, OPTION_KINDS, OVERALL_GROUPS, OWN_GROUPS, PRODUCT_TYPES, PROPERTY_KINDS, SLOT_AXES, TOKENS, VERSION, alias, tokenNames,
 } from './format.js'
 import { checkPages } from './pages.js'
 import {
@@ -58,11 +58,36 @@ export function check(schema: TupleSchema): SchemaError[] {
     tokens = {}
   }
   for (const group of ['font', 'typography', ...Object.keys(TOKENS)]) {
+    if ((OWN_GROUPS as readonly string[]).includes(group)) {
+      if (isEmpty(get(tokens, group) ?? [])) {
+        fail(`tokens.${group}`, 'required')
+      }
+      continue
+    }
     for (const name of tokenNames(group)) {
       if (!has(get(tokens, group), name)) {
         fail(`tokens.${group}.${name}`, 'required')
       }
     }
+  }
+  // What the schema refers to of the groups it names itself, it has.
+  const refers = (node: Json, path: string): void => {
+    if (isArray(node) && isList(node) && typeof get(node, 0) === 'string' && (Object.hasOwn(PROPERTY_KINDS, get(node, 0) as string) || get(node, 0) === 'role')) {
+      // A property in tuples: its default.
+      refers(get(node, 1), `${path}.default`)
+    } else if (isArray(node)) {
+      for (const [key, child] of entries(node)) {
+        refers(child, `${path}.${key}`)
+      }
+    } else {
+      const named = alias(node)
+      if (named !== null && (OWN_GROUPS as readonly string[]).includes(named[0]) && !has(get(tokens, named[0]), named[1])) {
+        fail(path, 'alias')
+      }
+    }
+  }
+  for (const section of ['tokens', 'components']) {
+    refers(get(schema, section) ?? [], section)
   }
   errors.push(...tokenErrors(tokens, 'tokens'))
 

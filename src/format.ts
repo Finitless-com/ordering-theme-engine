@@ -17,15 +17,23 @@ export const TYPOGRAPHY = {
   body: ['body_lg', 'body', 'body_sm', 'label', 'caption', 'button', 'overline'],
 } as const
 
+/**
+ * The token groups whose names each schema declares for itself, among the
+ * catalog's (api-core's ThemeFormat::OWN_GROUPS); every other group is a
+ * scale every schema has whole.
+ */
+export const OWN_GROUPS = ['color', 'typography', 'opacity'] as const
+
+/** Every color token a schema version names, the ones a later version dropped included. */
 export const COLORS = [
   'primary', 'on_primary', 'primary_subtle', 'primary_pressed', 'primary_text',
   'secondary', 'on_secondary', 'secondary_subtle', 'secondary_pressed',
   'background', 'surface', 'surface_alt', 'surface_raised', 'overlay', 'on_overlay', 'inverse_surface', 'on_inverse',
   'text_heading', 'text', 'text_muted', 'text_disabled', 'link',
   'border', 'border_strong', 'divider', 'focus',
-  'success', 'on_success', 'success_subtle',
-  'warning', 'on_warning', 'warning_subtle',
-  'danger', 'on_danger', 'danger_subtle',
+  'success', 'on_success', 'success_subtle', 'success_text',
+  'warning', 'on_warning', 'warning_subtle', 'warning_text',
+  'danger', 'on_danger', 'danger_subtle', 'danger_text',
   'info', 'on_info', 'info_subtle',
   'disabled', 'rating', 'favorite',
 ] as const
@@ -208,9 +216,9 @@ export function tokenNames(group: string): readonly string[] {
 /**
  * The node type of a token and its closed options, as the validator reads
  * it (api-core's NodeFormat::token()), or null for a token the format does
- * not have.
+ * not have. The focus ring's color is one of $colors, the schema's own.
  */
-export function tokenType(group: string, name: string): [string, readonly string[] | null] | null {
+export function tokenType(group: string, name: string, colors: readonly string[] = COLORS): [string, readonly string[] | null] | null {
   if (!tokenNames(group).includes(name)) {
     return null
   }
@@ -228,7 +236,7 @@ export function tokenType(group: string, name: string): [string, readonly string
     case 'border_style':
       return name === 'radius' ? ['option', RADIUS] : name === 'width' ? ['option', [NO_BORDER, ...BORDER]] : ['option', BORDER_STYLES]
     case 'motion_style': return name === 'easing' ? ['option', EASINGS] : ['boolean', null]
-    case 'focus_ring': return name === 'width' ? ['option', BORDER] : name === 'offset' ? ['option', SPACE] : ['option', COLORS]
+    case 'focus_ring': return name === 'width' ? ['option', BORDER] : name === 'offset' ? ['option', SPACE] : ['option', colors]
     case 'scrollbar': return ['number', null]
     default: return null
   }

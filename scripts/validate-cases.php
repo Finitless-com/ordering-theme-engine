@@ -158,6 +158,14 @@ $case('compile-token-type', 'Tokens that do not declare the type or the options 
 $case('compile-kind', 'A node whose type and scale are no property kind.', [
     set('components.button.base.radius.$type', 'font'),
 ]);
+$case('own-colors-dropped', 'A schema names its own colors: dropping one its components still paint is an alias error at each of them.', [
+    del('tokens.color.favorite'),
+    set([ 'tokens', 'focus_ring', 'color', '$extensions', 'co.ordering', 'options' ], [ 'primary', 'on_primary', 'primary_subtle', 'primary_pressed', 'primary_text', 'secondary', 'on_secondary', 'secondary_subtle', 'secondary_pressed', 'background', 'surface', 'surface_alt', 'surface_raised', 'overlay', 'on_overlay', 'inverse_surface', 'on_inverse', 'text_heading', 'text', 'text_muted', 'text_disabled', 'link', 'border', 'border_strong', 'divider', 'focus', 'success', 'on_success', 'success_subtle', 'warning', 'on_warning', 'warning_subtle', 'danger', 'on_danger', 'danger_subtle', 'info', 'on_info', 'info_subtle', 'disabled', 'rating' ]),
+]);
+$case('own-colors-added', 'A color of the catalog the schema adds, offered to the focus ring too: valid.', [
+    set('tokens.color.danger_text', [ '$value' => '#B02A3E' ]),
+    set([ 'tokens', 'focus_ring', 'color', '$extensions', 'co.ordering', 'options' ], [ 'primary', 'on_primary', 'primary_subtle', 'primary_pressed', 'primary_text', 'secondary', 'on_secondary', 'secondary_subtle', 'secondary_pressed', 'background', 'surface', 'surface_alt', 'surface_raised', 'overlay', 'on_overlay', 'inverse_surface', 'on_inverse', 'text_heading', 'text', 'text_muted', 'text_disabled', 'link', 'border', 'border_strong', 'divider', 'focus', 'success', 'on_success', 'success_subtle', 'warning', 'on_warning', 'warning_subtle', 'danger', 'on_danger', 'danger_subtle', 'info', 'on_info', 'info_subtle', 'disabled', 'rating', 'favorite', 'danger_text' ]),
+]);
 
 $case('tokens-required-unknown', 'A token missing, one the format does not have, and a group it does not have.', [
     del('tokens.radius.xl'),
