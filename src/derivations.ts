@@ -1,4 +1,4 @@
-import { mix, shade } from './colors.js'
+import { legible, mix, shade, TEXT_CONTRAST, TEXT_STEP } from './colors.js'
 import { alias, ROLE, SHADOW } from './format.js'
 import { asMap, clone, count, dig, entries, get, has, identical, isArray, isList, isMap, isNumeric, toFloat, toInt, type Json, type JsonMap } from './php.js'
 import type { TupleSchema } from './types.js'
@@ -179,14 +179,17 @@ export function matrices(components: JsonMap, colors: JsonMap, set: JsonMap, dec
           continue
         }
         const over = alias(get(rule, 'over'))
+        const overColor = over !== null && over[0] === 'color' ? get(colors, over[1]) : null
         const op = get(rule, 'op')
         const derived = op === 'same'
           ? get(roles, from)
           : op === 'shade'
             ? shade(get(roles, from), toFloat(get(rule, 'amount') ?? 0))
             : op === 'mix'
-              ? mix(get(roles, from), over !== null && over[0] === 'color' ? get(colors, over[1]) : null, toFloat(get(rule, 'amount') ?? 0))
-              : get(roles, role)
+              ? mix(get(roles, from), overColor, toFloat(get(rule, 'amount') ?? 0))
+              : op === 'legible'
+                ? legible(get(roles, from), overColor, toFloat(get(rule, 'contrast') ?? TEXT_CONTRAST), toFloat(get(rule, 'step') ?? TEXT_STEP))
+                : get(roles, role)
         // Derived again, it goes after the roles that are not.
         if (get(roles, role) !== null) {
           const { [role]: _, ...rest } = roles

@@ -636,6 +636,10 @@
           "type": "boolean",
           "description": "Shown with its resolved value and not edited: a theme may set it, the editor does not change it."
         },
+        "alpha": {
+          "type": "boolean",
+          "description": "A color that may be translucent: the picker shows its opacity. Colors without it are opaque."
+        },
         "info_off": {
           "$ref": "#/$defs/text"
         },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deriveColors } from '../src/colors.js'
-import { insets, shades } from '../src/derivations.js'
+import { insets, matrices, shades } from '../src/derivations.js'
 import { applyOverall, follows } from '../src/overall.js'
 import { schemaDefaults } from '../src/schemas.js'
 import { compile, defaults, resolve, type JsonMap, type NodeSchema } from '../src/index.js'
@@ -236,5 +236,19 @@ describe('component derivations', () => {
       default: { states: { pressed: { background: '#FCDF67' } } },
       other: { background: '#FFFFFF', states: { pressed: { background: '#EDEDED' } } },
     })
+  })
+})
+
+describe('matrices, as api-core\'s ThemeDerivationsTest::testAMatrixRoleIsLegibleOverAColor', () => {
+  it('derives a role legible over a color, and keeps one the color has with `when: missing`', () => {
+    const button = {
+      colors: { warning: { main: '#F5C400' }, primary: { main: '#1E72E3', ink: '#000000' } },
+      appearances: { ghost: { color: '{ink}' } },
+    }
+    const matrix = { button: { into: 'variants', roles: { ink: { op: 'legible', from: 'main', over: '{color.background}', contrast: 5.5, step: 0.01, when: 'missing' } } } }
+    const variants = ((matrices({ button }, { background: '#FFFFFF' }, {}, matrix).button as JsonMap).variants) as JsonMap
+
+    expect(((variants.warning as JsonMap).ghost as JsonMap).color).toBe('#7B6200')
+    expect(((variants.primary as JsonMap).ghost as JsonMap).color).toBe('#000000')
   })
 })

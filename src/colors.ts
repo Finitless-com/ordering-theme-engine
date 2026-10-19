@@ -27,8 +27,8 @@ const DERIVED: Record<string, [string, 'pressed' | 'subtle' | 'same' | 'legible'
 
 const PRESSED_DARKEN = 0.07
 const SUBTLE_MIX = 0.12
-const TEXT_CONTRAST = 4.5
-const TEXT_STEP = 0.01
+export const TEXT_CONTRAST = 4.5
+export const TEXT_STEP = 0.01
 
 /** The rules of DERIVED as a schema declares them (ThemeColors::rules()). */
 export function colorRules(): JsonMap {

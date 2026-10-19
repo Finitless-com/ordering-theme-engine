@@ -1,6 +1,6 @@
 {
   "name": "@finitless-com/ordering-theme-engine",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "api-core's theme engine (version 2 themes) in TypeScript: the same schema, the same rules, the same answer.",
   "repository": {
     "type": "git",
