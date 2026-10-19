@@ -48,7 +48,8 @@ api-core), en `$extensions["co.ordering"]`:
 
 Las operaciones (HSL, mezcla, contraste WCAG, escalas de sombra, orden de las secciones
 de una página) son del motor y las mismas para todos los productos. Un esquema que no
-declara `derive` ni `matrix` usa las reglas del motor, como api-core.
+declara `follows`, `derive` ni `matrix` usa las reglas del motor, como api-core, y un
+nodo sin `$type` toma el de su grupo.
 `co.ordering.editor` y el bloque `editor` son del editor: el motor no los lee.
 
 ## El contrato con api-core
@@ -93,8 +94,7 @@ Donde PHP y JavaScript difieren, el puerto imita a PHP (`src/php.ts`):
   solo registra esquemas válidos.
 - No convierte ni proyecta temas v1 (`ThemeV1Bridge`), no optimiza imágenes ni trae
   los ajustes del sitio (`values.site`): eso es del API.
-- Solo lee esquemas en nodos. La regla de `ThemeOverall::follows()` para esquemas en
-  tuplas que no declaran `follows` no está: un esquema en nodos siempre lo declara.
+- Solo lee esquemas en nodos (los registrados en tuplas los convierte api-core).
 
 ## Desarrollo
 

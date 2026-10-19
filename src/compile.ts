@@ -26,6 +26,13 @@ export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: Schem
     errors.push({ path, code: `${path}.${rule}` })
   }
   const follows: JsonMap = {}
+  // A group's `$type` is its nodes' unless they declare their own.
+  for (const block of ['components', 'pages', 'site']) {
+    const tree = schema[block]
+    if (isArray(tree)) {
+      schema[block] = inheritTypes(tree, null)
+    }
+  }
 
   const tuples: JsonMap = {}
   for (const key of ['product_type', 'version', 'format']) {
@@ -87,7 +94,10 @@ export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: Schem
   if (isArray(schema.site)) {
     tuples.site = tree(children(schema.site), 'site', fail)
   }
-  tuples.follows = follows
+  // A schema that declares nothing follows Identity by the engine's rule (overall.ts follows()).
+  if (Object.keys(follows).length > 0) {
+    tuples.follows = follows
+  }
 
   // A schema that declares no derivation keeps the engine's (colors.ts rules()).
   const derive: JsonMap = {}
@@ -244,6 +254,27 @@ function tuple(node: Json, path: string, fail: Fail): Json {
   const answer: Json[] = [kind, node.$value!]
   if (has(own, 'options')) {
     answer.push(get(own, 'options'))
+  }
+  return answer
+}
+
+/** $tree with each node that has no `$type` of its own taking its group's. */
+function inheritTypes(tree: Json, inherited: string | null): Json {
+  if (!isArray(tree)) {
+    return tree
+  }
+  const own = get(tree, '$type')
+  const type = typeof own === 'string' ? own : inherited
+  const answer: JsonMap = {}
+  for (const [key, child] of entries(tree)) {
+    if (key.startsWith('$') || !isArray(child)) {
+      answer[key] = child
+    } else if (isNode(child)) {
+      // PHP's isset(): a null `$type` is none.
+      answer[key] = get(child, '$type') === null && type !== null ? { $type: type, ...child } : child
+    } else {
+      answer[key] = inheritTypes(child, type)
+    }
   }
   return answer
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { deriveColors } from '../src/colors.js'
 import { insets, shades } from '../src/derivations.js'
+import { applyOverall, follows } from '../src/overall.js'
+import { schemaDefaults } from '../src/schemas.js'
 import { compile, defaults, resolve, type JsonMap, type NodeSchema } from '../src/index.js'
 import { cases, differences, goldenSchema } from './fixtures.js'
 
@@ -113,6 +115,51 @@ describe('deriveColors', () => {
       info_subtle: '#E0F5E0',
       info: '#00AA00',
     })
+  })
+})
+
+describe('Identity, as api-core\'s ThemeOverallTest::testAFollowedBorderOfNoneAndAPathThatIsNotThere', () => {
+  it('gives a followed border of none a border, and creates no path the defaults do not have', () => {
+    const schema = compile(goldenSchema()).schema
+    const card = (schema.components as JsonMap).card as JsonMap
+    ;(card.base as JsonMap).border = ['border', 'none']
+    const declared = schema.follows as JsonMap
+    declared['components.card.base.border'] = 'border'
+    declared['components.card.variants.ghost.shadow'] = 'shadow'
+
+    const applied = applyOverall(schemaDefaults(schema), schema, { border_width: 'thin', shadow: 'lg' })
+    const components = applied.components as JsonMap
+    expect(((components.card as JsonMap).base as JsonMap).border).toEqual({ width: '{border.thin}', color: '{color.border}', style: 'solid' })
+    expect((components.card as JsonMap).variants).not.toHaveProperty('ghost')
+  })
+})
+
+describe('compile, as api-core\'s ThemeSchemaNodesTest::testWhatAGroupOrTheEngineSaysForANodeThatDoesNot', () => {
+  const nodes = goldenSchema()
+  const declared = compile(nodes).schema
+
+  it('gives a node without a `$type` its group\'s', () => {
+    const typed = structuredClone(nodes)
+    const primary = (((typed.components as JsonMap).button as JsonMap).colors as JsonMap).primary as JsonMap
+    primary.$type = 'color'
+    for (const [role, node] of Object.entries(primary)) {
+      if (!role.startsWith('$')) {
+        delete (node as JsonMap).$type
+      }
+    }
+    const colors = (schema: JsonMap) => (((schema.components as JsonMap).button as JsonMap).colors as JsonMap).primary
+    expect(colors(compile(typed).schema)).toEqual(colors(declared))
+  })
+
+  it('leaves what follows Identity to the engine\'s rule when no node declares it', () => {
+    const undeclared = without(nodes, ['follows'])
+    const compiled = compile(undeclared).schema
+    expect(compiled).not.toHaveProperty('follows')
+    expect(follows(compiled)).toEqual(declared.follows)
+  })
+
+  it.each(cases())('%s resolves the same by the engine\'s rule', (_name, golden) => {
+    expect(differences(resolve(without(nodes, ['follows']), golden.values), golden.resolved)).toEqual([])
   })
 })
 
