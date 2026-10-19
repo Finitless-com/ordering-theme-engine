@@ -1,0 +1,1184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ordering:theme-schema:1",
+  "title": "Ordering theme schema, node format 1",
+  "description": "The structure of a product type's theme schema (docs/THEMES_V2_SCHEMA_FORMAT.md in api-core). It checks the shape of every node and group; what a value means (a level that exists, a component a slot names, a page section) is checked by api-core when the schema is registered.",
+  "type": "object",
+  "required": [
+    "$schema",
+    "product_type",
+    "version",
+    "format",
+    "tokens",
+    "components",
+    "visibility",
+    "images",
+    "pages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "const": "urn:ordering:theme-schema:1"
+    },
+    "$description": {
+      "type": "string"
+    },
+    "$extensions": {
+      "type": "object",
+      "properties": {
+        "co.ordering.migrate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+              },
+              "to": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "product_type": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d{1,4}(\\.\\d{1,4}){0,2}$"
+    },
+    "format": {
+      "const": 2
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "uniqueItems": true
+    },
+    "editor": {
+      "$ref": "#/$defs/editorLayout"
+    },
+    "tokens": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "components": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "visibility": {
+      "$ref": "#/$defs/flatGroup"
+    },
+    "images": {
+      "$ref": "#/$defs/flatGroup"
+    },
+    "pages": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "site": {
+      "$ref": "#/$defs/group",
+      "description": "The site's settings: its scope, name, HTML and third-party code."
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "type": {
+      "enum": [
+        "color",
+        "role",
+        "dimension",
+        "duration",
+        "opacity",
+        "number",
+        "typography",
+        "font",
+        "fontRole",
+        "border",
+        "shadow",
+        "image",
+        "boolean",
+        "option",
+        "layout",
+        "sections",
+        "slot",
+        "string",
+        "html",
+        "id"
+      ]
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "$type": {
+          "$ref": "#/$defs/type"
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$deprecated": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "patternProperties": {
+        "^[a-z0-9_]+$": {
+          "$ref": "#/$defs/member"
+        }
+      },
+      "additionalProperties": false
+    },
+    "flatGroup": {
+      "description": "Visibility and images: their keys are the paths the theme serves, so they may carry dots.",
+      "type": "object",
+      "properties": {
+        "$type": {
+          "$ref": "#/$defs/type"
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "patternProperties": {
+        "^[a-z0-9_]+(\\.[a-z0-9_]+){0,7}$": {
+          "$ref": "#/$defs/node"
+        }
+      },
+      "additionalProperties": false
+    },
+    "member": {
+      "if": {
+        "type": "object",
+        "required": [
+          "$value"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/node"
+      },
+      "else": {
+        "$ref": "#/$defs/group"
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "$value"
+      ],
+      "properties": {
+        "$value": true,
+        "$type": {
+          "$ref": "#/$defs/type"
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$deprecated": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "const": "dimension"
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "$value": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "$extensions"
+                ],
+                "properties": {
+                  "$extensions": {
+                    "required": [
+                      "co.ordering"
+                    ],
+                    "properties": {
+                      "co.ordering": {
+                        "required": [
+                          "scale"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "enum": [
+                  "option",
+                  "layout"
+                ]
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "required": [
+              "$extensions"
+            ],
+            "properties": {
+              "$extensions": {
+                "required": [
+                  "co.ordering"
+                ],
+                "properties": {
+                  "co.ordering": {
+                    "required": [
+                      "options"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "const": "boolean"
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "enum": [
+                  "color",
+                  "role"
+                ]
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "const": "sections"
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/section"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "$type": {
+                "const": "slot"
+              }
+            },
+            "required": [
+              "$type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "type": "object",
+                "required": [
+                  "component"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "section": {
+      "type": "object",
+      "required": [
+        "key",
+        "visible",
+        "hideable",
+        "group"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/name"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "hideable": {
+          "type": "boolean"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/name"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "co.ordering": {
+          "$ref": "#/$defs/engine"
+        },
+        "co.ordering.editor": {
+          "$ref": "#/$defs/editor"
+        }
+      },
+      "propertyNames": {
+        "pattern": "^[a-z0-9]+(\\.[a-z0-9_-]+)+$"
+      }
+    },
+    "engine": {
+      "description": "What api-core reads to validate and resolve a node.",
+      "type": "object",
+      "properties": {
+        "scale": {
+          "enum": [
+            "radius",
+            "size",
+            "icon",
+            "space"
+          ]
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1
+        },
+        "inherits": {
+          "$ref": "#/$defs/name"
+        },
+        "formats": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "hints": {
+          "type": "object"
+        },
+        "follows": {
+          "enum": [
+            "shadow",
+            "radius",
+            "border"
+          ],
+          "description": "The Identity choice this property follows: its default is the theme-wide shadow size, rounding or border."
+        },
+        "derive": {
+          "$ref": "#/$defs/derive"
+        },
+        "matrix": {
+          "$ref": "#/$defs/matrix"
+        }
+      },
+      "additionalProperties": false
+    },
+    "text": {
+      "type": "object",
+      "required": [
+        "key",
+        "default"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "default": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/text"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "A text of the editor: an i18n key, its English text, and the params the key interpolates (`_color_`), each a text or one text per value."
+    },
+    "editor": {
+      "description": "What only the editor reads (docs/THEMES_V2_PLAN.md §6.3.2).",
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "info": {
+          "$ref": "#/$defs/text"
+        },
+        "group": {
+          "$ref": "#/$defs/name"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "control": {
+          "enum": [
+            "color",
+            "level",
+            "range",
+            "select",
+            "segmented",
+            "toggle",
+            "border",
+            "shadow",
+            "typography",
+            "font",
+            "image",
+            "sortable_sections",
+            "text",
+            "html",
+            "matrix",
+            "cards",
+            "scope"
+          ]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "enum": [
+            "px",
+            "ms",
+            "%",
+            "x"
+          ]
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": true,
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "info": {
+                "$ref": "#/$defs/text"
+              },
+              "drawing": {
+                "type": "string"
+              },
+              "label_platform": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "visible_if": {
+          "$ref": "#/$defs/condition"
+        },
+        "advanced": {
+          "type": "boolean"
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preview": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "$ref": "#/$defs/name"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "disabled_if": {
+          "$ref": "#/$defs/condition"
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Not shown: painted from another control, or derived."
+        },
+        "readonly": {
+          "type": "boolean",
+          "description": "Shown with its resolved value and not edited: a theme may set it, the editor does not change it."
+        },
+        "info_off": {
+          "$ref": "#/$defs/text"
+        },
+        "labels": {
+          "type": "object",
+          "properties": {
+            "unset": {
+              "$ref": "#/$defs/text"
+            },
+            "none": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "additionalProperties": false
+        },
+        "platform": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "$ref": "#/$defs/text"
+            },
+            "info": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "additionalProperties": false
+        },
+        "pair": {
+          "type": "string",
+          "description": "The path shown on the same row (a color and the text on it)."
+        },
+        "fields": {
+          "type": "object",
+          "description": "The fields of a composite value (a typography style, a slot's axes).",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "The cards a component or part is shown in.",
+          "items": {
+            "$ref": "#/$defs/editorGroup"
+          }
+        },
+        "parts": {
+          "type": "object",
+          "description": "On a component: its tabs' own labels, by part key.",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "condition": {
+      "type": "object",
+      "required": [
+        "path",
+        "op"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "op": {
+          "enum": [
+            "eq",
+            "neq",
+            "in",
+            "not_in",
+            "truthy",
+            "falsy"
+          ]
+        },
+        "value": true
+      },
+      "additionalProperties": false
+    },
+    "editorLayout": {
+      "description": "The editor's sections, their groups and order, and what each reset restores.",
+      "type": "object",
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "info": {
+                "$ref": "#/$defs/text"
+              },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/editorGroup"
+                }
+              },
+              "reset": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "parent": {
+                "$ref": "#/$defs/name"
+              },
+              "store": {
+                "enum": [
+                  "theme",
+                  "site"
+                ],
+                "description": "Where the section's values are saved: in the theme's draft (default) or in the site's settings (PUT builder/products/{id}), outside the theme editor."
+              },
+              "layout": {
+                "enum": [
+                  "list",
+                  "cards"
+                ],
+                "description": "A list of components or pages with each one's detail, or the section's cards."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "section_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "label_states": {
+                "$ref": "#/$defs/text"
+              },
+              "label_styles": {
+                "$ref": "#/$defs/text"
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                },
+                "description": "The component parts the tab shows (colors and appearances in one). By default, [key]."
+              },
+              "choices": {
+                "type": "boolean",
+                "description": "One card per option (each variant, size, color, shape), unless the part has cards of its own; false shows the part whole."
+              },
+              "nested": {
+                "type": "boolean",
+                "description": "false: not offered inside a group's scope."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "labels": {
+          "type": "object",
+          "properties": {
+            "platforms": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "page_section_groups": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "props": {
+          "type": "object",
+          "description": "The label of a property by its name, for every node of that name without its own.",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "info": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "info": {
+          "$ref": "#/$defs/text"
+        },
+        "control": {
+          "enum": [
+            "color",
+            "level",
+            "range",
+            "select",
+            "segmented",
+            "toggle",
+            "border",
+            "shadow",
+            "typography",
+            "font",
+            "image",
+            "sortable_sections",
+            "text",
+            "html",
+            "matrix",
+            "cards",
+            "scope"
+          ]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "enum": [
+            "px",
+            "ms",
+            "%",
+            "x"
+          ]
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": true,
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "info": {
+                "$ref": "#/$defs/text"
+              },
+              "drawing": {
+                "type": "string"
+              },
+              "label_platform": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "editorGroup": {
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/name"
+        },
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "info": {
+          "$ref": "#/$defs/text"
+        },
+        "open": {
+          "type": "boolean"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "control": {
+          "enum": [
+            "color",
+            "level",
+            "range",
+            "select",
+            "segmented",
+            "toggle",
+            "border",
+            "shadow",
+            "typography",
+            "font",
+            "image",
+            "sortable_sections",
+            "text",
+            "html",
+            "matrix",
+            "cards",
+            "scope"
+          ]
+        },
+        "toggle": {
+          "type": "object",
+          "description": "A switch in the card's header, bound to a boolean node.",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "label": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "additionalProperties": false
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Not shown in the editor; its values are kept and served."
+        },
+        "part": {
+          "$ref": "#/$defs/name",
+          "description": "The component tab the card goes in (a key of editor.parts)."
+        },
+        "placement": {
+          "enum": [
+            "before",
+            "after"
+          ],
+          "description": "Before or after the tab's rows."
+        }
+      },
+      "additionalProperties": false
+    },
+    "derive": {
+      "description": "How a value derives from others when the theme does not set it: a color from colors (App\\Themes\\ThemeColors), a component's value from the same variant's (App\\Themes\\ThemeDerivations).",
+      "type": "object",
+      "required": [
+        "op",
+        "from"
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "same",
+            "shade",
+            "mix",
+            "legible",
+            "step",
+            "inset"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^(\\{color\\.[a-z0-9_]+\\}|[a-z0-9_]+)$"
+        },
+        "over": {
+          "type": "string",
+          "pattern": "^\\{color\\.[a-z0-9_]+\\}$"
+        },
+        "amount": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "contrast": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "by": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": -4,
+          "maximum": 4
+        },
+        "when": {
+          "enum": [
+            "changed",
+            "missing",
+            "always"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "mix",
+                  "legible"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "over"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "shade",
+                  "mix"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "amount"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "step"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "offset"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "inset"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "by"
+            ]
+          }
+        }
+      ]
+    },
+    "matrix": {
+      "description": "A component painted in every color of `colors` in every appearance of `appearances`, as `into` (App\\Themes\\ThemeDerivations::matrices()).",
+      "type": "object",
+      "required": [
+        "into",
+        "roles"
+      ],
+      "properties": {
+        "into": {
+          "$ref": "#/$defs/name"
+        },
+        "roles": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/derive"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

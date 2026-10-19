@@ -1,0 +1,3516 @@
+{
+    "description": "What api-core's ThemeSchemaPublisher::validate() answers for each mutation of marketplace_website@26.0.",
+    "php": "8.3.35",
+    "base": [
+        [
+            "set",
+            [
+                "version"
+            ],
+            "26.0.0"
+        ],
+        [
+            "set",
+            [
+                "components",
+                "signup_page",
+                "base",
+                "padding_y",
+                "$value"
+            ],
+            96
+        ],
+        [
+            "set",
+            [
+                "components",
+                "signup_page",
+                "base",
+                "padding_x",
+                "$value"
+            ],
+            96
+        ]
+    ],
+    "cases": [
+        {
+            "name": "original",
+            "description": "The product's schema as it ships: two defaults above their control's max (signup_page's padding, 120 and 130 over 96) and a version that is not semver.",
+            "schema": {
+                "from": "original",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.signup_page.base.padding_y",
+                        "code": "components.signup_page.base.padding_y.default_out_of_range"
+                    },
+                    {
+                        "path": "components.signup_page.base.padding_x",
+                        "code": "components.signup_page.base.padding_x.default_out_of_range"
+                    },
+                    {
+                        "path": "version",
+                        "code": "version.semver"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "valid",
+            "description": "The base: valid, without a version 1 map.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "valid-v1-map",
+            "description": "The base with the product's version 1 map: valid.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "format",
+            "description": "A schema that is not in nodes stops at the format.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$schema"
+                        ],
+                        "urn:ordering:theme-schema:0"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.format",
+                "errors": [
+                    {
+                        "path": "$schema",
+                        "code": "schema.format"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "semver",
+            "description": "A version of the base that is not major.minor.patch.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "version.semver"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "product-type",
+            "description": "A product type that is not one of the Builder's.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "product_type"
+                        ],
+                        "tv_app"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "product_type",
+                        "code": "product_type.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "compile-not-a-node",
+            "description": "Values that are not nodes: the compiler's errors, without check(), and the version's.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary"
+                        ],
+                        {
+                            "$description": "No value."
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius"
+                        ],
+                        {
+                            "$description": "No value."
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "secondary",
+                            "$value"
+                        ],
+                        "red"
+                    ],
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.color.primary",
+                        "code": "tokens.color.primary.invalid"
+                    },
+                    {
+                        "path": "components.button.base.radius",
+                        "code": "components.button.base.radius.invalid"
+                    },
+                    {
+                        "path": "version",
+                        "code": "version.semver"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "compile-token-type",
+            "description": "Tokens that do not declare the type or the options the engine validates them with.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "font",
+                            "body",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "roboto",
+                            "raleway",
+                            "poppins",
+                            "playfair_display",
+                            "open_sans",
+                            "nunito",
+                            "montserrat",
+                            "lato",
+                            "inter",
+                            "archivo"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "text",
+                            "$type"
+                        ],
+                        "string"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.font.body",
+                        "code": "tokens.font.body.type"
+                    },
+                    {
+                        "path": "tokens.color.text",
+                        "code": "tokens.color.text.type"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "compile-kind",
+            "description": "A node whose type and scale are no property kind.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$type"
+                        ],
+                        "font"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.radius",
+                        "code": "components.button.base.radius.type"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "tokens-required-unknown",
+            "description": "A token missing, one the format does not have, and a group it does not have.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "delete",
+                        [
+                            "tokens",
+                            "radius",
+                            "xl"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#123456"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "extra"
+                        ],
+                        {
+                            "one": {
+                                "$type": "number",
+                                "$value": 1
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.radius.xl",
+                        "code": "tokens.radius.xl.required"
+                    },
+                    {
+                        "path": "tokens.color.brand",
+                        "code": "tokens.color.brand.unknown"
+                    },
+                    {
+                        "path": "tokens.extra",
+                        "code": "tokens.extra.unknown"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "tokens-values",
+            "description": "Token defaults that are not literals of their group's kind.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "red"
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "space",
+                            "md",
+                            "$value"
+                        ],
+                        -5
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "shadow_style",
+                            "style",
+                            "$value"
+                        ],
+                        "fuzzy"
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "h1",
+                            "$value",
+                            "weight"
+                        ],
+                        450
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.typography.h1",
+                        "code": "tokens.typography.h1.invalid"
+                    },
+                    {
+                        "path": "tokens.color.primary",
+                        "code": "tokens.color.primary.invalid"
+                    },
+                    {
+                        "path": "tokens.space.md",
+                        "code": "tokens.space.md.invalid"
+                    },
+                    {
+                        "path": "tokens.shadow_style.style",
+                        "code": "tokens.shadow_style.style.invalid"
+                    },
+                    {
+                        "path": "tokens.space.md",
+                        "code": "tokens.space.md.default_out_of_range"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "prop-defaults",
+            "description": "Property defaults that do not fit their kind (one also above its control's max).",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "mobile_full_width",
+                            "$value"
+                        ],
+                        null
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$value"
+                        ],
+                        "{color.primary}"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$value"
+                        ],
+                        99999
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$value"
+                        ],
+                        "nope"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.icon_gap.default",
+                        "code": "components.button.base.icon_gap.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.mobile_full_width.default",
+                        "code": "components.button.base.mobile_full_width.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.speed.default",
+                        "code": "components.button.base.speed.default.invalid"
+                    },
+                    {
+                        "path": "site.mode.default",
+                        "code": "site.mode.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.speed",
+                        "code": "components.button.base.speed.default_out_of_range"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "prop-options",
+            "description": "Options a kind does not take, and a level the options leave out.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "huge"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "tint"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "options": [
+                                        "#ffffff"
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "radius",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "sm",
+                            "md"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "radius",
+                            "$value"
+                        ],
+                        "{radius.lg}"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.radius.options",
+                        "code": "components.button.base.radius.options.invalid"
+                    },
+                    {
+                        "path": "components.card.base.radius.default",
+                        "code": "components.card.base.radius.default.invalid"
+                    },
+                    {
+                        "path": "components.card.base.tint.options",
+                        "code": "components.card.base.tint.options.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "prop-shape",
+            "description": "Nodes without a type: a value is no tuple (unless it looks like one), and an empty group of the site.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "extra"
+                        ],
+                        {
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "looks_like_a_tuple"
+                        ],
+                        {
+                            "$value": [
+                                "color",
+                                "#ffffff"
+                            ]
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "extra"
+                        ],
+                        {
+                            "$value": 5
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "empty_group"
+                        ],
+                        {
+                            "$description": "Nothing in it."
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.extra",
+                        "code": "components.button.base.extra.invalid"
+                    },
+                    {
+                        "path": "site.extra",
+                        "code": "site.extra.invalid"
+                    },
+                    {
+                        "path": "site.empty_group",
+                        "code": "site.empty_group.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "unknown-section",
+            "description": "A section of a component that is none of the known ones.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "extras"
+                        ],
+                        {
+                            "one": {
+                                "tint": {
+                                    "$type": "color",
+                                    "$value": "#ffffff"
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.extras",
+                        "code": "components.button.extras.unknown"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "platforms",
+            "description": "A platform the schema does not declare, and platform properties that are not the base's of the same kind.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "platforms",
+                            "desktop"
+                        ],
+                        {
+                            "radius": {
+                                "$type": "dimension",
+                                "$value": "{radius.none}",
+                                "$extensions": {
+                                    "co.ordering": {
+                                        "scale": "radius"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "platforms",
+                            "mobile_web",
+                            "radius"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "platforms",
+                            "mobile_web",
+                            "ghost"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.modal.platforms.mobile_web.radius",
+                        "code": "components.modal.platforms.mobile_web.radius.invalid"
+                    },
+                    {
+                        "path": "components.modal.platforms.mobile_web.ghost",
+                        "code": "components.modal.platforms.mobile_web.ghost.invalid"
+                    },
+                    {
+                        "path": "components.modal.platforms.desktop",
+                        "code": "components.modal.platforms.desktop.unknown"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "scope",
+            "description": "A group's scope: what is no component, a group, itself, a property the component lacks, of another kind, a default that does not fit.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "nothing"
+                        ],
+                        {
+                            "base": {
+                                "radius": {
+                                    "$type": "dimension",
+                                    "$value": "{radius.md}",
+                                    "$extensions": {
+                                        "co.ordering": {
+                                            "scale": "radius"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "header"
+                        ],
+                        {
+                            "$description": "A group."
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "auth_form"
+                        ],
+                        {
+                            "$description": "Itself."
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "button",
+                            "base"
+                        ],
+                        {
+                            "glow": {
+                                "$type": "color",
+                                "$value": "#ffffff"
+                            },
+                            "radius": {
+                                "$type": "color",
+                                "$value": "#ffffff"
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "input",
+                            "base"
+                        ],
+                        {
+                            "radius": {
+                                "$type": "dimension",
+                                "$value": "{space.sm}",
+                                "$extensions": {
+                                    "co.ordering": {
+                                        "scale": "radius"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.auth_form.scope.button.base.glow",
+                        "code": "components.auth_form.scope.button.base.glow.unknown"
+                    },
+                    {
+                        "path": "components.auth_form.scope.button.base.radius",
+                        "code": "components.auth_form.scope.button.base.radius.invalid"
+                    },
+                    {
+                        "path": "components.auth_form.scope.input.base.radius.default",
+                        "code": "components.auth_form.scope.input.base.radius.default.invalid"
+                    },
+                    {
+                        "path": "components.auth_form.scope.nothing",
+                        "code": "components.auth_form.scope.nothing.invalid"
+                    },
+                    {
+                        "path": "components.auth_form.scope.header",
+                        "code": "components.auth_form.scope.header.invalid"
+                    },
+                    {
+                        "path": "components.auth_form.scope.auth_form",
+                        "code": "components.auth_form.scope.auth_form.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "slots",
+            "description": "Slots: an unknown component, an axis its component lacks, a choice it does not have, a group, and a component whose slots nest too deep.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "banner",
+                            "slots",
+                            "action",
+                            "$value",
+                            "component"
+                        ],
+                        "nonexistent"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "slots",
+                            "close",
+                            "$value",
+                            "variant"
+                        ],
+                        "primary"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "cart",
+                            "slots",
+                            "clear",
+                            "$value",
+                            "size"
+                        ],
+                        "huge"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "cart",
+                            "slots",
+                            "clear",
+                            "$value",
+                            "tone"
+                        ],
+                        "loud"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "promo_carousel",
+                            "slots",
+                            "arrow",
+                            "$value",
+                            "component"
+                        ],
+                        "auth_form"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "trailing"
+                        ],
+                        {
+                            "slots": {
+                                "inner": {
+                                    "$type": "slot",
+                                    "$value": {
+                                        "component": "input",
+                                        "size": "md"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "cart",
+                            "slots",
+                            "store",
+                            "$value"
+                        ],
+                        {
+                            "component": "trailing"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.modal.slots.close.variant",
+                        "code": "components.modal.slots.close.variant.unknown"
+                    },
+                    {
+                        "path": "components.banner.slots.action",
+                        "code": "components.banner.slots.action.invalid"
+                    },
+                    {
+                        "path": "components.promo_carousel.slots.arrow",
+                        "code": "components.promo_carousel.slots.arrow.invalid"
+                    },
+                    {
+                        "path": "components.cart.slots.clear.size",
+                        "code": "components.cart.slots.clear.size.invalid"
+                    },
+                    {
+                        "path": "components.cart.slots.clear.tone",
+                        "code": "components.cart.slots.clear.tone.unknown"
+                    },
+                    {
+                        "path": "components.cart.slots.store",
+                        "code": "components.cart.slots.store.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "inherits",
+            "description": "Parents that do not exist, that inherit themselves, or that are the component.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "business_card",
+                            "$extensions",
+                            "co.ordering",
+                            "inherits"
+                        ],
+                        "nonexistent"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "product_card",
+                            "$extensions",
+                            "co.ordering",
+                            "inherits"
+                        ],
+                        "business_card"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "wallet_balance",
+                            "$extensions",
+                            "co.ordering",
+                            "inherits"
+                        ],
+                        "wallet_balance"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "inherits.business_card",
+                        "code": "inherits.business_card.invalid"
+                    },
+                    {
+                        "path": "inherits.product_card",
+                        "code": "inherits.product_card.invalid"
+                    },
+                    {
+                        "path": "inherits.wallet_balance",
+                        "code": "inherits.wallet_balance.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "visibility-images",
+            "description": "Visibility and image defaults that do not fit, image formats and hints that are not valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "footer",
+                            "$value"
+                        ],
+                        null
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "logo",
+                            "$value"
+                        ],
+                        "ftp://example.com/logo.png"
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "logo",
+                            "$extensions",
+                            "co.ordering",
+                            "formats"
+                        ],
+                        [
+                            "gif"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "favicon",
+                            "$extensions",
+                            "co.ordering",
+                            "hints"
+                        ],
+                        {
+                            "size": [
+                                0,
+                                10
+                            ]
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "app_icon",
+                            "$extensions",
+                            "co.ordering",
+                            "hints"
+                        ],
+                        {
+                            "max_kb": 9000
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "visibility.footer.default",
+                        "code": "visibility.footer.default.invalid"
+                    },
+                    {
+                        "path": "images.logo.formats",
+                        "code": "images.logo.formats.invalid"
+                    },
+                    {
+                        "path": "images.logo.default",
+                        "code": "images.logo.default.invalid"
+                    },
+                    {
+                        "path": "images.favicon.hints",
+                        "code": "images.favicon.hints.invalid"
+                    },
+                    {
+                        "path": "images.app_icon.hints",
+                        "code": "images.app_icon.hints.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "visibility-v1",
+            "description": "Version 1 paths of visibility and images that are not a string or null.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "footer"
+                        ],
+                        5
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "logo"
+                        ],
+                        [
+                            "a"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "visibility.footer",
+                        "code": "visibility.footer.invalid"
+                    },
+                    {
+                        "path": "images.logo",
+                        "code": "images.logo.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "follows",
+            "description": "What follows Identity with a group that is not the property's kind.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$extensions",
+                            "co.ordering",
+                            "follows"
+                        ],
+                        "border"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "shadow",
+                            "$extensions",
+                            "co.ordering",
+                            "follows"
+                        ],
+                        "radius"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "follows.components.button.base.radius",
+                        "code": "follows.components.button.base.radius.invalid"
+                    },
+                    {
+                        "path": "follows.components.card.base.shadow",
+                        "code": "follows.components.card.base.shadow.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "derive",
+            "description": "Derived colors from a color the schema lacks, by an operation of the components, from a name that is no alias.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "focus",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "same",
+                            "from": "{color.nope}"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary_pressed",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "step",
+                            "from": "{color.primary}",
+                            "offset": 1
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary_subtle",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "mix",
+                            "from": "primary",
+                            "over": "{color.background}",
+                            "amount": 0.12
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "derive.primary_subtle",
+                        "code": "derive.primary_subtle.invalid"
+                    },
+                    {
+                        "path": "derive.primary_pressed",
+                        "code": "derive.primary_pressed.invalid"
+                    },
+                    {
+                        "path": "derive.focus",
+                        "code": "derive.focus.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "component-derive",
+            "description": "Components' derivations by an operation of the colors, from a value the variant lacks, inset by one it lacks.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "tabs",
+                            "variants",
+                            "pill",
+                            "tab_radius",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "same",
+                            "from": "radius"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "variants",
+                            "default",
+                            "states",
+                            "hover",
+                            "shadow",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "step",
+                            "from": "nope",
+                            "offset": 0
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "chip",
+                            "variants",
+                            "default",
+                            "states",
+                            "pressed",
+                            "background",
+                            "$extensions",
+                            "co.ordering",
+                            "derive"
+                        ],
+                        {
+                            "op": "inset",
+                            "from": "background",
+                            "by": "nope"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "component_derive.tabs.variants.pill.tab_radius",
+                        "code": "component_derive.tabs.variants.pill.tab_radius.invalid"
+                    },
+                    {
+                        "path": "component_derive.chip.variants.default.states.pressed.background",
+                        "code": "component_derive.chip.variants.default.states.pressed.background.invalid"
+                    },
+                    {
+                        "path": "component_derive.card.variants.default.states.hover.shadow",
+                        "code": "component_derive.card.variants.default.states.hover.shadow.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "matrix",
+            "description": "A matrix on a component without colors, and one into a section the component has.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "$extensions",
+                            "co.ordering",
+                            "matrix"
+                        ],
+                        {
+                            "into": "variants",
+                            "roles": {
+                                "ink": {
+                                    "op": "same",
+                                    "from": "main"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "$extensions",
+                            "co.ordering",
+                            "matrix",
+                            "into"
+                        ],
+                        "base"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "matrix.button",
+                        "code": "matrix.button.invalid"
+                    },
+                    {
+                        "path": "matrix.link",
+                        "code": "matrix.link.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "migrate-valid",
+            "description": "Migrations from keys the schema no longer has to keys it has.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            },
+                            {
+                                "from": "tokens.color.brand",
+                                "to": "tokens.color.primary"
+                            },
+                            {
+                                "from": "site.title",
+                                "to": "site.name"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "migrate-invalid",
+            "description": "Migrations from a key the schema has, to one it lacks, across sections, onto themselves, and of visibility (kindAt() knows no visibility key).",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.radius",
+                                "to": "components.button.base.icon_gap"
+                            },
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.new_gap"
+                            },
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "tokens.color.primary"
+                            },
+                            {
+                                "from": "components.button.base.gone",
+                                "to": "components.button.base.gone"
+                            },
+                            {
+                                "from": "visibility.old_footer",
+                                "to": "visibility.footer"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "migrate.0",
+                        "code": "migrate.0.invalid"
+                    },
+                    {
+                        "path": "migrate.1",
+                        "code": "migrate.1.invalid"
+                    },
+                    {
+                        "path": "migrate.2",
+                        "code": "migrate.2.invalid"
+                    },
+                    {
+                        "path": "migrate.3",
+                        "code": "migrate.3.invalid"
+                    },
+                    {
+                        "path": "migrate.4",
+                        "code": "migrate.4.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "pages",
+            "description": "Pages: a field they do not have, a footer that is no bool, a section hidden that cannot be, a section twice, sections of another type, an empty page.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "extra"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "footer",
+                            "$type"
+                        ],
+                        "string"
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "footer",
+                            "$value"
+                        ],
+                        ""
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "sections",
+                            "$value"
+                        ],
+                        [
+                            {
+                                "key": "hero",
+                                "visible": false,
+                                "hideable": false,
+                                "group": null
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true,
+                                "hideable": true,
+                                "group": null
+                            },
+                            {
+                                "key": "custom_order_banner",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "content",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "promo_banners",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "content",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            }
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "orders",
+                            "sections",
+                            "$type"
+                        ],
+                        "string"
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "empty"
+                        ],
+                        {
+                            "$description": "No footer, no sections."
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "pages.home.extra",
+                        "code": "pages.home.extra.unknown"
+                    },
+                    {
+                        "path": "pages.home.footer",
+                        "code": "pages.home.footer.invalid"
+                    },
+                    {
+                        "path": "pages.home.sections.hero",
+                        "code": "pages.home.sections.hero.invalid"
+                    },
+                    {
+                        "path": "pages.home.sections.content",
+                        "code": "pages.home.sections.content.duplicate"
+                    },
+                    {
+                        "path": "pages.orders.sections",
+                        "code": "pages.orders.sections.invalid"
+                    },
+                    {
+                        "path": "pages.empty.footer",
+                        "code": "pages.empty.footer.invalid"
+                    },
+                    {
+                        "path": "pages.empty.sections",
+                        "code": "pages.empty.sections.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "pages-v1",
+            "description": "Sections' version 1 paths: one that is visibility's, one that is no `.hidden` path, a `v1_default` that is no bool, one that another section has.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "login_account",
+                            "v1"
+                        ],
+                        "footer.hidden"
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "content"
+                        ],
+                        {
+                            "v1": "content"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "promo_banners"
+                        ],
+                        {
+                            "v1": "mobile_view_web.components.home.components.promo_banners.hidden",
+                            "v1_default": "yes"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "business_listing",
+                            "filters",
+                            "v1"
+                        ],
+                        "business_listing_view.components.search.hidden"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "pages.home.sections.login_account.v1",
+                        "code": "pages.home.sections.login_account.v1.duplicate"
+                    },
+                    {
+                        "path": "pages.home.sections.content.v1",
+                        "code": "pages.home.sections.content.v1.invalid"
+                    },
+                    {
+                        "path": "pages.home.sections.promo_banners",
+                        "code": "pages.home.sections.promo_banners.invalid"
+                    },
+                    {
+                        "path": "pages.business_listing.sections.filters.v1",
+                        "code": "pages.business_listing.sections.filters.v1.duplicate"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "v1",
+            "description": "The version 1 map: paths that are not strings, an empty list, two controls on one key (in two entries, in one list, a site setting), and a path the schema lacks (left out).",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "tokens.color.primary"
+                        ],
+                        5
+                    ],
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "tokens.color.link"
+                        ],
+                        []
+                    ],
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "tokens.color.text"
+                        ],
+                        "general.components.fonts.primary.name"
+                    ],
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "tokens.color.border"
+                        ],
+                        [
+                            "a.b",
+                            "a.b"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "components.nonexistent.base.x"
+                        ],
+                        "a.b.c"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name"
+                        ],
+                        "my_products.components.website_theme.components.type"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "v1.tokens.color.primary",
+                        "code": "v1.tokens.color.primary.invalid"
+                    },
+                    {
+                        "path": "v1.tokens.color.link",
+                        "code": "v1.tokens.color.link.invalid"
+                    },
+                    {
+                        "path": "v1.tokens.color.text",
+                        "code": "v1.tokens.color.text.duplicate"
+                    },
+                    {
+                        "path": "v1.tokens.color.border",
+                        "code": "v1.tokens.color.border.duplicate"
+                    },
+                    {
+                        "path": "v1.site.name",
+                        "code": "v1.site.name.duplicate"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "out-of-range",
+            "description": "Defaults outside their control's min and max, and nothing else.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$value"
+                        ],
+                        100
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$value"
+                        ],
+                        20
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.icon_gap",
+                        "code": "components.button.base.icon_gap.default_out_of_range"
+                    },
+                    {
+                        "path": "components.button.base.speed",
+                        "code": "components.button.base.speed.default_out_of_range"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "check-and-range",
+            "description": "A default that neither fits its kind nor its control: check()'s error, then outOfRange()'s.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$value"
+                        ],
+                        -1
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.icon_gap.default",
+                        "code": "components.button.base.icon_gap.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.icon_gap",
+                        "code": "components.button.base.icon_gap.default_out_of_range"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "check-and-semver",
+            "description": "check()'s errors and the version's together.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "red"
+                    ],
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.color.primary",
+                        "code": "tokens.color.primary.invalid"
+                    },
+                    {
+                        "path": "version",
+                        "code": "version.semver"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "version-equal",
+            "description": "The same version as the previous one.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.version_order",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "schema.version_order"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "version-lower",
+            "description": "A version lower than the previous one of its base.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.5"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.version_order",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "schema.version_order"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "version-previous-short",
+            "description": "A previous version of two parts (`26.0` is `26.0.0`): a patch over it.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "version-previous-prerelease",
+            "description": "A previous pre-release: PHP's version_compare() puts 26.1.0 after 26.1.0-beta.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0-beta"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "new-base",
+            "description": "A new base is not compared: it may remove anything; what it adds and deprecates is still reported.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "glow"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [
+                        "components.button.base.glow"
+                    ],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": [
+                        "components.button.base.speed"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "diff-patch-default",
+            "description": "A patch that changes a default.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "#123456"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-patch-texts",
+            "description": "A patch that changes only texts and editor metadata.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$description"
+                        ],
+                        "The rounding."
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "max"
+                        ],
+                        64
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "order"
+                        ],
+                        99
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "auth_form",
+                            "scope",
+                            "button",
+                            "$extensions"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "editor",
+                            "sections",
+                            0,
+                            "label",
+                            "default"
+                        ],
+                        "Colours"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$description"
+                        ],
+                        "Web Marketplace 26."
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "diff-minor-add",
+            "description": "A minor that adds keys and changes a default.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "glow"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.glow"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "#123456"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [
+                        "components.button.base.glow",
+                        "visibility.header.glow"
+                    ],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "diff-removed",
+            "description": "A minor that removes a key that was not deprecated.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "components.button.base.animated",
+                        "code": "components.button.base.animated.removed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-removed-deprecated",
+            "description": "A minor that removes a deprecated key and a component deprecated as a whole.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "connection_status"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated",
+                            "$deprecated"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "connection_status",
+                            "$deprecated"
+                        ],
+                        "No longer painted."
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [
+                        "components.button.base.animated",
+                        "components.connection_status.base.margin",
+                        "components.connection_status.slots.button"
+                    ],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "diff-deprecated-zero",
+            "description": "A key deprecated as the string \"0\" is not deprecated (PHP's empty()): removing it breaks.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$deprecated"
+                        ],
+                        "0"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "components.button.base.speed",
+                        "code": "components.button.base.speed.removed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-deprecating",
+            "description": "A minor that deprecates keys: only the newly deprecated are reported.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$deprecated"
+                        ],
+                        "Use the motion tokens."
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated",
+                            "$deprecated"
+                        ],
+                        false
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "radius",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": [
+                        "components.button.base.speed"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "diff-migrated",
+            "description": "A minor that moves a key with a migration.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [
+                        "components.button.base.old_gap"
+                    ],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "diff-type-changed",
+            "description": "A minor that changes the type of a key.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$type"
+                        ],
+                        "html"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "site.business_slug",
+                        "code": "site.business_slug.type_changed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-option-removed",
+            "description": "A minor that removes an option (and adds another).",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "marketplace",
+                            "single_store",
+                            "kiosk"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "site.mode",
+                        "code": "site.mode.option_removed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-migration-removed",
+            "description": "A minor that drops a migration of its base.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "migrate",
+                        "code": "schema.migration_removed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-errors",
+            "description": "Every incompatibility at once, in SchemaDiff's order: each key's, the migrations', and a patch's values.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$type"
+                        ],
+                        "html"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "marketplace",
+                            "single_store"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "components.button.base.animated",
+                        "code": "components.button.base.animated.removed"
+                    },
+                    {
+                        "path": "site.mode",
+                        "code": "site.mode.option_removed"
+                    },
+                    {
+                        "path": "site.business_slug",
+                        "code": "site.business_slug.type_changed"
+                    },
+                    {
+                        "path": "migrate",
+                        "code": "schema.migration_removed"
+                    },
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-valid-changes",
+            "description": "A valid minor with every kind of change: added, removed (deprecated), migrated and deprecated.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.2.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "glow"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated",
+                            "$deprecated"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [
+                        "components.button.base.glow"
+                    ],
+                    "removed": [
+                        "components.button.base.animated"
+                    ],
+                    "migrated": [
+                        "components.button.base.old_gap"
+                    ],
+                    "deprecated": [
+                        "components.button.base.speed"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "development-semver",
+            "description": "In development, the version is still semver.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1"
+                    ]
+                ]
+            },
+            "development": true,
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "version.semver"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "development-prop-defaults",
+            "description": "In development, the schema itself is still checked.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "mobile_full_width",
+                            "$value"
+                        ],
+                        null
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$value"
+                        ],
+                        "{color.primary}"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$value"
+                        ],
+                        99999
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$value"
+                        ],
+                        "nope"
+                    ]
+                ]
+            },
+            "development": true,
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.button.base.icon_gap.default",
+                        "code": "components.button.base.icon_gap.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.mobile_full_width.default",
+                        "code": "components.button.base.mobile_full_width.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.speed.default",
+                        "code": "components.button.base.speed.default.invalid"
+                    },
+                    {
+                        "path": "site.mode.default",
+                        "code": "site.mode.default.invalid"
+                    },
+                    {
+                        "path": "components.button.base.speed",
+                        "code": "components.button.base.speed.default_out_of_range"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "development-version-equal",
+            "description": "In development, the same version as the previous one is no refusal: its changes are answered.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "development-version-lower",
+            "description": "In development, a version lower than the previous one is no refusal.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.5"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ]
+                ]
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "development-diff-removed",
+            "description": "In development, removing a key that was not deprecated is no refusal: it is reported as removed.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [
+                        "components.button.base.animated"
+                    ],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "development-diff-errors",
+            "description": "In development, every incompatibility at once is no refusal: the changes are answered.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$type"
+                        ],
+                        "html"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "marketplace",
+                            "single_store"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [
+                        "components.button.base.animated"
+                    ],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "development-diff-valid-changes",
+            "description": "In development, a valid minor answers the same changes.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.2.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "glow"
+                        ],
+                        {
+                            "$type": "color",
+                            "$value": "#ffffff"
+                        }
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "speed",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "animated",
+                            "$deprecated"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [
+                        "components.button.base.glow"
+                    ],
+                    "removed": [
+                        "components.button.base.animated"
+                    ],
+                    "migrated": [
+                        "components.button.base.old_gap"
+                    ],
+                    "deprecated": [
+                        "components.button.base.speed"
+                    ]
+                }
+            }
+        }
+    ]
+}

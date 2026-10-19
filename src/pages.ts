@@ -1,5 +1,5 @@
-import { clone, dig, get, has, isArray, values, type Json, type JsonMap } from './php.js'
-import type { TupleSchema } from './types.js'
+import { clone, count, dig, entries, get, has, isArray, isEmpty, isList, values, type Json, type JsonMap } from './php.js'
+import type { SchemaError, TupleSchema } from './types.js'
 
 /**
  * The pages of a schema (ThemePages): whether each one shows the footer and
@@ -105,4 +105,97 @@ export function defaultSections(spec: Json): JsonMap[] {
 
 function hideable(section: JsonMap): boolean {
   return (get(section, 'hideable') ?? true) !== false
+}
+
+const NAME = /^[a-z0-9_]+\n?$/
+
+const V1_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)*\.hidden\n?$/
+
+const SECTION_FIELDS = ['key', 'visible', 'hideable', 'group', 'v1', 'v1_default']
+
+/**
+ * What a compiled schema's pages get wrong (ThemePages::check()). A
+ * section's `v1` must not be another control's: whichever is projected last
+ * would win.
+ */
+export function checkPages(schema: TupleSchema): SchemaError[] {
+  const errors: SchemaError[] = []
+  const fail = (path: string, rule: string): void => {
+    errors.push({ path, code: `${path}.${rule}` })
+  }
+
+  const pages = get(schema, 'pages') ?? []
+  if (!isArray(pages) || (!isEmpty(pages) && isList(pages))) {
+    fail('pages', 'invalid')
+    return errors
+  }
+
+  const v1Paths = new Set<string>()
+  for (const entry of values(get(schema, 'visibility'))) {
+    const path = get(entry, 1)
+    if (typeof path === 'string') {
+      v1Paths.add(path)
+    }
+  }
+
+  for (const [page, spec] of entries(pages)) {
+    const path = `pages.${page}`
+    if (!NAME.test(page) || !isArray(spec) || (!isEmpty(spec) && isList(spec))) {
+      fail(path, 'invalid')
+      continue
+    }
+    for (const [field] of entries(spec)) {
+      if (field !== 'footer' && field !== 'sections') {
+        fail(`${path}.${field}`, 'unknown')
+      }
+    }
+
+    const footer = get(spec, 'footer')
+    const shown = get(footer, 1)
+    if (!isArray(footer) || !isList(footer) || count(footer) !== 2 || get(footer, 0) !== 'bool' || !(shown === null || typeof shown === 'boolean')) {
+      fail(`${path}.footer`, 'invalid')
+    }
+
+    const sections = get(spec, 'sections')
+    const list = get(sections, 1)
+    if (!isArray(sections) || !isList(sections) || count(sections) !== 2 || get(sections, 0) !== 'sections' || !isArray(list) || !isList(list)) {
+      fail(`${path}.sections`, 'invalid')
+      continue
+    }
+    const keys = new Set<string>()
+    for (const [index, section] of entries(list)) {
+      const own = get(section, 'key')
+      const key = isArray(section) && typeof own === 'string' ? own : index
+      const sectionPath = `${path}.sections.${key}`
+      const visible = get(section, 'visible')
+      const hideable = get(section, 'hideable')
+      const group = get(section, 'group')
+      if (!isArray(section) || !NAME.test(key)
+        || !entries(section).every(([field]) => SECTION_FIELDS.includes(field))
+        || (has(section, 'v1_default') && typeof get(section, 'v1_default') !== 'boolean')
+        || typeof visible !== 'boolean' || typeof hideable !== 'boolean'
+        || !has(section, 'group') || !(group === null || (typeof group === 'string' && NAME.test(group)))
+        || (!hideable && !visible)) {
+        fail(sectionPath, 'invalid')
+        continue
+      }
+      if (keys.has(key)) {
+        fail(sectionPath, 'duplicate')
+      }
+      keys.add(key)
+
+      if (has(section, 'v1')) {
+        const v1 = get(section, 'v1')
+        if (typeof v1 !== 'string' || !V1_PATH.test(v1)) {
+          fail(`${sectionPath}.v1`, 'invalid')
+        } else if (v1Paths.has(v1)) {
+          fail(`${sectionPath}.v1`, 'duplicate')
+        } else {
+          v1Paths.add(v1)
+        }
+      }
+    }
+  }
+
+  return errors
 }

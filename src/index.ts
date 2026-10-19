@@ -1,12 +1,17 @@
 /**
  * api-core's theme engine (version 2 themes) in TypeScript: the same node
  * schema, the same rules and, case by case, the same answer
- * (fixtures/cases, the golden cases of api-core's ThemeResolverGoldenTest).
+ * (fixtures/cases, the golden cases of api-core's ThemeResolverGoldenTest;
+ * fixtures/validate.json, what ThemeSchemaPublisher::validate() answers).
  */
 export { resolve, defaults } from './resolver.js'
 export { compile } from './compile.js'
 export { siteDefaults } from './schemas.js'
+export { validate, outOfRange } from './validate.js'
+export { check } from './check.js'
+export { diff } from './diff.js'
 export type {
+  Changes,
   Collection,
   Json,
   JsonMap,
@@ -16,4 +21,7 @@ export type {
   SchemaError,
   ThemeValues,
   TupleSchema,
+  V1Map,
+  ValidateOptions,
+  ValidationResult,
 } from './types.js'

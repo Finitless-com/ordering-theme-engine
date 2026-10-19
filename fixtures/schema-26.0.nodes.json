@@ -119,7 +119,8 @@
                 "reset": [
                     "tokens.color",
                     "tokens.opacity.scrim"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "typography",
@@ -169,7 +170,8 @@
                 "reset": [
                     "tokens.font",
                     "tokens.typography"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "border",
@@ -216,7 +218,8 @@
                 "reset": [
                     "tokens.border_style",
                     "tokens.focus_ring"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "shadows",
@@ -247,7 +250,8 @@
                 "reset": [
                     "tokens.shadow_style",
                     "tokens.shadow"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "sizes",
@@ -336,7 +340,8 @@
                     "tokens.icon",
                     "tokens.space",
                     "tokens.scrollbar"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "layout",
@@ -373,7 +378,8 @@
                 ],
                 "reset": [
                     "tokens.layout"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "motion",
@@ -427,7 +433,8 @@
                 "reset": [
                     "tokens.motion",
                     "tokens.motion_style"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "components",
@@ -539,7 +546,8 @@
                 "reset": [
                     "components.{component}",
                     "platforms.{platform}.components.{component}"
-                ]
+                ],
+                "layout": "list"
             },
             {
                 "key": "site",
@@ -635,7 +643,8 @@
                         ]
                     }
                 ],
-                "store": "site"
+                "store": "site",
+                "layout": "cards"
             },
             {
                 "key": "pages",
@@ -724,7 +733,8 @@
                 "reset": [
                     "pages.{page}",
                     "platforms.{platform}.pages.{page}"
-                ]
+                ],
+                "layout": "list"
             },
             {
                 "key": "visibility",
@@ -1111,7 +1121,8 @@
                 ],
                 "reset": [
                     "visibility"
-                ]
+                ],
+                "layout": "cards"
             },
             {
                 "key": "images",
@@ -1261,7 +1272,8 @@
                 ],
                 "reset": [
                     "images"
-                ]
+                ],
+                "layout": "cards"
             }
         ],
         "section_groups": [
@@ -1293,14 +1305,25 @@
                 "label": {
                     "key": "BUILDER_THEME_PART_BASE",
                     "default": "Base"
-                }
+                },
+                "sources": [
+                    "base"
+                ],
+                "choices": false,
+                "nested": true
             },
             {
                 "key": "colors",
                 "label": {
                     "key": "BUILDER_THEME_PART_COLORS",
                     "default": "Colors and styles"
-                }
+                },
+                "sources": [
+                    "colors",
+                    "appearances"
+                ],
+                "choices": true,
+                "nested": true
             },
             {
                 "key": "variants",
@@ -1315,42 +1338,72 @@
                 "label_styles": {
                     "key": "BUILDER_THEME_PART_STYLES",
                     "default": "Styles"
-                }
+                },
+                "sources": [
+                    "variants"
+                ],
+                "choices": true,
+                "nested": true
             },
             {
                 "key": "sizes",
                 "label": {
                     "key": "BUILDER_THEME_PART_SIZES",
                     "default": "Sizes"
-                }
+                },
+                "sources": [
+                    "sizes"
+                ],
+                "choices": true,
+                "nested": true
             },
             {
                 "key": "shapes",
                 "label": {
                     "key": "BUILDER_THEME_PART_SHAPES",
                     "default": "Shapes"
-                }
+                },
+                "sources": [
+                    "shapes"
+                ],
+                "choices": true,
+                "nested": true
             },
             {
                 "key": "slots",
                 "label": {
                     "key": "BUILDER_THEME_PART_PIECES",
                     "default": "Pieces"
-                }
+                },
+                "sources": [
+                    "slots"
+                ],
+                "choices": false,
+                "nested": true
             },
             {
                 "key": "scope",
                 "label": {
                     "key": "BUILDER_THEME_PART_INSIDE",
                     "default": "Inside"
-                }
+                },
+                "sources": [
+                    "scope"
+                ],
+                "choices": false,
+                "nested": false
             },
             {
                 "key": "platforms",
                 "label": {
                     "key": "BUILDER_THEME_PART_PLATFORMS",
                     "default": "Platforms"
-                }
+                },
+                "sources": [
+                    "platforms"
+                ],
+                "choices": false,
+                "nested": true
             }
         ],
         "labels": {
@@ -8338,7 +8391,8 @@
                                     "components.button.sizes.sm",
                                     "components.button.sizes.md",
                                     "components.button.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -8405,7 +8459,9 @@
                                 "components.button.colors.success",
                                 "components.button.colors.neutral",
                                 "components.button.colors.inverse"
-                            ]
+                            ],
+                            "part": "colors",
+                            "placement": "before"
                         },
                         {
                             "key": "button_styles",
@@ -8422,7 +8478,9 @@
                                 "components.button.appearances.outline",
                                 "components.button.appearances.tonal",
                                 "components.button.appearances.ghost"
-                            ]
+                            ],
+                            "part": "colors",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -8433,7 +8491,9 @@
                             "paths": [
                                 "components.button.base.animated",
                                 "components.button.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 },
@@ -8603,7 +8663,8 @@
                                     "components.link.sizes.sm",
                                     "components.link.sizes.md",
                                     "components.link.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -9156,7 +9217,8 @@
                                     "components.input.sizes.md",
                                     "components.input.sizes.lg",
                                     "components.input.sizes.code"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -9292,7 +9354,8 @@
                                     "paths": [
                                         "components.input.variants.default.states.focus.border",
                                         "components.input.variants.default.states.error.border"
-                                    ]
+                                    ],
+                                    "placement": "after"
                                 }
                             ]
                         }
@@ -9492,7 +9555,9 @@
                             },
                             "paths": [
                                 "components.input.slots.trailing_action"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -9503,9 +9568,19 @@
                             "paths": [
                                 "components.input.base.animated",
                                 "components.input.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -10705,7 +10780,9 @@
                                 "components.auth_form.slots.resend",
                                 "components.auth_form.slots.social",
                                 "components.auth_form.slots.partner"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -10882,7 +10959,9 @@
                             "paths": [
                                 "components.menu.base.animated",
                                 "components.menu.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -10984,7 +11063,9 @@
                             "paths": [
                                 "components.checkbox.base.animated",
                                 "components.checkbox.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -11082,7 +11163,9 @@
                             "paths": [
                                 "components.radio.base.animated",
                                 "components.radio.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -11369,7 +11452,8 @@
                                     "components.choice.sizes.sm",
                                     "components.choice.sizes.md",
                                     "components.choice.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -11484,7 +11568,9 @@
                             "paths": [
                                 "components.choice.base.animated",
                                 "components.choice.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "option",
@@ -11503,7 +11589,9 @@
                                 "components.choice.base.radius",
                                 "components.choice.base.shadow",
                                 "components.choice.base.gap"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "text",
@@ -11514,7 +11602,9 @@
                             "paths": [
                                 "components.choice.base.text",
                                 "components.choice.base.color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "selected",
@@ -11530,7 +11620,9 @@
                                 "components.choice.variants.default.states.selected.background",
                                 "components.choice.variants.default.states.selected.border",
                                 "components.choice.variants.default.states.selected.color"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "disabled",
@@ -11540,7 +11632,9 @@
                             },
                             "paths": [
                                 "components.choice.variants.default.states.disabled.opacity"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "indicator",
@@ -11554,9 +11648,19 @@
                             },
                             "paths": [
                                 "components.choice.base.show_indicator"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -11750,7 +11854,8 @@
                                     "components.stepper.sizes.sm",
                                     "components.stepper.sizes.md",
                                     "components.stepper.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -11932,7 +12037,8 @@
                                     "components.switch.sizes.sm",
                                     "components.switch.sizes.md",
                                     "components.switch.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -11956,7 +12062,9 @@
                             "paths": [
                                 "components.switch.base.animated",
                                 "components.switch.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -12100,7 +12208,8 @@
                                 "paths": [
                                     "components.tabs.base.text",
                                     "components.tabs.base.icon_gap"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -12305,7 +12414,8 @@
                                     "components.tabs.sizes.sm",
                                     "components.tabs.sizes.md",
                                     "components.tabs.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -12613,7 +12723,8 @@
                                         "components.tabs.variants.pill.inset",
                                         "components.tabs.variants.pill.gap",
                                         "components.tabs.variants.pill.joined"
-                                    ]
+                                    ],
+                                    "placement": "after"
                                 },
                                 {
                                     "key": "each_tab",
@@ -12627,7 +12738,8 @@
                                         "components.tabs.variants.pill.active_background",
                                         "components.tabs.variants.pill.active",
                                         "components.tabs.variants.pill.inactive"
-                                    ]
+                                    ],
+                                    "placement": "after"
                                 }
                             ]
                         }
@@ -12977,9 +13089,19 @@
                             "paths": [
                                 "components.tabs.base.animated",
                                 "components.tabs.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STYLES",
+                                "default": "Styles"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -13232,7 +13354,8 @@
                                     "components.chip.sizes.sm",
                                     "components.chip.sizes.md",
                                     "components.chip.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -13331,7 +13454,8 @@
                                         "components.chip.variants.default.states.selected.background",
                                         "components.chip.variants.default.states.selected.color",
                                         "components.chip.variants.default.states.selected.border"
-                                    ]
+                                    ],
+                                    "placement": "after"
                                 }
                             ]
                         }
@@ -13356,9 +13480,19 @@
                             "paths": [
                                 "components.chip.base.animated",
                                 "components.chip.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -14096,7 +14230,9 @@
                             "paths": [
                                 "components.toast.base.animated",
                                 "components.toast.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -14361,7 +14497,8 @@
                                     "components.modal.sizes.md",
                                     "components.modal.sizes.lg",
                                     "components.modal.sizes.xl"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -14581,7 +14718,9 @@
                             },
                             "paths": [
                                 "components.modal.slots.close"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -14592,7 +14731,9 @@
                             "paths": [
                                 "components.modal.base.animated",
                                 "components.modal.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -15071,7 +15212,9 @@
                             "paths": [
                                 "components.tooltip.base.animated",
                                 "components.tooltip.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -15780,7 +15923,9 @@
                             },
                             "paths": [
                                 "components.banner.slots.action"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -16142,7 +16287,9 @@
                             },
                             "paths": [
                                 "components.promo_carousel.slots.arrow"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -16153,9 +16300,19 @@
                             "paths": [
                                 "components.promo_carousel.base.animated",
                                 "components.promo_carousel.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -16722,7 +16879,9 @@
                             "paths": [
                                 "components.accordion.base.animated",
                                 "components.accordion.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -16899,7 +17058,9 @@
                             "paths": [
                                 "components.slider.base.animated",
                                 "components.slider.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -17384,7 +17545,15 @@
                         "default": "Holds content in coupons, order details, reviews, promotions, wallets, gift cards, sessions, help, reservations, addresses, the free delivery bar and business info."
                     },
                     "group": "controls",
-                    "order": 34
+                    "order": 34,
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -18802,7 +18971,9 @@
                                 "components.header.slots.signup",
                                 "components.header.slots.language",
                                 "components.header.slots.menu_toggle"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -18823,7 +18994,9 @@
                                 "visibility.header.login",
                                 "visibility.header.signup",
                                 "visibility.header.far_away"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -19823,7 +19996,9 @@
                                 "components.home_hero.slots.search",
                                 "components.home_hero.slots.login",
                                 "components.home_hero.slots.signup"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -19834,7 +20009,9 @@
                             "paths": [
                                 "visibility.home.hero.logo",
                                 "visibility.home.hero.title"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -20108,7 +20285,9 @@
                             },
                             "paths": [
                                 "components.order_type_card.variants.default.states.hover.shadow"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -20119,7 +20298,9 @@
                             "paths": [
                                 "components.order_type_card.base.animated",
                                 "components.order_type_card.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "visible",
@@ -20130,9 +20311,19 @@
                             "paths": [
                                 "visibility.order_type.description",
                                 "visibility.order_type.call_to_action"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -20276,7 +20467,9 @@
                             "paths": [
                                 "components.business_card.slots.tag",
                                 "components.business_card.slots.cta"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "hover",
@@ -20290,7 +20483,9 @@
                             },
                             "paths": [
                                 "components.business_card.variants.default.states.hover.shadow"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -20301,7 +20496,9 @@
                             "paths": [
                                 "components.business_card.base.animated",
                                 "components.business_card.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "visible",
@@ -20319,9 +20516,19 @@
                                 "visibility.business_card.offer",
                                 "visibility.business_card.favorite",
                                 "visibility.business_card.closing_soon"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             },
             "base": {
@@ -21262,7 +21469,9 @@
                             "paths": [
                                 "components.business_types.slots.pill",
                                 "components.business_types.slots.tab"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -22007,7 +22216,9 @@
                                 "components.business_header.slots.action",
                                 "components.business_header.slots.social",
                                 "components.business_header.slots.back"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -22165,7 +22376,8 @@
                                             "paths": [
                                                 "components.category_tabs.scope.tabs.variants.pill.border",
                                                 "components.category_tabs.scope.tabs.variants.pill.shadow"
-                                            ]
+                                            ],
+                                            "placement": "after"
                                         }
                                     ]
                                 }
@@ -22354,7 +22566,9 @@
                             },
                             "paths": [
                                 "components.category_tabs.slots.tabs"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -22521,7 +22735,9 @@
                                 "components.product_card.slots.quantity_badge",
                                 "components.product_card.slots.sold_out_badge",
                                 "components.product_card.slots.action"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "hover",
@@ -22535,7 +22751,9 @@
                             },
                             "paths": [
                                 "components.product_card.variants.default.states.hover.shadow"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -22546,9 +22764,19 @@
                             "paths": [
                                 "components.product_card.base.animated",
                                 "components.product_card.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             },
             "base": {
@@ -24452,7 +24680,9 @@
                                 "components.product_modal.slots.add",
                                 "components.product_modal.slots.login",
                                 "components.product_modal.slots.quantity"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -25069,7 +25299,9 @@
                             "paths": [
                                 "components.product_option.slots.required",
                                 "components.product_option.slots.halves"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -25080,7 +25312,9 @@
                             "paths": [
                                 "components.product_option.base.animated",
                                 "components.product_option.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "title",
@@ -25091,7 +25325,9 @@
                             "paths": [
                                 "components.product_option.base.title",
                                 "components.product_option.base.title_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "description",
@@ -25102,7 +25338,9 @@
                             "paths": [
                                 "components.product_option.base.description",
                                 "components.product_option.base.description_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "price",
@@ -25113,7 +25351,9 @@
                             "paths": [
                                 "components.product_option.base.price",
                                 "components.product_option.base.price_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "box",
@@ -25126,7 +25366,9 @@
                                 "components.product_option.base.border",
                                 "components.product_option.base.radius",
                                 "components.product_option.base.error"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "images",
@@ -25149,7 +25391,9 @@
                                 "components.product_option.base.image_size",
                                 "components.product_option.base.image_radius",
                                 "visibility.product.options.image"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "nesting",
@@ -25164,7 +25408,9 @@
                             "paths": [
                                 "components.product_option.base.nesting",
                                 "components.product_option.base.nesting_line"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "groups",
@@ -25174,7 +25420,9 @@
                             },
                             "paths": [
                                 "components.product_option.base.collapsed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -25665,7 +25913,9 @@
                             "paths": [
                                 "components.cart.slots.clear",
                                 "components.cart.slots.store"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -26436,7 +26686,9 @@
                                 "components.checkout.slots.place_order_mobile",
                                 "components.checkout.slots.payment_change",
                                 "components.checkout.slots.required"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -26839,7 +27091,9 @@
                             "paths": [
                                 "components.orders_page.slots.tabs",
                                 "components.orders_page.slots.load_more"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -26851,7 +27105,9 @@
                                 "visibility.orders.previously_ordered",
                                 "visibility.orders.products_tab",
                                 "visibility.orders.business_tab"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -27152,7 +27408,9 @@
                             },
                             "paths": [
                                 "components.profile_photo.slots.edit"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -27840,7 +28098,9 @@
                             "paths": [
                                 "components.order_card.slots.review",
                                 "components.order_card.slots.reorder"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "hover",
@@ -27854,7 +28114,9 @@
                             },
                             "paths": [
                                 "components.order_card.variants.default.states.hover.shadow"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "motion",
@@ -27865,7 +28127,9 @@
                             "paths": [
                                 "components.order_card.base.animated",
                                 "components.order_card.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "visible",
@@ -27884,9 +28148,19 @@
                                 "visibility.orders.total",
                                 "visibility.orders.reorder_button",
                                 "visibility.orders.review_order_button"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             },
             "base": {
@@ -29491,7 +29765,9 @@
                                 "components.order_details.slots.directions",
                                 "components.order_details.slots.review",
                                 "components.order_details.slots.reorder"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -30542,7 +30818,9 @@
                                 "components.order_tracking.slots.survey_start",
                                 "components.order_tracking.slots.survey_chip",
                                 "components.order_tracking.slots.survey_submit"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -30771,7 +31049,8 @@
                                     "components.progress.sizes.sm",
                                     "components.progress.sizes.md",
                                     "components.progress.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -30949,7 +31228,9 @@
                             "paths": [
                                 "components.progress.base.animated",
                                 "components.progress.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "bar",
@@ -30967,7 +31248,9 @@
                                 "components.progress.base.radius",
                                 "components.progress.base.border",
                                 "components.progress.base.shadow"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "states",
@@ -30984,7 +31267,9 @@
                                 "components.progress.variants.default.states.complete",
                                 "components.progress.variants.default.states.pending",
                                 "components.progress.variants.default.states.canceled"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "active",
@@ -30994,9 +31279,19 @@
                             },
                             "paths": [
                                 "components.progress.variants.default.states.active.pulse"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -31291,7 +31586,9 @@
                             },
                             "paths": [
                                 "components.product_search.slots.go_to_store"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -31301,7 +31598,9 @@
                             },
                             "paths": [
                                 "visibility.product_search.logo"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -31520,7 +31819,9 @@
                             "paths": [
                                 "components.section_header.variants.page.title",
                                 "components.section_header.variants.page.margin_bottom"
-                            ]
+                            ],
+                            "part": "variants",
+                            "placement": "before"
                         },
                         {
                             "key": "section",
@@ -31535,7 +31836,9 @@
                             "paths": [
                                 "components.section_header.base.title",
                                 "components.section_header.base.margin_bottom"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "description",
@@ -31551,7 +31854,9 @@
                                 "components.section_header.base.description",
                                 "components.section_header.base.description_color",
                                 "components.section_header.base.gap"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "both",
@@ -31562,7 +31867,9 @@
                             "paths": [
                                 "components.section_header.base.title_color",
                                 "components.section_header.base.align"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
                     ]
                 }
@@ -31598,7 +31905,9 @@
                             },
                             "paths": [
                                 "components.offer_card.slots.action"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -31610,7 +31919,9 @@
                                 "visibility.promotions.offer.image",
                                 "visibility.promotions.offer.description",
                                 "visibility.promotions.offer.apply_for"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -32075,9 +32386,19 @@
                             "paths": [
                                 "components.search_bar.base.animated",
                                 "components.search_bar.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         }
-                    ]
+                    ],
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             },
             "base": {
@@ -32290,7 +32611,8 @@
                                     "components.search_bar.sizes.sm",
                                     "components.search_bar.sizes.md",
                                     "components.search_bar.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -32397,7 +32719,8 @@
                                     "paths": [
                                         "components.search_bar.variants.default.states.focus.border",
                                         "components.search_bar.variants.default.states.error.border"
-                                    ]
+                                    ],
+                                    "placement": "after"
                                 }
                             ]
                         }
@@ -32892,7 +33215,9 @@
                             "paths": [
                                 "components.sidebar_menu.base.animated",
                                 "components.sidebar_menu.base.speed"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "header",
@@ -32907,7 +33232,9 @@
                             "paths": [
                                 "components.sidebar_menu.base.header_text",
                                 "components.sidebar_menu.base.header_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "titles",
@@ -32923,7 +33250,9 @@
                                 "components.sidebar_menu.base.show_titles",
                                 "components.sidebar_menu.base.title",
                                 "components.sidebar_menu.base.title_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "options",
@@ -32946,7 +33275,9 @@
                                 "components.sidebar_menu.base.item_radius",
                                 "components.sidebar_menu.base.item_border",
                                 "components.sidebar_menu.base.item_danger"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "icons",
@@ -32962,7 +33293,9 @@
                                 "components.sidebar_menu.base.show_icons",
                                 "components.sidebar_menu.base.icon_size",
                                 "components.sidebar_menu.base.icon_color"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "panel",
@@ -32980,7 +33313,9 @@
                                 "components.sidebar_menu.base.border",
                                 "components.sidebar_menu.base.shadow",
                                 "components.sidebar_menu.base.overlay"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "visible",
@@ -33010,7 +33345,9 @@
                                 "visibility.menu.notifications",
                                 "visibility.menu.help",
                                 "visibility.menu.sessions"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -33195,7 +33532,9 @@
                                 "components.bottom_nav.base.border_top",
                                 "components.bottom_nav.base.shadow",
                                 "components.bottom_nav.base.height"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "padding",
@@ -33210,7 +33549,9 @@
                             "paths": [
                                 "components.bottom_nav.base.padding_y",
                                 "components.bottom_nav.base.padding_x"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "icons",
@@ -33223,7 +33564,9 @@
                                 "components.bottom_nav.base.active",
                                 "components.bottom_nav.base.inactive",
                                 "components.bottom_nav.base.label_text"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "after"
                         },
                         {
                             "key": "visible",
@@ -33240,7 +33583,9 @@
                                 "visibility.bottom_nav.browse",
                                 "visibility.bottom_nav.orders",
                                 "visibility.bottom_nav.profile"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -33658,7 +34003,9 @@
                             "paths": [
                                 "components.chat_bubble.slots.send",
                                 "components.chat_bubble.slots.unread"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         }
                     ]
                 }
@@ -34073,7 +34420,8 @@
                                     "components.rating.sizes.sm",
                                     "components.rating.sizes.md",
                                     "components.rating.sizes.lg"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -34583,7 +34931,8 @@
                                 "paths": [
                                     "components.steps.sizes.sm",
                                     "components.steps.sizes.md"
-                                ]
+                                ],
+                                "placement": "after"
                             }
                         ]
                     }
@@ -34730,7 +35079,15 @@
                         "default": "Steps"
                     },
                     "group": "controls",
-                    "order": 22
+                    "order": 22,
+                    "parts": {
+                        "variants": {
+                            "label": {
+                                "key": "BUILDER_THEME_PART_STATES",
+                                "default": "States"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -35009,7 +35366,9 @@
                             },
                             "paths": [
                                 "components.connection_status.slots.button"
-                            ]
+                            ],
+                            "part": "slots",
+                            "placement": "before"
                         },
                         {
                             "key": "visible",
@@ -35023,7 +35382,9 @@
                             },
                             "paths": [
                                 "visibility.connection_status"
-                            ]
+                            ],
+                            "part": "base",
+                            "placement": "before"
                         }
                     ]
                 }

@@ -1,6 +1,7 @@
-import { kindOf } from './format.js'
-import { clone, entries, get, has, isArray, isMap, type Json, type JsonMap } from './php.js'
-import type { NodeSchema, SchemaError, TupleSchema } from './types.js'
+import { kindOf, tokenType } from './format.js'
+import { asMap, clone, entries, get, has, identical, isArray, isList, isMap, phpString, type Json, type JsonMap } from './php.js'
+import { kindAt } from './schemas.js'
+import type { NodeSchema, SchemaError, TupleSchema, V1Map } from './types.js'
 
 /** What the engine reads from `$extensions`. */
 export const EXTENSION = 'co.ordering'
@@ -8,18 +9,25 @@ export const EXTENSION = 'co.ordering'
 /** The `$schema` of a schema in the node format. */
 export const NODE_FORMAT = 'urn:ordering:theme-schema:1'
 
+/** What only the editor reads. */
+export const EDITOR = 'co.ordering.editor'
+
+/** At the root, the renames and moves of a theme's values, `[{ from, to }]`. */
+export const MIGRATE = 'co.ordering.migrate'
+
 type Fail = (path: string, rule: string) => void
 
 /**
- * A schema in nodes as the tuples api-core's engine reads (NodeCompiler).
+ * A schema in nodes as the tuples api-core's engine reads (NodeCompiler),
+ * with the version 1 paths of $v1Map (none by default: api-core keeps them
+ * apart, for ThemeV1Bridge; validate() checks them).
  *
- * It answers what the engine reads: no version 1 paths (api-core keeps them
- * apart, for ThemeV1Bridge), and it does not check that a token declares
- * the type the validator expects. Like NodeCompiler, it refuses only a node
- * it cannot turn into a tuple; the meta-schema and ThemeSchemas::check()
- * are api-core's, which registers only a valid schema.
+ * Like NodeCompiler, it refuses only a node it cannot turn into a tuple and
+ * a token that does not declare the type or options the validator reads it
+ * with; check() validates the rest, and the meta-schema is the consumer's
+ * (meta/theme-schema-1.json).
  */
-export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: SchemaError[] } {
+export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSchema; errors: SchemaError[] } {
   const schema = clone(nodes as unknown as Json) as JsonMap
   const errors: SchemaError[] = []
   const fail: Fail = (path, rule) => {
@@ -58,17 +66,16 @@ export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: Schem
     tuples.inherits = inherits
   }
 
-  // The version 1 path of each key stays api-core's: null here.
   const visibility: JsonMap = {}
   for (const [key, node] of entries(children(isArray(schema.visibility) ? schema.visibility : {}))) {
-    visibility[key] = [get(node, '$value'), null]
+    visibility[key] = [get(node, '$value'), dig(v1Map, 'visibility', key)]
   }
   tuples.visibility = visibility
 
   const images: JsonMap = {}
   for (const [key, node] of entries(children(isArray(schema.images) ? schema.images : {}))) {
     const own = isArray(node) ? dig(node, '$extensions', EXTENSION) : {}
-    const entry: Json[] = [get(node, '$value'), null]
+    const entry: Json[] = [get(node, '$value'), dig(v1Map, 'images', key)]
     if (has(own, 'hints')) {
       entry.push(get(own, 'formats'), get(own, 'hints'))
     } else if (has(own, 'formats')) {
@@ -82,7 +89,26 @@ export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: Schem
   for (const [page, fields] of entries(children(isArray(schema.pages) ? schema.pages : {}))) {
     const spec: JsonMap = {}
     for (const [field, node] of entries(children(isArray(fields) ? fields : {}))) {
-      spec[field] = tuple(node, `pages.${page}.${field}`, fail)
+      const answer = tuple(node, `pages.${page}.${field}`, fail)
+      const sections = isArray(answer) ? get(answer, 1) : null
+      if (field === 'sections' && isArray(sections)) {
+        // Each section takes its version 1 path and default from the map.
+        for (const [index, section] of entries(sections)) {
+          if (!isArray(section)) {
+            continue
+          }
+          const key = get(section, 'key')
+          const from = dig(v1Map, 'pages', page, key === null ? '' : phpString(key))
+          const own = { ...section } as JsonMap
+          for (const [key, value] of entries(from)) {
+            if ((key === 'v1' || key === 'v1_default') && !has(own, key)) {
+              own[key] = value
+            }
+          }
+          ;(sections as Record<string, Json>)[index] = own
+        }
+      }
+      spec[field] = answer
     }
     pages[page] = spec
   }
@@ -91,8 +117,36 @@ export function compile(nodes: NodeSchema): { schema: TupleSchema; errors: Schem
   if (has(schema, 'platforms')) {
     tuples.platforms = schema.platforms!
   }
+  // The renames and moves a theme's values follow (ThemeMigrations).
+  const migrate = dig(schema, '$extensions', MIGRATE)
+  if (isArray(migrate)) {
+    tuples.migrate = migrate
+  }
   if (isArray(schema.site)) {
     tuples.site = tree(children(schema.site), 'site', fail)
+  }
+  // The site's settings convert and project through the same `v1` block,
+  // under `site.`: each setting the schema has.
+  const declared = get(v1Map, 'v1')
+  const paths: JsonMap = isArray(declared) ? { ...asMap(declared) } : {}
+  for (const [key, path] of entries(get(v1Map, 'site'))) {
+    let node: Json = get(tuples, 'site')
+    for (const segment of key.split('.')) {
+      node = isArray(node) ? get(node, segment) : null
+    }
+    if (typeof path === 'string' && isArray(node) && isList(node)) {
+      paths[`site.${key}`] = path
+    }
+  }
+  // The map outlives what a product removes: only what the schema has.
+  const v1: JsonMap = {}
+  for (const [path, value] of Object.entries(paths)) {
+    if (kindAt(tuples, path) !== null) {
+      v1[path] = value
+    }
+  }
+  if (Object.keys(v1).length > 0) {
+    tuples.v1 = v1
   }
   // A schema that declares nothing follows Identity by the engine's rule (overall.ts follows()).
   if (Object.keys(follows).length > 0) {
@@ -149,11 +203,19 @@ function tokens(groups: Json, fail: Fail): JsonMap {
   const answer: JsonMap = {}
   for (const [group, value] of entries(children(groups))) {
     const node = isArray(value) ? value : {}
+    const shared = get(node, '$type')
     const names: JsonMap = {}
     for (const [name, token] of entries(children(node))) {
+      const path = `tokens.${group}.${name}`
       if (!isNode(token)) {
-        fail(`tokens.${group}.${name}`, 'invalid')
+        fail(path, 'invalid')
         continue
+      }
+      // The type and options the validator reads the token with.
+      const expected = tokenType(group, name)
+      const options = extension(token, 'options')
+      if (expected !== null && ((get(token, '$type') ?? shared) !== expected[0] || !identical(options, expected[1] as Json))) {
+        fail(path, 'type')
       }
       names[name] = token.$value!
     }
@@ -270,10 +332,21 @@ function inheritTypes(tree: Json, inherited: string | null): Json {
     if (key.startsWith('$') || !isArray(child)) {
       answer[key] = child
     } else if (isNode(child)) {
-      // PHP's isset(): a null `$type` is none.
-      answer[key] = get(child, '$type') === null && type !== null ? { $type: type, ...child } : child
+      // PHP's isset(): a null `$type` is none, and `+` keeps the group's.
+      answer[key] = get(child, '$type') === null && type !== null ? withType(child, type) : child
     } else {
       answer[key] = inheritTypes(child, type)
+    }
+  }
+  return answer
+}
+
+/** PHP's `['$type' => $type] + $node`: the type first, the node's own `$type` (null) dropped. */
+function withType(node: JsonMap, type: string): JsonMap {
+  const answer: JsonMap = { $type: type }
+  for (const [key, value] of Object.entries(node)) {
+    if (key !== '$type') {
+      answer[key] = value
     }
   }
   return answer

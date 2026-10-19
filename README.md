@@ -4,7 +4,9 @@ El motor de temas v2 de api-core, en TypeScript. Resuelve un tema exactamente co
 lo hace `ThemeResolver::resolve()` de api-core, para que la web
 (`website-marketplace-v26`) y el Dashboard calculen lo mismo sin copiar las reglas:
 los defaults locales, la vista previa sin latencia y los artefactos de CI
-(`docs/THEMES_V2_PLAN.md` §6.3.4 y §6.3.7 de api-core).
+(`docs/THEMES_V2_PLAN.md` §6.3.4 y §6.3.7 de api-core). Y valida un esquema como
+`ThemeSchemaPublisher::validate()`, para que el CI de un producto sepa antes de
+publicar lo que api-core le va a responder.
 
 Sin dependencias en tiempo de ejecución. ESM, TypeScript estricto, Node 22.
 
@@ -18,6 +20,20 @@ const tema = resolve(schema, site_theme.values) // lo mismo que sirve api-core
 const vacio = defaults(schema)                  // el tema vacío resuelto
 ```
 
+Validar un esquema antes de publicarlo:
+
+```ts
+import Ajv2020 from 'ajv/dist/2020'
+import meta from '@finitless-com/ordering-theme-engine/meta/theme-schema-1.json' with { type: 'json' }
+import { validate } from '@finitless-com/ordering-theme-engine'
+
+const shape = new Ajv2020({ allErrors: true }).compile(meta) // 1. el meta-esquema, con tu validador
+if (!shape(schema)) throw new Error(JSON.stringify(shape.errors))
+
+const { code, errors, changes } = validate(schema, { previous, v1Map }) // 2. lo demás, como api-core
+// code: null (válido), 'schema.format', 'schema.invalid', 'schema.version_order' o 'schema.incompatible'
+```
+
 API pública:
 
 - `resolve(schema, values, options?)`: el tema sobre los defaults de su esquema, con
@@ -27,11 +43,59 @@ API pública:
 - `compile(schema)`: el esquema en nodos como las tuplas que lee el motor
   (`NodeCompiler`), con sus errores. `resolve` lo usa y lo guarda en caché por objeto.
 - `siteDefaults(compiled)`: los defaults del bloque `site` (son del sitio, no del tema).
-- Los tipos: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`…
+- `validate(schema, { previous?, v1Map?, development? })`: lo que responde
+  `ThemeSchemaPublisher::validate()` de api-core, `{ code, errors, changes }`, con los
+  mismos códigos, los mismos errores en el mismo orden y los mismos cambios (ver abajo).
+- `check(compiled)`: `ThemeSchemas::check()` sobre las tuplas que da `compile()`.
+- `outOfRange(schema)`: los defaults numéricos fuera del `min`/`max` de su control del
+  editor (`<path>.default_out_of_range`).
+- `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` con
+  `changes: { added, removed, migrated, deprecated }`.
+- El meta-esquema del formato, `@finitless-com/ordering-theme-engine/meta/theme-schema-1.json`
+  (JSON Schema 2020-12), copiado tal cual de api-core.
+- Los tipos: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
+  `ValidateOptions`, `ValidationResult`, `Changes`, `V1Map`…
 
 `options.emptyMaps`: PHP no distingue un mapa vacío de una lista vacía y los sirve como
 `[]`. Por defecto la salida hace lo mismo, así que su JSON es el del API; con
 `'object'` salen como `{}`.
+
+## Qué valida `validate()`
+
+Las etapas de `ThemeSchemaPublisher::validate()`; la primera que falla da el código:
+
+1. `schema.format`: el esquema no está en nodos (`$schema` no es
+   `urn:ordering:theme-schema:1`).
+2. `schema.invalid`: los errores del compilador (un valor que no es nodo, un tipo que no
+   es ningún tipo de propiedad, un token que no declara el tipo u opciones con que se
+   valida) o, si no hay, los de `check()` (cabecera, tokens, componentes, `scope`,
+   `slots`, plataformas, `inherits`, visibilidad e imágenes, `site`, `follows`, `derive`,
+   `component_derive`, `matrix`, migraciones, páginas y el mapa v1) y los de
+   `outOfRange()`. En los dos casos se añade `version.semver` si la versión no es
+   `mayor.menor.parche`.
+3. Con `previous` (la última versión publicada de su base): `schema.version_order` si
+   la versión no es mayor dentro de la misma base (como `version_compare()` de PHP), y
+   `schema.incompatible` con los errores de `diff()`. Si es válido, `changes` dice qué
+   cambia; sin `previous`, `changes` es null.
+
+`development: true` es el modo desarrollo de api-core: la etapa 3 no rechaza nada (ni
+el orden de la versión ni las incompatibilidades), pero `changes` sigue saliendo.
+
+`v1Map` es el mapa de rutas v1 que se publica con el esquema (`v1_map`); compila los
+bloques `v1`, las rutas v1 de visibilidad e imágenes, las de las secciones de cada
+página y las de `site`, que `check()` también valida. Sin él no hay rutas v1. api-core,
+si no recibe mapa, usa el último publicado para el tipo de producto (o el que guarda en
+`resources/themes/<product_type>/v1-map.json`): para obtener lo mismo, pasa ese mapa.
+
+Lo que **no** hace, y api-core sí:
+
+- **El meta-esquema.** El paquete no tiene dependencias, así que no valida JSON Schema:
+  publica el archivo (`meta/theme-schema-1.json`) para que lo corras con tu validador
+  (ajv con 2020-12) antes de `validate()`. api-core lo comprueba entre las etapas 1 y 2
+  y responde `schema.invalid` con errores `<path>.schema`; un esquema que no pasa el
+  meta-esquema puede recibir aquí otra respuesta.
+- **El registro.** api-core también rechaza una versión ya publicada con otro contenido
+  (`schema.version_exists`, 409), y busca él mismo el `previous` (la última de la base).
 
 ## De dónde salen las reglas
 
@@ -67,7 +131,23 @@ api-core es la referencia. Este paquete pasa los mismos casos dorados que
   actual del producto (`resources/themes/marketplace_website/26.0.json`) y el tema vacío
   que api-core resuelve con él (`scripts/resolve-empty.php`).
 - `fixtures/php-round.json`: el `round()` de PHP sobre los valores que redondea el
-  motor (`scripts/php-round.php`).
+  motor (`scripts/php-round.php`), y `fixtures/php-strings.json`, su `version_compare()`
+  y su `(string)` de un float (`scripts/php-strings.php`).
+- `fixtures/validate.json`: los casos dorados de `validate()`. `scripts/validate-cases.php`
+  corre en el contenedor: parte del esquema actual (con versión `26.0.0` y los dos
+  paddings de `signup_page` dentro de su control, la «base») y aplica a cada caso una
+  mutación, una lista de operaciones `["set", ruta, valor]` / `["delete", ruta]` sobre el
+  esquema, el `previous` y el mapa v1 (`fixtures/v1-map.json`), y guarda lo que responde
+  `ThemeSchemaPublisher::validate()`. La prueba aplica las mismas operaciones y compara
+  la respuesta entera, errores en orden. Cubren cada regla: el original tal cual
+  (fuera de rango y sin semver), formato, tipo de producto, compilador, cada fallo de
+  `check()`, `outOfRange()`, semver, orden de versiones (igual, menor, de dos partes, una
+  pre-release anterior) y `diff()` (parche que cambia un default o solo textos y
+  metadatos del editor, menor que añade, quitar con y sin `$deprecated`, `$deprecated:
+  "0"`, migrar, cambiar el tipo, quitar una opción, quitar una migración, base nueva,
+  todos los errores juntos y un válido con los cuatro tipos de cambio), más varios en
+  modo desarrollo. El script falla si un caso no pasa el meta-esquema, que el paquete no
+  comprueba.
 
 La comparación trata `[]` y `{}` vacíos como iguales e ignora el orden de las claves
 (JavaScript pone primero las claves numéricas), pero compara cada número exactamente.
@@ -84,14 +164,26 @@ Donde PHP y JavaScript difieren, el puerto imita a PHP (`src/php.ts`):
 - Los arrays de PHP se copian al asignarlos: el motor nunca cambia el esquema ni el
   tema que recibe, y cada respuesta es un objeto nuevo.
 - `===` entre arrays exige las mismas claves en el mismo orden.
+- El `$` de `preg_match()` también acepta un salto de línea final: los patrones que lo
+  imitan terminan en `\n?$`. `\s` es solo ASCII.
+- `version_compare()` (pre-releases como `26.1.0-beta`), el `(string)` de un float (14
+  cifras, `1.0E+25`), `empty()` (`"0"` está vacío: un `$deprecated: "0"` no depreca),
+  `strlen()` en bytes y `mb_strlen()` en caracteres.
+
+Donde JavaScript no puede imitarlo: `JSON.parse()` lee `2.0` como el entero `2`, y PHP
+como float. Un número entero sin parte decimal cuenta aquí como `int` de PHP; solo
+cambia la respuesta en lo que PHP exige `is_int()` (el `offset` de un `step`, los
+`hints` de una imagen, un `id`, un `weight` de tipografía, `format: 2`). También
+cambian el orden de las claves numéricas de un mapa (JavaScript las pone primero) y,
+por tanto, el orden de sus errores; ningún esquema real las tiene.
 
 ### Lo que no hace
 
-- **No valida.** Supone un tema válido: api-core lo valida al guardarlo y, al
+- **No valida temas.** Supone un tema válido: api-core lo valida al guardarlo y, al
   servirlo, descarta lo que ya no encaja con el esquema (`ThemeResolver::valid()`).
   Un tema que el API no aceptaría puede resolver aquí distinto.
-- No valida el esquema contra el meta-esquema ni con `ThemeSchemas::check()`: api-core
-  solo registra esquemas válidos.
+- `resolve()` no valida el esquema (para eso está `validate()`), ni `validate()` el
+  meta-esquema (ver arriba).
 - No convierte ni proyecta temas v1 (`ThemeV1Bridge`), no optimiza imágenes ni trae
   los ajustes del sitio (`values.site`): eso es del API.
 - Solo lee esquemas en nodos (los registrados en tuplas los convierte api-core).
@@ -101,7 +193,7 @@ Donde PHP y JavaScript difieren, el puerto imita a PHP (`src/php.ts`):
 ```sh
 nvm use            # Node 22.23.1
 pnpm install
-pnpm test          # vitest: casos dorados, esquema actual, semántica de PHP
+pnpm test          # vitest: casos dorados, esquema actual, validate(), semántica de PHP
 pnpm typecheck
 pnpm build         # dist/: ESM y .d.ts
 ```
@@ -116,10 +208,11 @@ pnpm sync-fixtures                          # api-core en ../api-core
 API_CORE=/ruta/a/api-core pnpm sync-fixtures
 ```
 
-El script solo lee api-core (incluido lo que no está commiteado): copia los casos y el
-esquema, y corre en el contenedor la conversión a nodos, `scripts/resolve-empty.php` y
-`scripts/php-round.php`, que escriben en el `/tmp` del contenedor o en la salida
-estándar. Una fixture solo se reemplaza si el comando termina bien y devuelve JSON.
+El script solo lee api-core (incluido lo que no está commiteado): copia los casos, el
+esquema, el mapa v1 y el meta-esquema (a `meta/`), y corre en el contenedor la
+conversión a nodos, `scripts/resolve-empty.php`, `scripts/php-round.php`,
+`scripts/php-strings.php` y `scripts/validate-cases.php`, que escriben en el `/tmp` del
+contenedor o en la salida estándar. Una fixture solo se reemplaza si el comando termina bien y devuelve JSON.
 Después, `pnpm test` dice si el motor sigue respondiendo lo mismo que api-core.
 
 ## Distribución
@@ -158,7 +251,7 @@ aviso), aunque pnpm 9 sí lo hace.
 ```
 
 y una versión exacta en `package.json`:
-`"@finitless-com/ordering-theme-engine": "0.1.0"`.
+`"@finitless-com/ordering-theme-engine": "0.2.0"`.
 
 - **En GitHub Actions:** dar acceso de lectura al repo en *Package settings → Manage
   Actions access*. `actions/setup-node` con `registry-url: https://npm.pkg.github.com`

@@ -11,7 +11,14 @@
 #   fixtures/schema-26.0.empty.json, the empty theme api-core resolves with it
 #   (scripts/resolve-empty.php);
 # - fixtures/php-round.json: PHP's round() over the values the engine rounds
-#   (scripts/php-round.php).
+#   (scripts/php-round.php), and fixtures/php-strings.json, its
+#   version_compare() and (string) cast (scripts/php-strings.php);
+# - fixtures/v1-map.json: the product's version 1 map
+#   (resources/themes/marketplace_website/v1-map.json), and
+#   fixtures/validate.json, what ThemeSchemaPublisher::validate() answers for
+#   each mutation of the current schema (scripts/validate-cases.php);
+# - meta/theme-schema-1.json: the format's meta-schema, which the package
+#   ships (resources/themes/meta/theme-schema-1.json).
 #
 # It needs api-core's dev container running (docker-compose.dev.yml). It only
 # reads api-core: the container writes to its own /tmp, never to the repo.
@@ -63,6 +70,18 @@ into "$FIXTURES/schema-26.0.empty.json" api php -- resources/themes/marketplace_
 # PHP's round(), which the engine imitates.
 into "$FIXTURES/php-round.json" api php < "$ROOT/scripts/php-round.php"
 
+# PHP's version_compare() and (string), which validate() imitates.
+into "$FIXTURES/php-strings.json" api php < "$ROOT/scripts/php-strings.php"
+
+# What validate() answers, over the current schema and the product's version 1 map.
+cp "$API_CORE/resources/themes/marketplace_website/v1-map.json" "$FIXTURES/v1-map.json"
+into "$FIXTURES/validate.json" api php -- resources/themes/marketplace_website/26.0.json \
+  resources/themes/marketplace_website/v1-map.json < "$ROOT/scripts/validate-cases.php"
+
+# The meta-schema the package ships for its consumers' JSON Schema validator.
+mkdir -p "$ROOT/meta"
+cp "$API_CORE/resources/themes/meta/theme-schema-1.json" "$ROOT/meta/theme-schema-1.json"
+
 api rm -rf "$CONTAINER_TMP"
 
-echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') cases, the golden schema, the 26.0 schema and its empty theme, PHP's round()."
+echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') cases, the golden schema, the 26.0 schema and its empty theme, PHP's round(), $(node -p 'require(process.argv[1]).cases.length' "$FIXTURES/validate.json") validate() cases; meta/theme-schema-1.json."
