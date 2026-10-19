@@ -1,4 +1,4 @@
-# @ordering/theme-engine
+# @finitless-com/ordering-theme-engine
 
 El motor de temas v2 de api-core, en TypeScript. Resuelve un tema exactamente como
 lo hace `ThemeResolver::resolve()` de api-core, para que la web
@@ -11,7 +11,7 @@ Sin dependencias en tiempo de ejecución. ESM, TypeScript estricto, Node 22.
 ## Uso
 
 ```ts
-import { resolve, defaults } from '@ordering/theme-engine'
+import { resolve, defaults } from '@finitless-com/ordering-theme-engine'
 import schema from './theme.schema.json' // el esquema en nodos
 
 const tema = resolve(schema, site_theme.values) // lo mismo que sirve api-core
@@ -124,5 +124,45 @@ Después, `pnpm test` dice si el motor sigue respondiendo lo mismo que api-core.
 
 ## Distribución
 
-Por decidir: npm privado, dependencia git o paquete del monorepo. Mientras tanto el
-paquete es `private` y no se publica.
+Se publica en GitHub Packages (decidido el 2026-10-19). El nombre lleva el scope de la
+organización, `@finitless-com`, porque el registro de GitHub lo exige.
+
+### Publicar una versión
+
+1. Subir `version` en `package.json` (semver: un cambio en lo que resuelve es minor, y
+   uno que rompe la API pública es major) y mergear a `master`.
+2. Crear el tag `v<version>` sobre ese commit y subirlo (`git tag v0.2.0 && git push
+   origin v0.2.0`).
+3. `.github/workflows/publish.yml` comprueba que el tag coincide con `package.json`,
+   corre los tipos y las pruebas, compila y publica. Una versión publicada no se
+   reemplaza: si ya existe, el workflow falla.
+
+`.github/workflows/ci.yml` corre los tipos, las pruebas y la compilación en cada PR y
+en cada push a `master`.
+
+### Instalarlo en otro repo
+
+En el `.npmrc` del repo que lo usa, solo el registro del scope:
+
+```ini
+@finitless-com:registry=https://npm.pkg.github.com
+```
+
+El token va en el `.npmrc` del usuario, no en el del proyecto: pnpm 11 ya no expande
+variables de entorno en las credenciales de un `.npmrc` del proyecto (las ignora con un
+aviso), aunque pnpm 9 sí lo hace.
+
+```ini
+# ~/.npmrc
+//npm.pkg.github.com/:_authToken=<token con read:packages>
+```
+
+y una versión exacta en `package.json`:
+`"@finitless-com/ordering-theme-engine": "0.1.0"`.
+
+- **En GitHub Actions:** dar acceso de lectura al repo en *Package settings → Manage
+  Actions access*. `actions/setup-node` con `registry-url: https://npm.pkg.github.com`
+  y `scope: '@finitless-com'` escribe el `.npmrc` de usuario con
+  `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}`, y el job necesita
+  `permissions: packages: read`.
+- **En local:** un token clásico con `read:packages` en `~/.npmrc`.
