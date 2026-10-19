@@ -1,0 +1,4 @@
+allowBuilds:
+  # esbuild's postinstall only checks the native binary that its optional
+  # platform package already brings; vitest runs without it.
+  esbuild: false
