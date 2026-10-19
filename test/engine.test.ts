@@ -116,6 +116,28 @@ describe('deriveColors', () => {
   })
 })
 
+describe('deriveColors, as api-core\'s ThemeColorsTest::testADerivedColorChangesWhatDerivesFromIt', () => {
+  const defaults = { primary: '#2C7BE5', primary_pressed: '#1A69D3', focus: '#1A69D3' }
+  const set = { primary: '#FF5500' }
+
+  it('derives what derives from a derived color', () => {
+    const rules = {
+      primary_pressed: { op: 'shade', from: '{color.primary}', amount: -0.07 },
+      focus: { op: 'same', from: '{color.primary_pressed}' },
+    }
+    const colors = deriveColors({ ...defaults, ...set }, set, defaults, rules)
+    expect([colors.primary_pressed, colors.focus]).toEqual(['#DB4900', '#DB4900'])
+  })
+
+  it('follows `when`', () => {
+    const missing = { focus: { op: 'same', from: '{color.primary}', when: 'missing' } }
+    expect(deriveColors({ ...defaults, ...set }, set, defaults, missing).focus).toBe('#1A69D3')
+    expect(deriveColors({ ...defaults, ...set, focus: null }, set, defaults, missing).focus).toBe('#FF5500')
+    const always = { focus: { op: 'same', from: '{color.primary}', when: 'always' } }
+    expect(deriveColors(defaults, {}, defaults, always).focus).toBe('#2C7BE5')
+  })
+})
+
 describe('component derivations', () => {
   // The same input and answers as api-core's ThemeDerivations (PHP 8.3).
   const specs = {
