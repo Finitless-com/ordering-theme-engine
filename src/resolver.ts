@@ -2,6 +2,7 @@ import { deriveColors } from './colors.js'
 import { compile, isNodes } from './compile.js'
 import { derivationRules, insets, matrices, shades, steps } from './derivations.js'
 import { NO_BORDER, alias, typographyRole } from './format.js'
+import { applyMigrations } from './migrations.js'
 import { applyOverall } from './overall.js'
 import { resolvePageSections } from './pages.js'
 import { clone, dig, entries, get, has, isArray, isEmpty, isList, isMap, type Json, type JsonMap } from './php.js'
@@ -28,7 +29,9 @@ function tuples(schema: NodeSchema): TupleSchema {
  * A version 2 theme over its schema's defaults, every alias resolved: what
  * api-core's ThemeResolver::resolve() answers, step by step.
  *
- * 1. what the theme sets on a parent (`inherits`) also on its children;
+ * 1. what the schema renamed or moved (`co.ordering.migrate`) where it
+ *    went, and what the theme sets on a parent (`inherits`) also on its
+ *    children;
  * 2. the schema's defaults, with Identity's shadow style and its shadow,
  *    rounding and border levels over every property that follows them;
  * 3. the theme over them, and every page's sections in order;
@@ -40,7 +43,8 @@ function tuples(schema: NodeSchema): TupleSchema {
  *
  * The theme is assumed valid: api-core validates it when it is saved and,
  * when it serves it, drops what no longer fits the schema
- * (ThemeResolver::valid()), which this does not do.
+ * (ThemeResolver::valid()), which this does not do; it does move what the
+ * schema migrates first, as valid() does.
  */
 export function resolve(schema: NodeSchema, theme: ThemeValues | null | undefined, options: ResolveOptions = {}): ResolvedTheme {
   const resolved = resolveTuples(tuples(schema), theme ?? {})
@@ -54,7 +58,7 @@ export function defaults(schema: NodeSchema, options: ResolveOptions = {}): Reso
 
 /** ThemeResolver::resolve() over a compiled schema. */
 export function resolveTuples(schema: TupleSchema, theme: unknown): JsonMap {
-  const own = inherit(valid(theme), schema)
+  const own = inherit(valid(theme, schema), schema)
   let defaults = schemaDefaults(schema)
 
   // The shadow style, color and direction remake the levels; what the
@@ -161,10 +165,17 @@ function mergeInto(base: JsonMap, over: Json): void {
   }
 }
 
-/** What of a stored theme has the shape of one: a list is no theme. */
-function valid(theme: unknown): JsonMap {
+/**
+ * What of a stored theme has the shape of one (a list is no theme), with
+ * what the schema renamed or moved read where it went (ThemeMigrations).
+ */
+function valid(theme: unknown, schema: TupleSchema): JsonMap {
   const values = clone(theme as Json)
-  return isMap(values) && !(count(values) > 0 && isList(values)) ? values : {}
+  if (!isMap(values) || (count(values) > 0 && isList(values))) {
+    return {}
+  }
+  const migrate = get(schema, 'migrate')
+  return applyMigrations(values, isArray(migrate) ? migrate : [])
 }
 
 function count(map: JsonMap): number {

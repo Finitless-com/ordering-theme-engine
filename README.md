@@ -196,15 +196,19 @@ nodo sin `$type` toma el de su grupo.
 api-core es la referencia. Este paquete pasa los mismos casos dorados que
 `ThemeResolverGoldenTest` de api-core:
 
-- `fixtures/cases/*.json`: `{ description, values, resolved }`, copiados de
+- `fixtures/cases/*.json`: `{ description, migrate?, values, resolved }`, copiados de
   `tests/fixtures/themes/cases` de api-core. Cada tema (`values`) tiene que resolver a
-  su `resolved`.
+  su `resolved`. `migrate`, si está, son las migraciones que el esquema declara en ese
+  caso (`co.ordering.migrate`): un tema guardado antes de ellas.
 - `fixtures/schema.nodes.json`: el esquema congelado de esos casos
   (`schema-marketplace_website-26.0.json`), convertido a nodos por
   `ordering:theme-schema:convert` de api-core.
 - `fixtures/schema-26.0.nodes.json` y `fixtures/schema-26.0.empty.json`: el esquema
   actual del producto (`resources/themes/marketplace_website/26.0.json`) y el tema vacío
   que api-core resuelve con él (`scripts/resolve-empty.php`).
+- `fixtures/schema-26.0.compiled.json`: las tuplas que `NodeCompiler::compile()` de
+  api-core da para el esquema actual con su mapa v1 (`scripts/compile-schema.php`), que
+  `compile()` tiene que dar iguales, sus colores translúcidos (`alpha`) incluidos.
 - `fixtures/php-round.json`: el `round()` de PHP sobre los valores que redondea el
   motor (`scripts/php-round.php`), y `fixtures/php-strings.json`, su `version_compare()`
   y su `(string)` de un float (`scripts/php-strings.php`).
@@ -219,10 +223,10 @@ api-core es la referencia. Este paquete pasa los mismos casos dorados que
   `check()`, `outOfRange()`, semver, orden de versiones (igual, menor, de dos partes, una
   pre-release anterior) y `diff()` (parche que cambia un default o solo textos y
   metadatos del editor, menor que añade, quitar con y sin `$deprecated`, `$deprecated:
-  "0"`, migrar, cambiar el tipo, quitar una opción, quitar una migración, base nueva,
-  todos los errores juntos y un válido con los cuatro tipos de cambio), más varios en
-  modo desarrollo. El script falla si un caso no pasa el meta-esquema, así que
-  `validateFull()` responde lo mismo que `validate()` en todos.
+  "0"`, migrar, cambiar el tipo, cambiar la escala, quitar una opción, quitar una
+  migración, base nueva, todos los errores juntos y un válido con los cuatro tipos de
+  cambio), más varios en modo desarrollo. El script falla si un caso no pasa el
+  meta-esquema, así que `validateFull()` responde lo mismo que `validate()` en todos.
 
 La comparación trata `[]` y `{}` vacíos como iguales e ignora el orden de las claves
 (JavaScript pone primero las claves numéricas), pero compara cada número exactamente.
@@ -256,7 +260,8 @@ por tanto, el orden de sus errores; ningún esquema real las tiene.
 
 - **No valida temas.** Supone un tema válido: api-core lo valida al guardarlo y, al
   servirlo, descarta lo que ya no encaja con el esquema (`ThemeResolver::valid()`).
-  Un tema que el API no aceptaría puede resolver aquí distinto.
+  Un tema que el API no aceptaría puede resolver aquí distinto. Lo que sí hace, como
+  `valid()`, es mover primero lo que el esquema migra (`co.ordering.migrate`).
 - `resolve()` no valida el esquema (para eso está `validateFull()`), ni `validate()` el
   meta-esquema (ver arriba).
 - No convierte ni proyecta temas v1 (`ThemeV1Bridge`), no optimiza imágenes ni trae

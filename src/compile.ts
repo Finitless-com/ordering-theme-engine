@@ -123,6 +123,15 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
   if (has(schema, 'platforms')) {
     tuples.platforms = schema.platforms!
   }
+  // The colors the editor may make translucent (editor `alpha`), by path:
+  // any other color of a theme is opaque (ThemeValidator::translucent()).
+  const alpha: string[] = []
+  for (const block of ['tokens', 'components']) {
+    translucent(isArray(schema[block]) ? schema[block] : {}, block, alpha)
+  }
+  if (alpha.length > 0) {
+    tuples.alpha = alpha
+  }
   // The options a schema keeps of a token it narrows (NARROWABLE).
   if (Object.keys(tokenOptions).length > 0) {
     tuples.token_options = tokenOptions
@@ -354,6 +363,22 @@ function tuple(node: Json, path: string, fail: Fail): Json {
     answer.push(rules)
   }
   return answer
+}
+
+/** The paths of the nodes under $tree whose editor marks them `alpha`, added to $paths. */
+function translucent(tree: Json, path: string, paths: string[]): void {
+  for (const [key, child] of Object.entries(children(tree))) {
+    if (!isArray(child)) {
+      continue
+    }
+    if (isNode(child)) {
+      if (dig(child, '$extensions', EDITOR, 'alpha') === true) {
+        paths.push(`${path}.${key}`)
+      }
+    } else {
+      translucent(child, `${path}.${key}`, paths)
+    }
+  }
 }
 
 /** $tree with each node that has no `$type` of its own taking its group's. */

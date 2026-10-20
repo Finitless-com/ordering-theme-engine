@@ -771,6 +771,61 @@
             }
         },
         {
+            "name": "alpha",
+            "description": "Colors the editor may make translucent, a token, a component's base and a variant's state: valid (the compiled schema lists them in `alpha`).",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "overlay",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "chip",
+                            "variants",
+                            "default",
+                            "states",
+                            "pressed",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
             "name": "rules-invalid",
             "description": "Rules of another kind, a pattern no engine reads, and a default its rule refuses.",
             "schema": {
@@ -3325,6 +3380,88 @@
                     {
                         "path": "site.business_slug",
                         "code": "site.business_slug.type_changed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "diff-scale-changed",
+            "description": "A minor that moves dimensions to another scale: the levels stored themes name are of the old one.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding",
+                            "$value"
+                        ],
+                        "{size.lg}"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding",
+                            "$extensions",
+                            "co.ordering",
+                            "scale"
+                        ],
+                        "size"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$value"
+                        ],
+                        "{icon.sm}"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering",
+                            "scale"
+                        ],
+                        "icon"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "components.button.base.icon_gap",
+                        "code": "components.button.base.icon_gap.scale_changed"
+                    },
+                    {
+                        "path": "components.card.base.padding",
+                        "code": "components.card.base.padding.scale_changed"
                     }
                 ],
                 "changes": null

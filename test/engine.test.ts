@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { deriveColors } from '../src/colors.js'
 import { insets, matrices, shades } from '../src/derivations.js'
+import { applyMigrations } from '../src/migrations.js'
 import { applyOverall, follows } from '../src/overall.js'
 import { schemaDefaults } from '../src/schemas.js'
-import { check, compile, defaults, resolve, type JsonMap, type NodeSchema } from '../src/index.js'
-import { cases, differences, goldenSchema } from './fixtures.js'
+import { check, compile, defaults, resolve, type JsonMap, type NodeSchema, type SchemaError, type V1Map } from '../src/index.js'
+import { cases, differences, goldenSchema, json, schemaFor } from './fixtures.js'
 
 /** A copy of $schema without the rules it declares under `co.ordering`. */
 function without(schema: NodeSchema, keys: string[]): NodeSchema {
@@ -83,7 +84,7 @@ describe('resolve', () => {
   })
 
   it.each(cases())('%s resolves the same with the engine\'s rules instead of the declared ones', (_name, golden) => {
-    expect(differences(resolve(undeclared, golden.values), golden.resolved)).toEqual([])
+    expect(differences(resolve(schemaFor(undeclared, golden), golden.values), golden.resolved)).toEqual([])
   })
 })
 
@@ -95,6 +96,46 @@ describe('compile', () => {
     expect(schema.inherits).toMatchObject({ business_card: 'card', search_bar: 'input' })
     expect(Object.keys(schema.derive as JsonMap)).toHaveLength(10)
     expect(Object.keys(schema.matrix as JsonMap)).toEqual(['button'])
+  })
+
+  // What api-core's NodeCompiler::compile() answers for the current schema (scripts/compile-schema.php).
+  it('answers the tuples api-core compiles for the current schema, its translucent colors included', () => {
+    const golden = json<{ alpha: Record<string, boolean>; schema: JsonMap; errors: SchemaError[] }>('schema-26.0.compiled.json')
+    const nodes = json<NodeSchema>('schema-26.0.nodes.json')
+    // The editor's `alpha` on the nodes the script marks.
+    for (const [path, mark] of Object.entries(golden.alpha)) {
+      let node = nodes as unknown as Record<string, JsonMap>
+      for (const segment of path.split('.')) {
+        node = node[segment] as unknown as Record<string, JsonMap>
+      }
+      const extensions = (node.$extensions ??= {})
+      extensions['co.ordering.editor'] = { ...(extensions['co.ordering.editor'] as JsonMap | undefined), alpha: mark }
+    }
+    const { schema, errors } = compile(nodes, json<V1Map>('v1-map.json'))
+    expect(errors).toEqual(golden.errors)
+    expect(differences(schema, golden.schema)).toEqual([])
+    expect([...schema.alpha as string[]].sort()).toEqual(Object.keys(golden.alpha).filter((path) => golden.alpha[path]).sort())
+  })
+})
+
+describe('applyMigrations, as api-core\'s ThemeSchemaPublicationTest::testAThemeTakesWhatTheSchemaMovedWhereItWent', () => {
+  it('moves each value unless its new place is set, and drops the maps it leaves empty', () => {
+    const migrations = [
+      { from: 'components.card.base.bg', to: 'components.card.base.background' },
+      { from: 'visibility.business.info', to: 'visibility.business.header.info' },
+      { from: 'components.chip.base.bg', to: 'components.chip.base.background' },
+    ]
+    const values = applyMigrations({
+      components: { card: { base: { bg: '#FFF8E1' } }, chip: { base: { bg: '#000000', background: '#FDE68A' } } },
+      visibility: { 'business.info': false },
+    }, migrations)
+
+    expect(values).toEqual({
+      components: { chip: { base: { background: '#FDE68A' } }, card: { base: { background: '#FFF8E1' } } },
+      visibility: { 'business.header.info': false },
+    })
+    // A map left empty goes; one recreated comes last.
+    expect(Object.keys(values.components as JsonMap)).toEqual(['chip', 'card'])
   })
 })
 
@@ -159,7 +200,7 @@ describe('compile, as api-core\'s ThemeSchemaNodesTest::testWhatAGroupOrTheEngin
   })
 
   it.each(cases())('%s resolves the same by the engine\'s rule', (_name, golden) => {
-    expect(differences(resolve(without(nodes, ['follows']), golden.values), golden.resolved)).toEqual([])
+    expect(differences(resolve(schemaFor(without(nodes, ['follows']), golden), golden.values), golden.resolved)).toEqual([])
   })
 })
 

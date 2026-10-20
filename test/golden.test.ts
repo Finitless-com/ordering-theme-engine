@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defaults, resolve } from '../src/index.js'
-import { cases, differences, goldenSchema, json, type Case } from './fixtures.js'
+import { cases, differences, goldenSchema, json, schemaFor, type Case } from './fixtures.js'
 
 /**
  * api-core's golden cases (tests/fixtures/themes/cases): each theme
@@ -17,7 +17,11 @@ describe('the golden cases of api-core', () => {
   })
 
   it.each(all)('%s resolves as api-core does', (_name, golden: Case) => {
-    expect(differences(resolve(schema, golden.values), golden.resolved)).toEqual([])
+    expect(differences(resolve(schemaFor(schema, golden), golden.values), golden.resolved)).toEqual([])
+  })
+
+  it('has a case that a migration of its schema moves', () => {
+    expect(all.some(([, golden]) => golden.migrate !== undefined)).toBe(true)
   })
 })
 

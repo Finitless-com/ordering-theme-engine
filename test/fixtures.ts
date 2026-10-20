@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { basename } from 'node:path'
-import type { NodeSchema, ThemeValues } from '../src/index.js'
+import type { Json, NodeSchema, ThemeValues } from '../src/index.js'
 
 /**
  * The fixtures api-core produces (scripts/sync-fixtures.sh): its golden
@@ -11,6 +11,8 @@ const directory = new URL('../fixtures/', import.meta.url)
 
 export interface Case {
   description: string
+  /** The renames and moves the schema declares for this case, if any. */
+  migrate?: Json[]
   values: ThemeValues
   resolved: unknown
 }
@@ -28,6 +30,22 @@ export function cases(): Array<[string, Case]> {
 }
 
 export const goldenSchema = (): NodeSchema => json<NodeSchema>('schema.nodes.json')
+
+/**
+ * $schema with the migrations a case declares (`co.ordering.migrate`, as
+ * api-core's ThemeResolverGolden::schemaFor() adds them); $schema itself
+ * when it declares none.
+ */
+export function schemaFor(schema: NodeSchema, golden: Case): NodeSchema {
+  if (golden.migrate === undefined) {
+    return schema
+  }
+  const extensions = (schema as Record<string, unknown>).$extensions
+  return {
+    ...schema,
+    $extensions: { ...(typeof extensions === 'object' && extensions !== null ? extensions : {}), 'co.ordering.migrate': golden.migrate },
+  } as NodeSchema
+}
 
 /**
  * Where two JSON values differ as PHP would see them: `[]` and `{}` are the

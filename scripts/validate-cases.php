@@ -191,6 +191,11 @@ $case('rules', 'A custom typography, a string with a longest value and one with 
     set([ 'site', 'smart_banner', 'apple_id', '$extensions', 'co.ordering' ], [ 'pattern' => '^\\d{6,12}$' ]),
     set([ 'images', 'business_listing_hero', '$extensions', 'co.ordering', 'hints', 'safe' ], '4:1'),
 ]);
+$case('alpha', "Colors the editor may make translucent, a token, a component's base and a variant's state: valid (the compiled schema lists them in `alpha`).", [
+    set([ 'tokens', 'color', 'overlay', '$extensions', 'co.ordering.editor', 'alpha' ], true),
+    set([ 'components', 'modal', 'base', 'background', '$extensions', 'co.ordering.editor', 'alpha' ], true),
+    set([ 'components', 'chip', 'variants', 'default', 'states', 'pressed', 'background', '$extensions', 'co.ordering.editor', 'alpha' ], true),
+]);
 $case('rules-invalid', 'Rules of another kind, a pattern no engine reads, and a default its rule refuses.', [
     set([ 'site', 'description', '$extensions', 'co.ordering.editor', 'custom' ], true),
     set([ 'site', 'name', '$extensions', 'co.ordering' ], [ 'pattern' => '(' ]),
@@ -402,6 +407,13 @@ $case('diff-migrated', 'A minor that moves a key with a migration.', [
 $case('diff-type-changed', 'A minor that changes the type of a key.', [
     version('26.1.0'),
     set('site.business_slug.$type', 'html'),
+], [ 'ops' => [] ]);
+$case('diff-scale-changed', 'A minor that moves dimensions to another scale: the levels stored themes name are of the old one.', [
+    version('26.1.0'),
+    set('components.card.base.padding.$value', '{size.lg}'),
+    set([ 'components', 'card', 'base', 'padding', '$extensions', 'co.ordering', 'scale' ], 'size'),
+    set('components.button.base.icon_gap.$value', '{icon.sm}'),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering', 'scale' ], 'icon'),
 ], [ 'ops' => [] ]);
 $case('diff-option-removed', 'A minor that removes an option (and adds another).', [
     version('26.1.0'),

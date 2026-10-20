@@ -222,8 +222,9 @@ anteriores. Las reglas exactas están en
 | Renombrar o mover una propiedad de componente, con su migración | minor |
 | Quitar una clave no deprecada, cambiar un tipo o la escala de una `dimension`, quitar una opción, quitar una migración | **rompe**: base nueva |
 
-Cambiar la escala de una `dimension` (`size` → `space`) no lo detecta la comparación,
-pero rompe igual los temas guardados: trátalo como un cambio de tipo.
+Cambiar la escala de una `dimension` (`size` → `space`) rompe los temas guardados, que
+nombran un nivel de la escala anterior: dentro de una base se rechaza igual que un cambio
+de tipo (`<ruta>.scale_changed`).
 
 **Cuándo basta `co.ordering.migrate`.** Para renombrar o mover una propiedad, una
 variante o un estado de un componente: declara `{ from, to }` en la raíz y api-core mueve

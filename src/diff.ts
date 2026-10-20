@@ -10,8 +10,8 @@ import type { Changes, NodeSchema, SchemaError } from './types.js'
  *   editor metadata.
  * - A minor may add keys and options and change defaults. A key it drops
  *   must have been `$deprecated` in the last version, or moved by a
- *   migration; a key keeps its type and every option it had; and the
- *   migrations of the base are never dropped.
+ *   migration; a key keeps its type, its scale and every option it had;
+ *   and the migrations of the base are never dropped.
  * - A new base is not compared.
  */
 
@@ -19,6 +19,7 @@ const BLOCKS = ['tokens', 'components', 'visibility', 'images', 'pages', 'site']
 
 export interface Leaf {
   type: string | null
+  scale: Json
   options: Json[]
   deprecated: boolean
 }
@@ -67,6 +68,10 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
     if (leaf.type !== now.type) {
       errors.push({ path, code: `${path}.type_changed` })
     }
+    // A stored value names a level of its scale: another scale reads it elsewhere.
+    if (!identical(leaf.scale, now.scale)) {
+      errors.push({ path, code: `${path}.scale_changed` })
+    }
     const kept = new Set(now.options.map(phpString))
     if (leaf.options.some((option) => !kept.has(phpString(option)))) {
       errors.push({ path, code: `${path}.option_removed` })
@@ -89,8 +94,8 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
 
 /**
  * Each value of a schema by the path a theme stores it at, with its type
- * (its own or its closest group's), its options and whether it or a group
- * above it is deprecated.
+ * (its own or its closest group's), its own scale, its options and whether
+ * it or a group above it is deprecated.
  */
 export function leaves(schema: NodeSchema): Record<string, Leaf> {
   const answer: Record<string, Leaf> = {}
@@ -102,6 +107,7 @@ export function leaves(schema: NodeSchema): Record<string, Leaf> {
       const options = dig(group, '$extensions', EXTENSION, 'options') ?? []
       answer[path] = {
         type,
+        scale: dig(group, '$extensions', EXTENSION, 'scale'),
         options: isArray(options)
           ? values(options).map((option) => isArray(option) ? get(option, 'value') : option).filter(isScalar)
           : [],

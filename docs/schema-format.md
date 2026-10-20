@@ -651,6 +651,9 @@ base:
   - quitar una clave (`<ruta>.removed`), salvo que la versión anterior la marcara
     `$deprecated` o que una migración la mueva (§14);
   - cambiar su `$type` (`<ruta>.type_changed`);
+  - cambiar su `scale` (`<ruta>.scale_changed`): pasar una `dimension` de una escala a
+    otra, o quitarle o darle una, cambia la escala en la que un tema guardado nombra su
+    nivel;
   - quitar una de sus opciones (`<ruta>.option_removed`);
   - quitar una migración que ya estaba (`schema.migration_removed`): dentro de una base
     la lista solo crece.
@@ -659,8 +662,7 @@ base:
 
 Las rutas que se comparan son las de cada nodo (`tokens.color.primary`,
 `components.button.base.radius`, `visibility.header.logo`…), con el `$type` del nodo o
-de su grupo. La comparación mira `$type`, no `scale`: pasar una `dimension` de una
-escala a otra no se detecta, pero rompe los temas guardados igual que cambiar el tipo.
+de su grupo y la `scale` del propio nodo (un grupo no la hereda).
 
 Cada respuesta válida trae `changes`: `{ added, removed, migrated, deprecated }`, con
 rutas.
@@ -684,8 +686,9 @@ de los valores de un tema:
 }
 ```
 
-- api-core las aplica en orden cada vez que lee o guarda un tema: el valor en `from`
-  pasa a `to` si el tema no fija `to`, y `from` se borra igual.
+- api-core las aplica en orden cada vez que lee o guarda un tema, y `resolve()` de este
+  paquete también, antes que nada (antes de `inherits`): el valor en `from` pasa a `to`
+  si el tema no fija `to`, y `from` se borra igual.
 - Cada migración necesita un `from` que el esquema **ya no tiene** y un `to` que sí
   tiene, de la misma sección (el mismo primer segmento), y distintos. Si no,
   `migrate.<índice>.invalid`.
@@ -705,9 +708,6 @@ pocos tokens, y en la práctica:
 
 Lo que no se puede declarar necesita una migración de datos en api-core
 ([creating-a-schema.md §6](creating-a-schema.md#6-versiones-y-migraciones)).
-
-`resolve()` de este paquete no aplica migraciones: supone un tema ya válido para el
-esquema, como lo sirve api-core.
 
 ## 15. Errores
 
@@ -743,7 +743,7 @@ Reglas de cada error:
 | `migrate.<n>.invalid` | §14 |
 | `.default_out_of_range` | un default numérico fuera del `min`/`max` de su editor |
 | `version.semver` | la versión no es `base.minor.patch` |
-| `.removed`, `.type_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed` | §13 |
+| `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed` | §13 |
 
 Las rutas de los errores del compilador y de las reglas son las de la tupla compilada:
 las mismas del esquema, más `.default`, `.options` o `.rules` al final. Los errores del
