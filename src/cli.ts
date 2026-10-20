@@ -24,22 +24,22 @@ export const HELP = `Usage: ordering-theme <command> [options]
 
 Commands:
   validate <schema.json>   Check a schema in nodes: the format's meta-schema and
-                           what api-core checks before it publishes one.
+                           what the Ordering.co API checks before it publishes one.
       --v1-map <file>      The version 1 map published with the schema.
       --previous <file>    The last version published of its base: also checks
                            the version's order and that nothing breaks.
 
-  defaults <schema.json>   The empty theme resolved (what api-core serves for a
+  defaults <schema.json>   The empty theme resolved (what the API serves for a
                            theme that sets nothing), as JSON.
       --out <file>         Write it to <file> instead of printing it.
       --check              Exit 1 when <file> (--out) is not up to date.
       --site               Add the defaults of the site's settings, under "site"
                            (left out when the schema has none).
 
-  publish <schema.json>    Validate the schema, then publish it to api-core.
-      --v1-map <file>      The version 1 map to publish with it (api-core keeps
+  publish <schema.json>    Validate the schema, then publish it to the API.
+      --v1-map <file>      The version 1 map to publish with it (the API keeps
                            the last one published when none is sent).
-      --dry-run            api-core checks everything and saves nothing.
+      --dry-run            The API checks everything and saves nothing.
       --required           Fail when THEME_PUBLISH_API or THEME_PUBLISH_KEY is
                            missing, instead of skipping (or THEME_PUBLISH_REQUIRED
                            set to 1 or true).
@@ -52,7 +52,7 @@ Options:
   -h, --help               Show this help.
   -v, --version            Show the package's version.
 
-Exit codes: 0 done, 1 the schema or api-core's answer fails, 2 a usage error.
+Exit codes: 0 done, 1 the schema or the API's answer fails, 2 a usage error.
 `
 
 /** Where the command reads and writes: the process's by default, a test's otherwise. */
