@@ -3,11 +3,11 @@
 The v2 theme engine, in two implementations that answer the same:
 
 - **PHP** (`orderingco/ordering-theme-engine` on Packagist, [below](#php)): the engine
-  api-core runs to resolve every site's theme and to validate the schemas products
+  the Ordering.co API runs to resolve every site's theme and to validate the schemas products
   publish.
 - **TypeScript** (`@orderingco/ordering-theme-engine` on npmjs): the same resolution and
   validation for the products (the web, the Dashboard, the apps), so they compute what
-  api-core will serve or answer without copying the rules: local defaults, zero-latency
+  the Ordering.co API will serve or answer without copying the rules: local defaults, zero-latency
   preview, CI artifacts. No runtime dependencies. ESM, strict TypeScript, Node 22. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and
   publishes it.
@@ -25,7 +25,7 @@ pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
 Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.5.0"`):
-a minor can change what it resolves, because it follows api-core.
+a minor can change what it resolves, because it follows the Ordering.co API.
 
 ## Usage
 
@@ -33,7 +33,7 @@ a minor can change what it resolves, because it follows api-core.
 import { resolve, defaults } from '@orderingco/ordering-theme-engine'
 import schema from './theme.schema.json' // the schema in nodes
 
-const theme = resolve(schema, site_theme.values) // what api-core serves
+const theme = resolve(schema, site_theme.values) // what the Ordering.co API serves
 const empty = defaults(schema)                   // the empty theme, resolved
 ```
 
@@ -42,7 +42,7 @@ Validating a schema before publishing it:
 ```ts
 import { validateFull } from '@orderingco/ordering-theme-engine'
 
-const { code, errors, changes } = validateFull(schema, { previous, v1Map }) // meta-schema and the rest, as api-core
+const { code, errors, changes } = validateFull(schema, { previous, v1Map }) // meta-schema and the rest, as the Ordering.co API
 // code: null (valid), 'schema.format', 'schema.invalid', 'schema.version_order' or 'schema.incompatible'
 ```
 
@@ -60,14 +60,14 @@ alone.
   (`NodeCompiler`), with its errors. `resolve` uses it and caches the result per object.
 - `siteDefaults(compiled)`: the defaults of the `site` block (they belong to the site,
   not the theme).
-- `validateFull(schema, { previous?, v1Map?, development? })`: what api-core's
+- `validateFull(schema, { previous?, v1Map?, development? })`: what the Ordering.co API's
   `ThemeSchemaPublisher::validate()` answers, `{ code, errors, changes }`, meta-schema
   included (see below).
 - `validate(schema, options?)`: the same without the meta-schema, with the same codes,
-  the same errors in the same order and the same changes as api-core.
+  the same errors in the same order and the same changes as the Ordering.co API.
 - `validateShape(schema)`: the schema's errors against the meta-schema, as
   `ThemeSchemas::meta()`: one per path, `{ path, code: '<path>.schema', message }`
-  (`message` is the validator's explanation; api-core does not send it). `[]` if it
+  (`message` is the validator's explanation; the Ordering.co API does not send it). `[]` if it
   passes.
 - `check(compiled, nodes?)`: `ThemeSchemas::check()` over the tuples from `compile()`;
   given the schema in nodes they come from, it then runs `checkEditor()` on it.
@@ -105,14 +105,14 @@ use Ordering\ThemeEngine\ThemeSchemaPublisher;
 use Ordering\ThemeEngine\ThemeSchemas;
 
 $compiled = ThemeSchemas::tuples($nodes, $v1Map);              // ['schema' => tuples, 'errors' => [...]]
-$theme = ThemeResolver::resolve($values, $compiled['schema']); // what api-core serves
+$theme = ThemeResolver::resolve($values, $compiled['schema']); // what the Ordering.co API serves
 $answer = ThemeSchemaPublisher::validate($nodes, $v1Map, $previous, $development);
 // ['code' => null|'schema.format'|'schema.invalid'|'schema.version_order'|'schema.incompatible', 'errors' => [...], 'changes' => ...]
 ```
 
 The engine reads a schema as tuples: `ThemeSchemas::tuples()` checks one in nodes
 against the meta-schema and compiles it (one already in tuples comes back as it is).
-A null `$v1Map` compiles no version 1 paths: api-core passes the map it keeps for the
+A null `$v1Map` compiles no version 1 paths: the Ordering.co API passes the map it keeps for the
 product type.
 
 Public entry points:
@@ -139,7 +139,7 @@ Public entry points:
 - `ThemeFormat`, `ThemeColors`, `ThemeDerivations`, `ThemeShadows`, `ThemeOverall` and
   `ThemePages` hold the format's catalog and the operations the resolver applies.
 
-What stays in api-core: the registry of published schemas and its cache, publishing
+What stays in the Ordering.co API: the registry of published schemas and its cache, publishing
 (`schema.version_exists`, looking up `previous`), reading a site's theme, version 1
 themes (`ThemeV1Bridge`), the site's settings, stored-data migrations and inspecting an
 uploaded image.
@@ -162,20 +162,20 @@ ordering-theme --version   # -v
   the code does not include it, plus the validator's message for meta-schema errors) and
   exits 1; exits 0 if valid. With `--previous` (the last published version of its base)
   it also checks the version order and that nothing breaks, and prints the changes.
-- `defaults`: the empty theme resolved (`defaults()`), what api-core serves for a theme
+- `defaults`: the empty theme resolved (`defaults()`), what the Ordering.co API serves for a theme
   that changes nothing, as indented JSON with a trailing newline. Without `--out` it
   prints it; with `--out` it writes it. `--check` (requires `--out`) compares that file
   instead of writing it and exits 1 if it is out of date, for CI when the product
   commits the file. `--site` adds the site settings' defaults (`siteDefaults()`) under
   `site`.
-- `publish`: validates the schema locally and, if it passes, sends it to api-core:
+- `publish`: validates the schema locally and, if it passes, sends it to the Ordering.co API:
   `POST {THEME_PUBLISH_API}/system/theme_schemas` with `{ schema, v1_map?, dry_run? }`
   and the key in `X-Theme-Publish-Key-X`. Product type and version come from the schema
-  (`product_type`, `version`). Without `--v1-map` no map is sent and api-core uses the
-  last one published for the product type. `--dry-run`: api-core checks everything and
+  (`product_type`, `version`). Without `--v1-map` no map is sent and the Ordering.co API uses the
+  last one published for the product type. `--dry-run`: the Ordering.co API checks everything and
   saves nothing (`valid`).
 
-  Exits 0 if api-core answers `created`, `replaced` (a product in development), `valid`
+  Exits 0 if the Ordering.co API answers `created`, `replaced` (a product in development), `valid`
   or `unchanged` (that version is already published with the same content, so a deploy
   can be repeated), and prints the changes. A rejection exits 1 and prints its errors
   and codes: `schema.invalid` (422), `schema.incompatible` (422),
@@ -184,11 +184,11 @@ ordering-theme --version   # -v
 
   Environment: `THEME_PUBLISH_API` (the API with its version, e.g.
   `https://apiv4.ordering.co/v400`) and `THEME_PUBLISH_KEY` (the environment's publish
-  key, api-core's `THEME_PUBLISH_KEY`). If either is missing, it validates and skips
+  key, the Ordering.co API's `THEME_PUBLISH_KEY`). If either is missing, it validates and skips
   publishing (exit 0), unless `--required` or `THEME_PUBLISH_REQUIRED=1` is set, which
   exits 1: a deploy that cannot publish its schema does not deploy.
 
-Exit codes: 0 done; 1 the schema or api-core's answer fails, or a file cannot be read
+Exit codes: 0 done; 1 the schema or the Ordering.co API's answer fails, or a file cannot be read
 or is not JSON; 2 a usage error (unknown command or option, missing `<schema.json>`
 argument, `--check` without `--out`).
 
@@ -221,24 +221,25 @@ The stages of `ThemeSchemaPublisher::validate()`; the first that fails sets the 
 
 `validate()` is the same without the meta-schema in stage 2.
 
-`development: true` is api-core's development mode: stage 3 rejects nothing (neither
+`development: true` is the Ordering.co API's development mode: stage 3 rejects nothing (neither
 version order nor incompatibilities), but `changes` is still returned.
 
 `v1Map` is the v1 path map published with the schema (`v1_map`). It compiles the `v1`
 blocks, the v1 paths of visibility and images, those of each page's sections and those
-of `site`, which `check()` also validates. Without it there are no v1 paths. api-core,
-given no map, uses the last one published for the product type (or the one it keeps in
-`resources/themes/<product_type>/v1-map.json`): pass that map to get the same result.
+of `site`, which `check()` also validates. Without it there are no v1 paths. The
+Ordering.co API (api-core repo), given no map, uses the last one published for the
+product type (or the one it keeps in `resources/themes/<product_type>/v1-map.json`):
+pass that map to get the same result.
 
-What it does **not** do, and api-core does:
+What it does **not** do, and the Ordering.co API does:
 
 - **Identical meta-schema errors.** Whether a schema passes is the same here and in
-  api-core, but the PHP engine uses another validator (opis/json-schema): when it fails, the
+  the Ordering.co API, but the PHP engine uses another validator (opis/json-schema): when it fails, the
   paths it names can differ (under an `anyOf`, one names the branches and the other only
   the node). The package compiles the meta-schema with Ajv at build time
   (`scripts/build-shape-validator.mjs`, which writes the unversioned
   `src/shape-validator.js`).
-- **The registry.** api-core also rejects a version already published with different
+- **The registry.** The Ordering.co API also rejects a version already published with different
   content (`schema.version_exists`, 409), and looks up `previous` itself (the last one
   of the base).
 
@@ -257,7 +258,7 @@ under `$extensions["co.ordering"]`:
 
 The operations (HSL, mixing, WCAG contrast, shadow scales, ordering a page's sections)
 belong to the engine and are the same for every product. A schema that declares no rules
-for a category uses the engine's for that category, as api-core does; once it declares
+for a category uses the engine's for that category, as the Ordering.co API does; once it declares
 one, the engine's rules for that category no longer apply (§11 of
 [`docs/schema-format.md`](docs/schema-format.md)). A node without `$type` takes its
 group's. `co.ordering.editor` and the `editor` block belong to the editor: the engine
@@ -265,7 +266,7 @@ resolves nothing with them, and `check()` validates them, given the nodes.
 
 ## Parity between PHP and TypeScript
 
-The PHP engine (`php/src`) is the reference: it is what api-core runs. The TypeScript
+The PHP engine (`php/src`) is the reference: it is what the Ordering.co API runs. The TypeScript
 engine must answer exactly what it answers, and CI checks it in two steps: the fixtures
 are regenerated from `php/src` and must not change (`scripts/sync-fixtures.sh`), and the
 TypeScript tests compare themselves with those fixtures. A change of behavior lands in
@@ -279,7 +280,7 @@ Inputs, written by hand or copied from the product, which the scripts never writ
 - `fixtures/schema.tuples.json`: the frozen schema of those cases (Web Marketplace 26 as
   it was, in tuples).
 - `fixtures/schema-26.0.nodes.json` and `fixtures/v1-map.json`: the product's current
-  schema and its version 1 map (copies of api-core's
+  schema and its version 1 map (copies of the Ordering.co API's
   `resources/themes/marketplace_website/`).
 - `meta/theme-schema-1.json`: the format's meta-schema, which both implementations read.
 
@@ -345,7 +346,7 @@ real schema has them.
 
 ### What the TypeScript engine leaves out
 
-- **It does not validate themes.** It assumes a valid theme: api-core validates it on
+- **It does not validate themes.** It assumes a valid theme: the Ordering.co API validates it on
   save and, when serving it, drops whatever no longer fits the schema
   (`ThemeResolver::valid()`). A theme the API would not accept may resolve differently
   here. Like `valid()`, it does first move what the schema migrates
@@ -354,7 +355,7 @@ real schema has them.
   `validate()` check the meta-schema (see above).
 - It does not convert or project v1 themes (`ThemeV1Bridge`), optimize images or fetch
   the site settings (`values.site`): that belongs to the API.
-- It only reads node schemas (api-core converts the ones registered as tuples).
+- It only reads node schemas (the Ordering.co API converts the ones registered as tuples).
 
 ## Development
 
@@ -388,7 +389,7 @@ It runs the PHP scripts in docker, in `php:8.3.35-cli` (the PHP the fixtures rec
 rewrites every fixture the PHP engine answers from the inputs above. A fixture is
 replaced only if its command succeeds and returns JSON. Run it after changing `php/src`
 or an input, review the diff, and then `pnpm test` tells whether the TypeScript engine
-still answers the same. It does not depend on api-core.
+still answers the same. It does not depend on the Ordering.co API.
 
 ## Distribution
 
