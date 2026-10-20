@@ -7,7 +7,8 @@
 export { resolve, defaults } from './resolver.js'
 export { compile } from './compile.js'
 export { siteDefaults } from './schemas.js'
-export { validate, outOfRange } from './validate.js'
+export { validate, validateFull, outOfRange } from './validate.js'
+export { validateShape, type ShapeError } from './shape.js'
 export { check } from './check.js'
 export { diff } from './diff.js'
 export type {

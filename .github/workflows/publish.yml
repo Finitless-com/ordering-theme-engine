@@ -1,14 +1,20 @@
 name: Publish
 
-# A tag v<version> publishes that version to GitHub Packages. A version
+# A tag v<version> publishes that version to npmjs, public. A version
 # already published is never replaced: the registry refuses it and the job fails.
+#
+# It authenticates with npm's trusted publishing (OIDC): no token secret, the
+# registry trusts this workflow of this repository. npm only lets a package
+# that already exists configure its trusted publisher, so the first version
+# is published by hand (`npm publish --access public` from a maintainer's
+# machine); every later one goes through this workflow.
 on:
   push:
     tags: ['v*']
 
 permissions:
   contents: read
-  packages: write
+  id-token: write
 
 jobs:
   publish:
@@ -24,8 +30,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-          registry-url: https://npm.pkg.github.com
-          scope: '@finitless-com'
 
       - name: The tag is the package's version
         run: |
@@ -38,9 +42,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm build
 
-      # prepack builds dist/.
+      # Trusted publishing needs npm 11.5.1 or later; Node 22 brings npm 10.
+      - name: Set up npm for trusted publishing
+        run: npm install -g npm@11.6.2
+
+      # publishConfig names the registry; prepack builds dist/ again.
       - name: Publish
-        run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --provenance --access public

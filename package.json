@@ -1,13 +1,28 @@
 {
   "name": "@finitless-com/ordering-theme-engine",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "api-core's theme engine (version 2 themes) in TypeScript: the same schema, the same rules, the same answer.",
+  "license": "MIT",
+  "author": "Ordering, Inc.",
+  "keywords": [
+    "ordering",
+    "theme",
+    "theme-engine",
+    "design-tokens",
+    "json-schema",
+    "cli"
+  ],
+  "homepage": "https://github.com/Finitless-com/ordering-theme-engine#readme",
+  "bugs": {
+    "url": "https://github.com/Finitless-com/ordering-theme-engine/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Finitless-com/ordering-theme-engine.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "type": "module",
   "packageManager": "pnpm@11.24.0",
@@ -16,6 +31,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "ordering-theme": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -29,7 +47,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && node scripts/build-shape-validator.mjs && tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json && cp src/shape-validator.js dist/ && chmod +x dist/bin.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "sync-fixtures": "bash scripts/sync-fixtures.sh",
@@ -37,6 +55,8 @@
   },
   "devDependencies": {
     "@types/node": "22.20.5",
+    "ajv": "8.17.1",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
   }

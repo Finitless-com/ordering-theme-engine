@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validate, type JsonMap, type NodeSchema, type ValidationResult } from '../src/index.js'
+import { validate, validateFull, validateShape, type JsonMap, type NodeSchema, type ValidationResult } from '../src/index.js'
 import { json } from './fixtures.js'
 
 /**
@@ -83,5 +83,48 @@ describe("validate() answers what api-core's validate() answers", () => {
     validate(schema, { previous: base, v1Map: map })
     expect(JSON.stringify(schema)).toBe(before)
     expect(JSON.stringify(base)).toBe(previous)
+  })
+})
+
+describe('validateFull() adds the meta-schema, between the format and the compiler', () => {
+  const fixture = json<ValidateFixture>('validate.json')
+  const original = json<NodeSchema>('schema-26.0.nodes.json')
+  const map = json<JsonMap>('v1-map.json')
+  const base = apply(original, fixture.base)
+  const start = (mutation: Mutation): NodeSchema => apply(mutation.from === 'original' ? original : base, mutation.ops)
+
+  // Every golden case passes the meta-schema (scripts/validate-cases.php fails otherwise).
+  it.each(fixture.cases.map((golden) => [golden.name, golden] as const))('%s answers what validate() answers', (_name, golden) => {
+    const schema = start(golden.schema)
+    if (golden.expected.code !== 'schema.format') {
+      expect(validateShape(schema)).toEqual([])
+    }
+    expect(validateFull(schema, {
+      ...(golden.previous ? { previous: start(golden.previous) } : {}),
+      ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map.ops) } : {}),
+      ...(golden.development ? { development: true } : {}),
+    })).toEqual(golden.expected)
+  })
+
+  it("answers schema.invalid with the meta-schema's errors, at api-core's paths", () => {
+    const schema = apply(base, [
+      ['delete', ['product_type']],
+      ['set', ['tokens', 'color', 'unknown_key'], 1],
+      ['set', ['version'], '26.0'],
+    ])
+    const answer = validateFull(schema)
+    expect(answer.code).toBe('schema.invalid')
+    expect(answer.changes).toBeNull()
+    expect(answer.errors.map((error) => error.code)).toEqual([
+      ...validateShape(schema).map((error) => error.code),
+      'version.semver',
+    ])
+    expect(answer.errors[0]).toMatchObject({ path: '', code: 'schema', message: expect.stringContaining('product_type') })
+    expect(answer.errors.map((error) => error.code)).toContain('tokens.color.unknown_key.schema')
+  })
+
+  it('leaves the format to validate()', () => {
+    expect(validateFull({ version: '26.0.0' } as unknown as NodeSchema).code).toBe('schema.format')
+    expect(validateShape({ version: '26.0.0' }).length).toBeGreaterThan(0)
   })
 })

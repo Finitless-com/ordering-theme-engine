@@ -8,7 +8,22 @@ los defaults locales, la vista previa sin latencia y los artefactos de CI
 `ThemeSchemaPublisher::validate()`, para que el CI de un producto sepa antes de
 publicar lo que api-core le va a responder.
 
-Sin dependencias en tiempo de ejecución. ESM, TypeScript estricto, Node 22.
+Sin dependencias en tiempo de ejecución. ESM, TypeScript estricto, Node 22. Trae un
+comando, `ordering-theme`, que valida, calcula los defaults y publica un esquema.
+
+El formato del esquema: [`docs/schema-format.md`](docs/schema-format.md). Cómo
+escribir el de un producto: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
+
+## Instalación
+
+Se publica en npmjs, público: no hace falta `.npmrc` ni token.
+
+```sh
+pnpm add -E @finitless-com/ordering-theme-engine   # o npm i -E, yarn add -E
+```
+
+Una versión exacta en `package.json` (`"@finitless-com/ordering-theme-engine": "0.3.0"`):
+un minor puede cambiar lo que resuelve, porque sigue a api-core.
 
 ## Uso
 
@@ -23,16 +38,14 @@ const vacio = defaults(schema)                  // el tema vacío resuelto
 Validar un esquema antes de publicarlo:
 
 ```ts
-import Ajv2020 from 'ajv/dist/2020'
-import meta from '@finitless-com/ordering-theme-engine/meta/theme-schema-1.json' with { type: 'json' }
-import { validate } from '@finitless-com/ordering-theme-engine'
+import { validateFull } from '@finitless-com/ordering-theme-engine'
 
-const shape = new Ajv2020({ allErrors: true }).compile(meta) // 1. el meta-esquema, con tu validador
-if (!shape(schema)) throw new Error(JSON.stringify(shape.errors))
-
-const { code, errors, changes } = validate(schema, { previous, v1Map }) // 2. lo demás, como api-core
+const { code, errors, changes } = validateFull(schema, { previous, v1Map }) // el meta-esquema y lo demás, como api-core
 // code: null (válido), 'schema.format', 'schema.invalid', 'schema.version_order' o 'schema.incompatible'
 ```
+
+El meta-esquema va compilado dentro del paquete: no hace falta Ajv ni otro validador.
+`validateShape(schema)` corre solo esa etapa.
 
 API pública:
 
@@ -43,9 +56,14 @@ API pública:
 - `compile(schema)`: el esquema en nodos como las tuplas que lee el motor
   (`NodeCompiler`), con sus errores. `resolve` lo usa y lo guarda en caché por objeto.
 - `siteDefaults(compiled)`: los defaults del bloque `site` (son del sitio, no del tema).
-- `validate(schema, { previous?, v1Map?, development? })`: lo que responde
-  `ThemeSchemaPublisher::validate()` de api-core, `{ code, errors, changes }`, con los
-  mismos códigos, los mismos errores en el mismo orden y los mismos cambios (ver abajo).
+- `validateFull(schema, { previous?, v1Map?, development? })`: lo que responde
+  `ThemeSchemaPublisher::validate()` de api-core, `{ code, errors, changes }`, meta-esquema
+  incluido (ver abajo).
+- `validate(schema, options?)`: lo mismo sin el meta-esquema, con los mismos códigos,
+  los mismos errores en el mismo orden y los mismos cambios que api-core.
+- `validateShape(schema)`: los errores del esquema contra el meta-esquema, como
+  `ThemeSchemas::meta()`: uno por ruta, `{ path, code: '<path>.schema', message }`
+  (`message` es la explicación del validador; api-core no la manda). `[]` si lo cumple.
 - `check(compiled)`: `ThemeSchemas::check()` sobre las tuplas que da `compile()`.
 - `outOfRange(schema)`: los defaults numéricos fuera del `min`/`max` de su control del
   editor (`<path>.default_out_of_range`).
@@ -54,19 +72,73 @@ API pública:
 - El meta-esquema del formato, `@finitless-com/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), copiado tal cual de api-core.
 - Los tipos: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
-  `ValidateOptions`, `ValidationResult`, `Changes`, `V1Map`…
+  `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`…
 
 `options.emptyMaps`: PHP no distingue un mapa vacío de una lista vacía y los sirve como
 `[]`. Por defecto la salida hace lo mismo, así que su JSON es el del API; con
 `'object'` salen como `{}`.
 
-## Qué valida `validate()`
+## El comando `ordering-theme`
+
+Lo que el repo de un producto corre sobre su esquema, para que ninguno copie sus propios
+scripts. Con el paquete instalado, `pnpm exec ordering-theme` (o `npx ordering-theme`);
+sin instalarlo, `npx @finitless-com/ordering-theme-engine <comando>`.
+
+```sh
+ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous last.json]
+ordering-theme defaults theme.schema.json [--out src/theme.defaults.json] [--check] [--site]
+ordering-theme publish  theme.schema.json [--v1-map v1-map.json] [--dry-run] [--required]
+ordering-theme --help
+```
+
+- `validate`: `validateFull()`. Imprime un error por línea (su código, con la ruta si el
+  código no la dice, y lo que dice el validador en los del meta-esquema) y sale con 1;
+  con 0 si es válido. Con `--previous` (la última versión publicada de su base) también
+  comprueba el orden de la versión y que nada se rompa, e imprime los cambios.
+- `defaults`: el tema vacío resuelto (`defaults()`), lo que api-core sirve para un tema
+  que no cambia nada, como JSON con sangría y salto de línea final. Sin `--out` lo
+  imprime; con `--out` lo escribe, y con `--check` además sale con 1 si ese archivo no
+  está al día (para el CI, si el producto lo versiona). `--site` le añade los defaults
+  de los ajustes del sitio (`siteDefaults()`) en `site`.
+- `publish`: valida el esquema aquí y, si pasa, lo manda a api-core: `POST
+  {THEME_PUBLISH_API}/system/theme_schemas` con `{ schema, v1_map?, dry_run? }` y la
+  clave en `X-Theme-Publish-Key-X`. El tipo de producto y la versión son los del
+  esquema (`product_type`, `version`). Sin `--v1-map` no manda mapa y api-core usa el
+  último publicado para el tipo de producto. `--dry-run`: api-core lo comprueba todo y no
+  guarda nada (`valid`).
+
+  Sale con 0 si api-core responde `created`, `replaced` (un producto en desarrollo),
+  `valid` o `unchanged` (esa versión ya está publicada con el mismo contenido, así que
+  un deploy se puede repetir), e imprime los cambios. Un rechazo sale con 1 e imprime
+  sus errores y sus códigos: `schema.invalid` (422), `schema.incompatible` (422),
+  `schema.version_order` (409), `schema.version_exists` (409, esa versión ya está
+  publicada con otro contenido: hay que subirla) o la clave rechazada (401).
+
+  Entorno: `THEME_PUBLISH_API` (el API con su versión, p. ej.
+  `https://apiv4.ordering.co/v400`) y `THEME_PUBLISH_KEY` (la clave de publicación del
+  entorno, `THEME_PUBLISH_KEY` de api-core). Si falta alguna, valida y no publica
+  (sale con 0), salvo con `--required` o `THEME_PUBLISH_REQUIRED=1`, que sale con 1:
+  un deploy que no puede publicar su esquema no se despliega.
+
+Códigos de salida: 0 hecho, 1 el esquema o la respuesta de api-core falla, 2 un error de
+uso (un comando u opción que no existe, falta el archivo).
+
+En un CI, por ejemplo:
+
+```sh
+ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check
+ordering-theme publish theme.schema.json --v1-map v1-map.json --dry-run   # en el PR
+ordering-theme publish theme.schema.json --v1-map v1-map.json --required  # en el deploy
+```
+
+## Qué valida `validateFull()`
 
 Las etapas de `ThemeSchemaPublisher::validate()`; la primera que falla da el código:
 
 1. `schema.format`: el esquema no está en nodos (`$schema` no es
    `urn:ordering:theme-schema:1`).
-2. `schema.invalid`: los errores del compilador (un valor que no es nodo, un tipo que no
+2. `schema.invalid`: los errores del meta-esquema (`validateShape()`), o si lo cumple,
+   los del compilador (un valor que no es nodo, un tipo que no
    es ningún tipo de propiedad, un token que no declara el tipo u opciones con que se
    valida) o, si no hay, los de `check()` (cabecera, tokens, componentes, `scope`,
    `slots`, plataformas, `inherits`, visibilidad e imágenes, `site`, `follows`, `derive`,
@@ -77,6 +149,8 @@ Las etapas de `ThemeSchemaPublisher::validate()`; la primera que falla da el có
    la versión no es mayor dentro de la misma base (como `version_compare()` de PHP), y
    `schema.incompatible` con los errores de `diff()`. Si es válido, `changes` dice qué
    cambia; sin `previous`, `changes` es null.
+
+`validate()` es lo mismo sin el meta-esquema de la etapa 2.
 
 `development: true` es el modo desarrollo de api-core: la etapa 3 no rechaza nada (ni
 el orden de la versión ni las incompatibilidades), pero `changes` sigue saliendo.
@@ -89,11 +163,12 @@ si no recibe mapa, usa el último publicado para el tipo de producto (o el que g
 
 Lo que **no** hace, y api-core sí:
 
-- **El meta-esquema.** El paquete no tiene dependencias, así que no valida JSON Schema:
-  publica el archivo (`meta/theme-schema-1.json`) para que lo corras con tu validador
-  (ajv con 2020-12) antes de `validate()`. api-core lo comprueba entre las etapas 1 y 2
-  y responde `schema.invalid` con errores `<path>.schema`; un esquema que no pasa el
-  meta-esquema puede recibir aquí otra respuesta.
+- **Los mismos errores del meta-esquema.** Si un esquema lo cumple o no es lo mismo
+  aquí y en api-core, pero api-core usa otro validador (opis/json-schema): cuando falla,
+  las rutas que nombra pueden ser otras (en un `anyOf`, uno nombra las ramas y el otro
+  solo el nodo). El paquete lo compila con Ajv al construirse
+  (`scripts/build-shape-validator.mjs`, que escribe `src/shape-validator.js`, no
+  versionado).
 - **El registro.** api-core también rechaza una versión ya publicada con otro contenido
   (`schema.version_exists`, 409), y busca él mismo el `previous` (la última de la base).
 
@@ -146,8 +221,8 @@ api-core es la referencia. Este paquete pasa los mismos casos dorados que
   metadatos del editor, menor que añade, quitar con y sin `$deprecated`, `$deprecated:
   "0"`, migrar, cambiar el tipo, quitar una opción, quitar una migración, base nueva,
   todos los errores juntos y un válido con los cuatro tipos de cambio), más varios en
-  modo desarrollo. El script falla si un caso no pasa el meta-esquema, que el paquete no
-  comprueba.
+  modo desarrollo. El script falla si un caso no pasa el meta-esquema, así que
+  `validateFull()` responde lo mismo que `validate()` en todos.
 
 La comparación trata `[]` y `{}` vacíos como iguales e ignora el orden de las claves
 (JavaScript pone primero las claves numéricas), pero compara cada número exactamente.
@@ -182,7 +257,7 @@ por tanto, el orden de sus errores; ningún esquema real las tiene.
 - **No valida temas.** Supone un tema válido: api-core lo valida al guardarlo y, al
   servirlo, descarta lo que ya no encaja con el esquema (`ThemeResolver::valid()`).
   Un tema que el API no aceptaría puede resolver aquí distinto.
-- `resolve()` no valida el esquema (para eso está `validate()`), ni `validate()` el
+- `resolve()` no valida el esquema (para eso está `validateFull()`), ni `validate()` el
   meta-esquema (ver arriba).
 - No convierte ni proyecta temas v1 (`ThemeV1Bridge`), no optimiza imágenes ni trae
   los ajustes del sitio (`values.site`): eso es del API.
@@ -193,10 +268,14 @@ por tanto, el orden de sus errores; ningún esquema real las tiene.
 ```sh
 nvm use            # Node 22.23.1
 pnpm install
-pnpm test          # vitest: casos dorados, esquema actual, validate(), semántica de PHP
+pnpm test          # vitest: casos dorados, esquema actual, validate(), el comando, semántica de PHP
 pnpm typecheck
-pnpm build         # dist/: ESM y .d.ts
+pnpm build         # dist/: ESM, .d.ts, el validador del meta-esquema y el comando
 ```
+
+`src/shape-validator.js`, el meta-esquema compilado, no se versiona: lo escriben
+`pnpm build` y el arranque de las pruebas (`test/global-setup.ts`). Ajv y esbuild solo
+se usan para generarlo; el paquete publicado no depende de nada.
 
 ### Refrescar las fixtures
 
@@ -217,45 +296,31 @@ Después, `pnpm test` dice si el motor sigue respondiendo lo mismo que api-core.
 
 ## Distribución
 
-Se publica en GitHub Packages (decidido el 2026-10-19). El nombre lleva el scope de la
-organización, `@finitless-com`, porque el registro de GitHub lo exige.
+Se publica en npmjs, público (decidido el 2026-10-20; antes, en GitHub Packages): quien
+lo usa no necesita token ni `.npmrc`. El nombre conserva el scope de la organización,
+`@finitless-com`.
 
 ### Publicar una versión
 
 1. Subir `version` en `package.json` (semver: un cambio en lo que resuelve es minor, y
    uno que rompe la API pública es major) y mergear a `master`.
-2. Crear el tag `v<version>` sobre ese commit y subirlo (`git tag v0.2.0 && git push
-   origin v0.2.0`).
+2. Crear el tag `v<version>` sobre ese commit y subirlo (`git tag v0.3.0 && git push
+   origin v0.3.0`).
 3. `.github/workflows/publish.yml` comprueba que el tag coincide con `package.json`,
-   corre los tipos y las pruebas, compila y publica. Una versión publicada no se
-   reemplaza: si ya existe, el workflow falla.
+   corre los tipos y las pruebas, compila y publica con `npm publish --provenance`. Se
+   autentica con la publicación de confianza de npm (OIDC): no hay token en los
+   secretos. Una versión publicada no se reemplaza: si ya existe, el workflow falla.
+
+La primera versión en npmjs se publica a mano (`npm publish --access public`, con una
+cuenta de la organización): npm solo deja configurar el publicador de confianza
+(*Settings → Trusted publishing*: este repo y `publish.yml`) en un paquete que ya existe.
 
 `.github/workflows/ci.yml` corre los tipos, las pruebas y la compilación en cada PR y
 en cada push a `master`.
 
-### Instalarlo en otro repo
+### Pasar de GitHub Packages a npmjs
 
-En el `.npmrc` del repo que lo usa, solo el registro del scope:
-
-```ini
-@finitless-com:registry=https://npm.pkg.github.com
-```
-
-El token va en el `.npmrc` del usuario, no en el del proyecto: pnpm 11 ya no expande
-variables de entorno en las credenciales de un `.npmrc` del proyecto (las ignora con un
-aviso), aunque pnpm 9 sí lo hace.
-
-```ini
-# ~/.npmrc
-//npm.pkg.github.com/:_authToken=<token con read:packages>
-```
-
-y una versión exacta en `package.json`:
-`"@finitless-com/ordering-theme-engine": "0.2.0"`.
-
-- **En GitHub Actions:** dar acceso de lectura al repo en *Package settings → Manage
-  Actions access*. `actions/setup-node` con `registry-url: https://npm.pkg.github.com`
-  y `scope: '@finitless-com'` escribe el `.npmrc` de usuario con
-  `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}`, y el job necesita
-  `permissions: packages: read`.
-- **En local:** un token clásico con `read:packages` en `~/.npmrc`.
+Un repo que lo instalaba de GitHub Packages quita del `.npmrc` del proyecto la línea
+`@finitless-com:registry=https://npm.pkg.github.com` (si no, sigue buscando el paquete
+ahí), el token de `~/.npmrc` si no lo usa para nada más y, en GitHub Actions, el
+`registry-url`/`scope` de `actions/setup-node` y `permissions: packages: read`.

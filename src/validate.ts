@@ -2,6 +2,7 @@ import { check } from './check.js'
 import { EDITOR, compile, isNodes } from './compile.js'
 import { diff } from './diff.js'
 import { dig, entries, get, has, isArray, isNumeric, phpString, toFloat, versionCompare, type Json } from './php.js'
+import { validateShape } from './shape.js'
 import type { NodeSchema, SchemaError, ValidateOptions, ValidationResult } from './types.js'
 
 const SEMVER = /^\d{1,4}\.\d{1,4}\.\d{1,4}\n?$/
@@ -22,9 +23,8 @@ const SEMVER = /^\d{1,4}\.\d{1,4}\.\d{1,4}\n?$/
  * Valid, it answers the changes from `previous` (null without one). In
  * `development`, the third stage only answers the changes.
  *
- * It does not check the meta-schema: run meta/theme-schema-1.json with a
- * JSON Schema 2020-12 validator first (api-core does, between 1 and 2; a
- * schema it refuses answers `<path>.schema` errors there). Nor does it know
+ * It does not check the meta-schema, which api-core checks between 1 and
+ * 2: validateFull() does both, or validateShape() alone. Nor does it know
  * the registry: api-core also refuses a version already published with
  * other contents (`schema.version_exists`).
  */
@@ -57,6 +57,27 @@ export function validate(schema: NodeSchema, options: ValidateOptions = {}): Val
   }
 
   return { code: null, errors: [], changes: compared.changes }
+}
+
+/**
+ * validate() with the meta-schema in its place, between the format and the
+ * compiler, as ThemeSchemaPublisher::validate() runs it: a schema in nodes
+ * that fails validateShape() answers `schema.invalid` with its errors
+ * (`<path>.schema`, plus `version.semver` when the version is not semver),
+ * and one that passes, what validate() answers.
+ */
+export function validateFull(schema: NodeSchema, options: ValidateOptions = {}): ValidationResult {
+  if (!isNodes(schema)) {
+    return validate(schema, options)
+  }
+  const errors: SchemaError[] = validateShape(schema)
+  if (errors.length === 0) {
+    return validate(schema, options)
+  }
+  if (!SEMVER.test(phpString(get(schema, 'version') ?? ''))) {
+    errors.push({ path: 'version', code: 'version.semver' })
+  }
+  return { code: 'schema.invalid', errors, changes: null }
 }
 
 /**
