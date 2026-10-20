@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:ordering:theme-schema:1",
   "title": "Ordering theme schema, node format 1",
-  "description": "The structure of a product type's theme schema (docs/THEMES_V2_SCHEMA_FORMAT.md in api-core). It checks the shape of every node and group; what a value means (a level that exists, a component a slot names, a page section) is checked by api-core when the schema is registered.",
+  "description": "The structure of a product type's theme schema (docs/schema-format.md in ordering-theme-engine). It checks the shape of every node and group; what a value means (a level that exists, a component a slot names, a page section) is checked by api-core when the schema is registered.",
   "type": "object",
   "required": [
     "$schema",
