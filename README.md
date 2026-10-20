@@ -24,7 +24,7 @@ schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
 pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
-Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.4.0"`):
+Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.5.0"`):
 a minor can change what it resolves, because it follows api-core.
 
 ## Usage
