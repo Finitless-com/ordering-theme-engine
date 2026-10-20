@@ -163,7 +163,7 @@ Details:
   `transform` `none` or `uppercase`. A typography with `line` in px (`21`) is not valid.
 - **Color with no default of its own:** a `color` or `role` with `$value: null` is
   valid: the default comes from elsewhere (a derivation, inheritance).
-- **`string` rules:** `max_length` (an integer from 1 to 1000) and `pattern` (§10). An
+- **`string` rules:** `max_length` (an integer from 1 to 1000) and `pattern` (§10.2). An
   empty value counts as "unset": no `pattern` rejects it.
 
 ## 4. Tokens
@@ -418,7 +418,7 @@ settings. It is a tree of groups and nodes, with the same property types as §3 
 | `matrix` | component | `{ into, roles }` (§11.4) |
 | `platforms` | `visibility` key | its default per platform (§6) |
 | `formats`, `hints` | image | §7 |
-| `max_length`, `pattern` | `string` | its maximum length in characters (1–1000) and a regular expression that ECMAScript and PCRE read the same way |
+| `max_length`, `pattern` | `string` | its maximum length in characters (1–1000) and a regular expression in the subset ECMAScript and PCRE read the same way (§10.2) |
 
 No other keys are allowed.
 
@@ -432,10 +432,50 @@ The engine compiles each property to `[kind, default, options|null, rules?]`:
   `co.ordering.editor.custom`, on a `typography`), `max_length` and `pattern` (on a
   `string`). A rule on a type that is not its own is rejected with `<path>.rules.invalid`:
   `custom` only on `typography` and with `true`; `max_length` and `pattern` only on
-  `string`, `pattern` non-empty and a valid expression.
+  `string`, `pattern` non-empty, within §10.2's subset and compiling.
 
 This package's `compile(schema)` returns those tuples, and they are what `check()` and
 `resolve()` read.
+
+### 10.2 `pattern`
+
+A `pattern` is a regular expression without delimiters or flags. The editor checks it in
+JavaScript (`new RegExp(pattern, 'u')`) and the Ordering.co API in PHP (PCRE), so it must
+be written in the subset both read the same way; anything else is `<path>.rules.invalid`.
+The subset:
+
+- **Literal characters:** any character except the metacharacters
+  `\ ^ $ . | ? * + ( ) [ ] { }` and the control characters (U+0000 to U+001F, U+007F).
+  A `]`, `{` or `}` must be escaped even alone (JavaScript rejects it, PCRE takes it as a
+  literal); a newline, carriage return or tab is written `\n`, `\r`, `\t`.
+- **Escapes:** `\d \D \w \W`, `\n \r \t`, and an escaped metacharacter or `/`. `\-`
+  only inside a class. No other escape: not `\s`/`\S` (whitespace by a different list in
+  each), `\b`/`\B` (see below), `\A \z \Z \G \K \Q \E \h \v \R \X`, `\p{…}`, `\x…`,
+  `\u…`, `\c…`, nor backreferences (`\1`, `\k<…>`).
+- **`.`**, the anchors **`^`** and **`$`** (anywhere, never quantified) and **`|`**.
+- **Groups:** `( … )`, `(?: … )` and the lookaheads `(?= … )` and `(?! … )`, which are
+  never quantified. Not lookbehinds, named groups (`(?<name>`, `(?P<`), inline flags
+  (`(?i)`), atomic groups (`(?>`), conditionals or comments. Parentheses balance.
+- **Quantifiers:** `?`, `*`, `+`, `{n}`, `{n,}` and `{n,m}` (digits only, n ≤ m ≤ 65535,
+  PCRE's largest), each optionally followed by `?` (lazy). Not possessive (`a++`), not
+  after another quantifier, not with nothing to repeat; a `{` that is no such quantifier
+  is invalid (`a{,3}`, `a{x}`).
+- **Classes:** `[ … ]` and `[^ … ]`, not empty (`[]` and `[^]` are invalid), of literals
+  other than `\`, `[` and `]` (so no POSIX `[:alpha:]`), the escapes above except `\D`,
+  `\W`, `\b` and `\B`, and ranges `a-z` whose ends are single characters (a literal or
+  an escaped one) in order. `-` is a literal only first, last or escaped.
+
+Within the subset, the two engines match the same values:
+
+- `$` matches only at the very end of the value, never before a final newline (PHP
+  compiles the pattern with the `D` modifier): `^\d{6,12}$` refuses `"123456\n"`.
+- `\d` is `[0-9]` and `\w` is `[A-Za-z0-9_]`, ASCII as in JavaScript, although PHP's
+  `u` modifier would make them Unicode: the engine writes them as those classes before
+  compiling (and `\D`, `\W` as their negations), which is why the negations do not go
+  in a class and why `\b` and `\B`, word boundaries by that `\w`, are outside the
+  subset.
+- `.` matches any character except `\n`, `\r`, U+2028 and U+2029, as in JavaScript:
+  PCRE's `.` only leaves out `\n`, so the engine writes it as that class.
 
 ## 11. Derivations, Identity and matrices
 
@@ -823,7 +863,7 @@ Rules of each error:
 | `.default.invalid` | the default is not a value of its type |
 | `.default.alias` | the default is an alias to a token the schema does not have |
 | `.options.invalid` | `options` where it does not belong, or missing where it does |
-| `.rules.invalid` | `custom`, `max_length` or `pattern` on a type that is not its own |
+| `.rules.invalid` | `custom`, `max_length` or `pattern` on a type that is not its own, or a `pattern` outside §10.2's subset |
 | `.platforms.invalid`, `.formats.invalid`, `.hints.invalid` | §6, §7 |
 | `.duplicate` | a repeated page section |
 | `token_options.<token>.invalid` | §4.2 |

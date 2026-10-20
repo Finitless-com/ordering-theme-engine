@@ -10935,6 +10935,758 @@
             }
         },
         {
+            "name": "rules-patterns",
+            "description": "Patterns of the subset PCRE and ECMAScript read alike, each with a default it takes: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\d{6,12}$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$value"
+                        ],
+                        "123456"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^[a-zA-Z][\\w]*(\\.[a-zA-Z][\\w]*)+$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$value"
+                        ],
+                        "com.ordering.app"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^(?:[a-z0-9]+-)*[a-z0-9]+$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$value"
+                        ],
+                        "my-shop"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^(?!-)[^<>\\n]{1,60}?$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$value"
+                        ],
+                        "Acme"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^(?:https?://)?[\\w.\\-/]+|[{}()|$^*+?.]\\.{2,}\\[\\]$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$value"
+                        ],
+                        "https://ordering.co/a-b"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-escapes",
+            "description": "Escapes outside the subset: whitespace, a PCRE anchor, a property, a character code and a backreference.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\s+$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "\\Aabc"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\p{L}+$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "\\x41"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(a)\\1"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.rules",
+                        "code": "site.business_slug.rules.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.rules",
+                        "code": "site.smart_banner.apple_id.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.rules",
+                        "code": "site.smart_banner.android_id.rules.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-groups",
+            "description": "Groups outside the subset: a lookbehind, a named group, an inline flag, an atomic group and an unclosed one.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(?<=a)b"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(?<id>a)"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(?i)abc"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(?>a+)b"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(ab"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.rules",
+                        "code": "site.business_slug.rules.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.rules",
+                        "code": "site.smart_banner.apple_id.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.rules",
+                        "code": "site.smart_banner.android_id.rules.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-quantifiers",
+            "description": "Quantifiers outside the subset: possessive, with nothing to repeat, out of order, a brace that is no quantifier and over a lookahead.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\d++$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "*a"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a{3,2}"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a{,3}"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "(?=a)*b"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.rules",
+                        "code": "site.business_slug.rules.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.rules",
+                        "code": "site.smart_banner.apple_id.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.rules",
+                        "code": "site.smart_banner.android_id.rules.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-classes",
+            "description": "Classes outside the subset: empty, empty and negated, a POSIX class, a word boundary inside and a `-` in the middle.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a[]"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "[^]"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "[[:alpha:]]"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "[\\b]"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "[a-z-0]"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.rules",
+                        "code": "site.business_slug.rules.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.rules",
+                        "code": "site.smart_banner.apple_id.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.rules",
+                        "code": "site.smart_banner.android_id.rules.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-literals",
+            "description": "Literals and escapes outside the subset: a lone `]` and `}`, `\\-` outside a class, a word boundary and a control character.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a]"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a}"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a\\-b"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "\\bword\\b"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "a\tb"
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.rules",
+                        "code": "site.business_slug.rules.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.rules",
+                        "code": "site.smart_banner.apple_id.rules.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.rules",
+                        "code": "site.smart_banner.android_id.rules.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-patterns-values",
+            "description": "Defaults a pattern of the subset refuses as ECMAScript does: before a final newline `$` does not match, `\\d` is ASCII and `.` matches no line break.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\d{6,12}$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$value"
+                        ],
+                        "123456\n"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\d{6,12}$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "android_id",
+                            "$value"
+                        ],
+                        "٣٣٣٣٣٣"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^.$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$value"
+                        ],
+                        "\r"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^x.$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$value"
+                        ],
+                        "x\u2028"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\w+$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$value"
+                        ],
+                        "ñandú"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "site.business_slug.default",
+                        "code": "site.business_slug.default.invalid"
+                    },
+                    {
+                        "path": "site.name.default",
+                        "code": "site.name.default.invalid"
+                    },
+                    {
+                        "path": "site.description.default",
+                        "code": "site.description.default.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.apple_id.default",
+                        "code": "site.smart_banner.apple_id.default.invalid"
+                    },
+                    {
+                        "path": "site.smart_banner.android_id.default",
+                        "code": "site.smart_banner.android_id.default.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
             "name": "typography-line",
             "description": "A line height in px, and one above the ratio the format takes: invalid typography defaults.",
             "schema": {

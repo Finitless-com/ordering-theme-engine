@@ -681,8 +681,8 @@ final class EditorRules
     /**
      * `max_length` and `pattern` only on a string node, and `placeholder`
      * and `multiline` only on a text control. On a property, a rule of
-     * another type, a pattern that does not compile and a default either
-     * refuses are check()'s (`.rules.invalid`, `.default.invalid`).
+     * another type, a pattern outside the subset (ThemePattern) and a
+     * default either refuses are check()'s (`.rules.invalid`, `.default.invalid`).
      */
     private static function texts(array $schema, callable $fail): void
     {

@@ -7,6 +7,18 @@ change to the public API.
 
 ## 0.5.1 (2026-10-20)
 
+- **Behavior change:** a string's `pattern` rule must be in the subset of regular
+  expressions that PCRE and ECMAScript (`u` flag) read the same way (§10.2 of the schema
+  format), checked by one scanner in both engines (PHP's `ThemePattern`,
+  `src/pattern.ts`). A pattern outside it that passed before, because PCRE or JavaScript
+  compiled it (`\A`, `a++`, `[^]`, `\s`, `\b`, a lone `]`, a lookbehind…), is now
+  `<path>.rules.invalid`, and no value matches it.
+- **Behavior change:** within the subset a value matches the same in both. PHP compiles
+  the pattern with the `D` modifier, so `$` matches only at the very end (`"123456\n"` no
+  longer passes `^\d{6,12}$` in PHP); `\d` and `\w` are ASCII in PHP too (its `u`
+  modifier made them Unicode, so `^\d{6,12}$` took `"٣٣٣٣٣٣"`); and `.` no longer
+  matches `\r`, U+2028 or U+2029 in PHP. The engine's other regular expressions are
+  unchanged.
 - `siteDefaults()` (and PHP's `ThemeSchemas::siteDefaults()`) throws a `TypeError` when
   given a schema in nodes or the whole answer of `compile()` (`tuples()`), instead of
   answering the raw node tree or `{}`. What it answers for a compiled schema is unchanged.

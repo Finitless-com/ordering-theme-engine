@@ -3,6 +3,7 @@ import {
   NO_BORDER, PROPERTY_KINDS, RADIUS, ROLE, SHADOW, SHADOW_DIRECTIONS, SHADOW_STYLES, SPACE, STRING_MAX_LENGTH, alias,
   isColor, isImage, isNumber, isOpacity, isShadow, isTypography, tokenNames,
 } from './format.js'
+import { matchesPattern, patternSource } from './pattern.js'
 import { entries, get, has, identical, isArray, isInt, isList, mbStrlen, phpString, strlen, uniqueCount, values, type Json, type JsonMap } from './php.js'
 import type { SchemaError } from './types.js'
 
@@ -35,7 +36,7 @@ export function valueError(kind: string, value: Json, options: Json = null, rule
     const maxLength = get(rules, 'max_length')
     const pattern = get(rules, 'pattern')
     if (mbStrlen(value) > (typeof maxLength === 'number' ? maxLength : STRING_MAX_LENGTH)
-      || (typeof pattern === 'string' && !new RegExp(pattern, 'u').test(value))) {
+      || (typeof pattern === 'string' && !matchesPattern(pattern, value))) {
       return 'invalid'
     }
   }
@@ -203,8 +204,8 @@ function validToken(group: string, name: string, value: Json): boolean {
 /**
  * The rules a property's fourth element may set (ThemeValidator::validRules()):
  * `custom` (true, on a typography), `max_length` (characters, at most the
- * engine's) and `pattern` (a regular expression ECMAScript and PCRE read
- * alike), on a string.
+ * engine's) and `pattern` (a regular expression in the subset ECMAScript and
+ * PCRE read alike, src/pattern.ts, that also compiles here), on a string.
  */
 export function validRules(kind: string, rules: Json): boolean {
   if (!isArray(rules) || values(rules).length === 0 || isList(rules)
@@ -225,8 +226,12 @@ export function validRules(kind: string, rules: Json): boolean {
   if (kind !== 'string' || typeof pattern !== 'string' || pattern === '') {
     return false
   }
+  const source = patternSource(pattern)
+  if (source === null) {
+    return false
+  }
   try {
-    new RegExp(pattern, 'u')
+    new RegExp(source, 'u')
     return true
   } catch {
     return false

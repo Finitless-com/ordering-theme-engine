@@ -6,7 +6,9 @@ import { entries, get, has, isArray, isInt, strlen, type PhpArray } from './php.
  * like (api-core's ThemeFormat).
  *
  * PHP's `$` also matches before a final newline (preg_match without the D
- * modifier): the patterns that imitate one end in `\n?$`.
+ * modifier): the patterns that imitate one end in `\n?$`. A string's
+ * `pattern` rule does not imitate it: PHP compiles that one with the D
+ * modifier (src/pattern.ts).
  */
 
 export const FONT_ROLES = ['heading', 'body'] as const

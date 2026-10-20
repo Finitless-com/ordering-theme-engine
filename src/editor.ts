@@ -641,8 +641,8 @@ function fonts(schema: NodeSchema, fail: Fail): void {
 /**
  * `max_length` and `pattern` only on a string node, and `placeholder` and
  * `multiline` only on a text control. On a property, a rule of another
- * type, a pattern that does not compile and a default either refuses are
- * check()'s (`.rules.invalid`, `.default.invalid`).
+ * type, a pattern outside the subset (src/pattern.ts) and a default either
+ * refuses are check()'s (`.rules.invalid`, `.default.invalid`).
  */
 function texts(schema: NodeSchema, fail: Fail): void {
   for (const [path, node, type] of nodesOf(schema)) {

@@ -335,6 +335,59 @@ $case('rules-invalid', 'Rules of another kind, a pattern no engine reads, and a 
     set([ 'site', 'business_slug', '$value' ], 'abcdef'),
     set([ 'site', 'business_slug', '$extensions', 'co.ordering' ], [ 'max_length' => 3 ]),
 ]);
+$pattern = fn (string $key, string $pattern, ?string $default = null) => [
+    set([ 'site', ...explode('.', $key), '$extensions', 'co.ordering' ], [ 'pattern' => $pattern ]),
+    ...($default === null ? [] : [ set([ 'site', ...explode('.', $key), '$value' ], $default) ]),
+];
+$case('rules-patterns', 'Patterns of the subset PCRE and ECMAScript read alike, each with a default it takes: valid.', [
+    ...$pattern('smart_banner.apple_id', '^\\d{6,12}$', '123456'),
+    ...$pattern('smart_banner.android_id', '^[a-zA-Z][\\w]*(\\.[a-zA-Z][\\w]*)+$', 'com.ordering.app'),
+    ...$pattern('business_slug', '^(?:[a-z0-9]+-)*[a-z0-9]+$', 'my-shop'),
+    ...$pattern('name', '^(?!-)[^<>\\n]{1,60}?$', 'Acme'),
+    ...$pattern('description', '^(?:https?://)?[\\w.\\-/]+|[{}()|$^*+?.]\\.{2,}\\[\\]$', 'https://ordering.co/a-b'),
+]);
+$case('rules-patterns-escapes', 'Escapes outside the subset: whitespace, a PCRE anchor, a property, a character code and a backreference.', [
+    ...$pattern('smart_banner.apple_id', '^\\s+$'),
+    ...$pattern('smart_banner.android_id', '\\Aabc'),
+    ...$pattern('business_slug', '^\\p{L}+$'),
+    ...$pattern('name', '\\x41'),
+    ...$pattern('description', '(a)\\1'),
+]);
+$case('rules-patterns-groups', 'Groups outside the subset: a lookbehind, a named group, an inline flag, an atomic group and an unclosed one.', [
+    ...$pattern('smart_banner.apple_id', '(?<=a)b'),
+    ...$pattern('smart_banner.android_id', '(?<id>a)'),
+    ...$pattern('business_slug', '(?i)abc'),
+    ...$pattern('name', '(?>a+)b'),
+    ...$pattern('description', '(ab'),
+]);
+$case('rules-patterns-quantifiers', 'Quantifiers outside the subset: possessive, with nothing to repeat, out of order, a brace that is no quantifier and over a lookahead.', [
+    ...$pattern('smart_banner.apple_id', '^\\d++$'),
+    ...$pattern('smart_banner.android_id', '*a'),
+    ...$pattern('business_slug', 'a{3,2}'),
+    ...$pattern('name', 'a{,3}'),
+    ...$pattern('description', '(?=a)*b'),
+]);
+$case('rules-patterns-classes', 'Classes outside the subset: empty, empty and negated, a POSIX class, a word boundary inside and a `-` in the middle.', [
+    ...$pattern('smart_banner.apple_id', 'a[]'),
+    ...$pattern('smart_banner.android_id', '[^]'),
+    ...$pattern('business_slug', '[[:alpha:]]'),
+    ...$pattern('name', '[\\b]'),
+    ...$pattern('description', '[a-z-0]'),
+]);
+$case('rules-patterns-literals', 'Literals and escapes outside the subset: a lone `]` and `}`, `\\-` outside a class, a word boundary and a control character.', [
+    ...$pattern('smart_banner.apple_id', 'a]'),
+    ...$pattern('smart_banner.android_id', 'a}'),
+    ...$pattern('business_slug', 'a\\-b'),
+    ...$pattern('name', '\\bword\\b'),
+    ...$pattern('description', "a\tb"),
+]);
+$case('rules-patterns-values', 'Defaults a pattern of the subset refuses as ECMAScript does: before a final newline `$` does not match, `\\d` is ASCII and `.` matches no line break.', [
+    ...$pattern('smart_banner.apple_id', '^\\d{6,12}$', "123456\n"),
+    ...$pattern('smart_banner.android_id', '^\\d{6,12}$', '٣٣٣٣٣٣'),
+    ...$pattern('name', '^.$', "\r"),
+    ...$pattern('description', '^x.$', "x\u{2028}"),
+    ...$pattern('business_slug', '^\\w+$', 'ñandú'),
+]);
 $case('typography-line', 'A line height in px, and one above the ratio the format takes: invalid typography defaults.', [
     set([ 'tokens', 'typography', 'h1', '$value', 'line' ], 40),
     set([ 'tokens', 'typography', 'caption', '$value', 'line' ], 3.2),

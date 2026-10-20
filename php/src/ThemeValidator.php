@@ -524,7 +524,7 @@ final class ThemeValidator
         }
         if ($kind === 'string' && is_string($value) && $value !== '') {
             if (mb_strlen($value) > ($rules['max_length'] ?? ThemeFormat::STRING_MAX_LENGTH)
-                || (isset($rules['pattern']) && preg_match(self::pattern($rules['pattern']), $value) !== 1)) {
+                || (is_string($rules['pattern'] ?? null) && !ThemePattern::matches($rules['pattern'], $value))) {
                 return 'invalid';
             }
         }
@@ -573,8 +573,8 @@ final class ThemeValidator
     /**
      * The rules a property's fourth element may set: `custom` (true, on a
      * typography), `max_length` (characters, at most the engine's) and
-     * `pattern` (a regular expression ECMAScript and PCRE read alike), on
-     * a string.
+     * `pattern` (a regular expression in the subset ECMAScript and PCRE
+     * read alike, ThemePattern, that also compiles here), on a string.
      */
     public static function validRules(string $kind, $rules): bool
     {
@@ -594,21 +594,17 @@ final class ThemeValidator
         if ($kind !== 'string' || !is_string($rules['pattern']) || $rules['pattern'] === '') {
             return false;
         }
+        $source = ThemePattern::source($rules['pattern']);
+        if ($source === null) {
+            return false;
+        }
         // A pattern PCRE cannot compile warns: whatever handles warnings, it is only a refusal here.
         set_error_handler(fn () => true);
         try {
-            return preg_match(self::pattern($rules['pattern']), '') !== false;
+            return preg_match(ThemePattern::regex($source), '') !== false;
         } finally {
             restore_error_handler();
         }
-    }
-
-    /**
-     * A pattern as PCRE reads it, delimited by a character no pattern has.
-     */
-    private static function pattern(string $pattern): string
-    {
-        return "\x01{$pattern}\x01u";
     }
 
     /**

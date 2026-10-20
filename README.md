@@ -165,7 +165,8 @@ Public entry points:
   `Schema\EditorMetadata` (`inject()`), `Schema\EditorRules` (`check()`, the editor
   metadata's rules, and `translucent()`).
 - `ThemeFormat`, `ThemeColors`, `ThemeDerivations`, `ThemeShadows`, `ThemeOverall` and
-  `ThemePages` hold the format's catalog and the operations the resolver applies.
+  `ThemePages` hold the format's catalog and the operations the resolver applies;
+  `ThemePattern` (`source()`, `matches()`, `regex()`), a string's `pattern` rule.
 
 What stays in the Ordering.co API: the registry of published schemas and its cache, publishing
 (`schema.version_exists`, looking up `previous`), reading a site's theme, version 1
@@ -441,8 +442,17 @@ Where PHP and JavaScript differ, the port imitates PHP (`src/php.ts`):
 - PHP arrays are copied on assignment: the engine never mutates the schema or theme it
   receives, and every answer is a new object.
 - `===` between arrays requires the same keys in the same order.
-- `preg_match()`'s `$` also accepts a trailing newline: the patterns that imitate it end
-  in `\n?$`. `\s` is ASCII only.
+- `preg_match()`'s `$` also accepts a trailing newline: the engine's own patterns that
+  imitate it end in `\n?$`. `\s` is ASCII only.
+- A string's `pattern` rule is the exception: instead of one engine imitating the
+  other, both accept only the subset of regular expressions that PCRE and ECMAScript
+  (`u` flag) read the same way (`ThemePattern` and `src/pattern.ts`, one scanner written
+  twice; §10.2 of the schema format). Within it, PHP compiles with the `D` modifier, so
+  `$` matches only at the very end as in JavaScript (`^\d{6,12}$` refuses `"123456\n"`
+  in both), and both compile `.`, `\d`, `\D`, `\w` and `\W` written out as the classes
+  JavaScript reads (PHP's `u` modifier would make `\d` and `\w` Unicode, and its `.`
+  would match `\r`, U+2028 and U+2029). Outside the subset a pattern is
+  `<path>.rules.invalid`, and no value matches it.
 - `version_compare()` (pre-releases such as `26.1.0-beta`), the `(string)` cast of a
   float (14 digits, `1.0E+25`), `empty()` (`"0"` is empty: `$deprecated: "0"` does not
   deprecate), `strlen()` in bytes and `mb_strlen()` in characters.
