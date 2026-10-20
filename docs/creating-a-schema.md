@@ -161,8 +161,9 @@ pnpm exec ordering-theme publish theme.schema.json
 
 `publish` validates locally first and sends nothing if the schema does not pass. Without
 `THEME_PUBLISH_API` or `THEME_PUBLISH_KEY` it does not publish and exits successfully;
-with `--required` (or `THEME_PUBLISH_REQUIRED=1`) it exits with an error, which is what
-you want in a deploy.
+with `--required` (or `THEME_PUBLISH_REQUIRED` set to `1` or `true`) it exits with an
+error, which is what you want in a deploy. No other variable, such as a CI's own flag,
+makes it required.
 
 Recommended in CI:
 
@@ -185,7 +186,10 @@ Content-Type: application/json
 - `schema`: the schema as is.
 - `v1_map`: only for a product with v1 themes that api-core converts (today, the
   marketplace website). A new product does not send it.
-- `dry_run`: `true` checks everything and stores nothing.
+- `dry_run`: `true` checks everything, the registry included, and stores nothing. A
+  version already published answers as publishing would: `unchanged` with the same
+  content, 409 `schema.version_exists` with other content (outside development mode).
+  Only a version that would be stored answers `valid`.
 
 Responses (`{ error, result, … }`, like all of api-core):
 
@@ -268,15 +272,17 @@ const theme = resolve(schema, themeValues)   // a theme (what it stores: only wh
   values, with no latency.
 
 The result has `tokens`, `components`, `visibility`, `images`, `pages`, `modes` and
-`platforms`, with each alias replaced by its value and each typography with its `family`
-(the font of its role). A platform's own values come separately, in
-`platforms.<platform>`, and the client applies them on top. By default empty maps come
-out as `[]`, as api-core serves them; with `{ emptyMaps: 'object' }` they come out as
-`{}`.
+`platforms`, with each alias of the components (and of `platforms.<platform>.components`)
+replaced by its value and each typography with its `family` (the font of its role).
+Tokens and `modes` hold literal values: neither a schema nor a theme may put an alias
+there. A platform's own values come separately, in `platforms.<platform>`, and the
+client applies them on top. By default empty maps come out as `[]`, as api-core serves
+them; with `{ emptyMaps: 'object' }` they come out as `{}`.
 
-`resolve()` assumes a theme valid for the schema: it does not apply migrations or drop
-values that no longer fit, as api-core does when serving it. It does not resolve site
-settings (`values.site`): they belong to the site, and api-core serves them.
+`resolve()` assumes a theme valid for the schema: it applies the schema's migrations, as
+api-core does when serving it, but does not drop values that no longer fit. It does not
+resolve site settings (`values.site`): they belong to the site, and api-core serves
+them.
 
 ## 8. Complete minimal example
 

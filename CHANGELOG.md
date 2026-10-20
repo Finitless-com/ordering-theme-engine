@@ -1,0 +1,75 @@
+# Changelog
+
+One version covers the npm package (`@orderingco/ordering-theme-engine`) and, from 0.4.0,
+the Composer package (`orderingco/ordering-theme-engine`). A minor can change what is
+resolved or validated, because the engine follows the Ordering.co API; **API** marks a
+change to the public API.
+
+## 0.5.1 (2026-10-20)
+
+- `siteDefaults()` (and PHP's `ThemeSchemas::siteDefaults()`) throws a `TypeError` when
+  given a schema in nodes or the whole answer of `compile()` (`tuples()`), instead of
+  answering the raw node tree or `{}`. What it answers for a compiled schema is unchanged.
+- CLI `defaults`: a schema that does not compile exits 1 and prints the compiler's
+  errors (it exited 0), and one that is not in nodes exits 1 with a one-line message
+  (it crashed with a stack).
+- CLI `publish`: `THEME_PUBLISH_REQUIRED` also takes `true`, in any case.
+- The npm package ships `docs/` and this changelog. The README links to the docs by
+  absolute URL and documents `modes`, what `resolve()` resolves, `--dry-run`, the exit
+  codes and the per-object compile cache; §12.3 of the schema format lists the editor
+  rules in the order they run.
+
+## 0.5.0 (2026-10-20)
+
+- **API:** `check(compiled, nodes?)` takes the schema in nodes it was compiled from and
+  then checks its editor metadata; `checkEditor(schema)` runs those rules alone (§12.3 of
+  the schema format). PHP: `ThemeSchemas::check($schema, $nodes)` and
+  `Schema\EditorRules::check()`.
+- `validate()` and `validateFull()` include the editor rules, as the Ordering.co API
+  does: a schema that passed 0.4.0 can fail with `schema.invalid`.
+
+## 0.4.0 (2026-10-20)
+
+- **API:** the PHP engine the Ordering.co API runs is a Composer package,
+  `orderingco/ordering-theme-engine` (namespace `Ordering\ThemeEngine\`), and the
+  fixtures are generated from it in this repo.
+- A token color has a kind only when the schema names it (the catalog's when the schema
+  names none): `ThemeSchemas::kindAt()`, and with it the checks of the v1 map and the
+  migrations, read the schema's own colors.
+
+## 0.3.1 (2026-10-20)
+
+- Published through npm trusted publishing, with provenance. README and docs in English.
+
+## 0.3.0 (2026-10-20)
+
+- **API:** renamed to `@orderingco/ordering-theme-engine`, public on npmjs under MIT (it
+  was `@finitless-com/ordering-theme-engine` on GitHub Packages).
+- **API:** `validateFull()` (the meta-schema, then `validate()`) and `validateShape()`,
+  with the meta-schema compiled into the package (no runtime dependencies).
+- **API:** the `ordering-theme` CLI: `validate`, `defaults` and `publish`.
+- A scale change within a base is incompatible (`<path>.scale_changed`).
+- `resolve()` applies the schema's migrations (`co.ordering.migrate`), and `compile()`
+  lists the colors marked translucent (`alpha`).
+- A visibility key may set its default per platform, a visibility group may name the
+  pages it is shown in, a token may be narrowed (`token_options`), a property may carry
+  rules (`custom`, `max_length`, `pattern`) and an image hints its safe area.
+- A typography's line height is a ratio of its size (0.8 to 3), not px.
+- The schema format and how to create a schema are documented under `docs/`.
+
+## 0.2.1 (2026-10-19)
+
+- Each schema names its own colors, text styles and opacities.
+- A matrix role can be legible over a color, and the editor can mark a color translucent.
+
+## 0.2.0 (2026-10-19)
+
+- **API:** `validate(schema, { previous, v1Map, development })`, `check()`, `diff()`
+  and `outOfRange()`: what the Ordering.co API answers before publishing a schema. The
+  meta-schema ships as `meta/theme-schema-1.json`.
+
+## 0.1.0 (2026-10-19)
+
+- **API:** `resolve()`, `defaults()`, `compile()` and `siteDefaults()`: the Ordering.co
+  API's theme resolution in TypeScript. Published privately on GitHub Packages as
+  `@finitless-com/ordering-theme-engine`.

@@ -1,7 +1,7 @@
 # What the Composer dist (a git archive of the tag) leaves out: the
 # TypeScript engine, the tests, the fixtures and the tooling. It ships
-# composer.json, php/src, meta/ (which php/src reads), docs/, README.md
-# and LICENSE. npm ships what package.json's `files` lists.
+# composer.json, php/src, meta/ (which php/src reads), docs/, README.md,
+# CHANGELOG.md and LICENSE. npm ships what package.json's `files` lists.
 /.github export-ignore
 /.gitattributes export-ignore
 /.gitignore export-ignore

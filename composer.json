@@ -1,6 +1,6 @@
 {
     "name": "orderingco/ordering-theme-engine",
-    "description": "api-core's theme engine (version 2 themes) in PHP: the same schema, the same rules, the same answer as the TypeScript package.",
+    "description": "The Ordering.co API's theme engine (version 2 themes) in PHP: the same schema, the same rules, the same answer as the TypeScript package.",
     "type": "library",
     "license": "MIT",
     "keywords": [

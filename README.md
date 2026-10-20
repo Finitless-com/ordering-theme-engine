@@ -8,15 +8,20 @@ The v2 theme engine, in two implementations that answer the same:
 - **TypeScript** (`@orderingco/ordering-theme-engine` on npmjs): the same resolution and
   validation for the products (the web, the Dashboard, the apps), so they compute what
   the Ordering.co API will serve or answer without copying the rules: local defaults, zero-latency
-  preview, CI artifacts. No runtime dependencies. ESM, strict TypeScript, Node 22. It
+  preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
+  `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and
   publishes it.
 
 Both live here and are checked against each other in one CI
 ([parity](#parity-between-php-and-typescript)).
 
-Schema format: [`docs/schema-format.md`](docs/schema-format.md). Writing a product's
-schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
+Schema format:
+[`docs/schema-format.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/docs/schema-format.md).
+Writing a product's schema:
+[`docs/creating-a-schema.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/docs/creating-a-schema.md).
+Both ship in the npm package and the Composer dist, under `docs/`. What changed in each
+version: [`CHANGELOG.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/CHANGELOG.md).
 
 ## Installation
 
@@ -24,7 +29,7 @@ schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
 pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
-Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.5.0"`):
+Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.5.1"`):
 a minor can change what it resolves, because it follows the Ordering.co API.
 
 ## Usage
@@ -36,6 +41,10 @@ import schema from './theme.schema.json' // the schema in nodes
 const theme = resolve(schema, site_theme.values) // what the Ordering.co API serves
 const empty = defaults(schema)                   // the empty theme, resolved
 ```
+
+`resolve()` and `defaults()` compile the schema once per object (a `WeakMap`): a schema
+changed in place after the first call keeps resolving as it was. Pass a new object (a
+copy) instead.
 
 Validating a schema before publishing it:
 
@@ -51,29 +60,38 @@ alone.
 
 ### Public API
 
-- `resolve(schema, values, options?)`: the theme over its schema's defaults, every alias
-  resolved. This is `ThemeResolver::resolve()`. Throws a `TypeError` if the schema is
-  not in nodes.
+- `resolve(schema, values, options?)`: the theme over its schema's defaults
+  (`ThemeResolver::resolve()`): the aliases of `components` and of
+  `platforms.<platform>.components` replaced by their tokens' values, and each
+  `tokens.typography` style with the `family` of its font role. `tokens` and `modes`
+  stay as they are: their values are literals, and neither a schema nor a theme may put
+  an alias there. Throws a `TypeError` if the schema is not in nodes.
 - `defaults(schema, options?)`: the empty theme resolved, what a site whose theme
   changes nothing serves.
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads
-  (`NodeCompiler`), with its errors. `resolve` uses it and caches the result per object.
-- `siteDefaults(compiled)`: the defaults of the `site` block (they belong to the site,
-  not the theme).
+  (`NodeCompiler`), with its errors: `{ schema, errors }`. `resolve` uses it and caches
+  the result per object.
+- `siteDefaults(compile(schema).schema)`: the defaults of the `site` block (they belong
+  to the site, not the theme), `{}` without one. It reads the tuples: given the schema
+  in nodes, or compile()'s whole `{ schema, errors }`, it throws a `TypeError`.
 - `validateFull(schema, { previous?, v1Map?, development? })`: what the Ordering.co API's
   `ThemeSchemaPublisher::validate()` answers, `{ code, errors, changes }`, meta-schema
   included (see below).
-- `validate(schema, options?)`: the same without the meta-schema, with the same codes,
-  the same errors in the same order and the same changes as the Ordering.co API.
+- `validate(schema, options?)`: the same without the meta-schema. For a schema that
+  passes the meta-schema it answers the same codes, the same errors in the same order
+  and the same changes as the Ordering.co API; for one that fails it, the API answers
+  the meta-schema's errors instead (`validateFull()`).
 - `validateShape(schema)`: the schema's errors against the meta-schema, as
   `ThemeSchemas::meta()`: one per path, `{ path, code: '<path>.schema', message }`
   (`message` is the validator's explanation; the Ordering.co API does not send it). `[]` if it
   passes.
 - `check(compiled, nodes?)`: `ThemeSchemas::check()` over the tuples from `compile()`;
   given the schema in nodes they come from, it then runs `checkEditor()` on it.
+  `check(compiled)` alone skips the editor rules (the tuples no longer carry the
+  metadata).
 - `checkEditor(schema)`: what the editor metadata gets wrong (`co.ordering.editor` and
   the `editor` block, which the compiler drops), `EditorRules::check()`: the rules of §12.3
-  of [`docs/schema-format.md`](docs/schema-format.md).
+  of [`docs/schema-format.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/docs/schema-format.md).
 - `outOfRange(schema)`: numeric defaults outside the `min`/`max` of their editor
   control (`<path>.default_out_of_range`).
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` with
@@ -85,7 +103,15 @@ alone.
 
 `options.emptyMaps`: PHP does not distinguish an empty map from an empty list and serves
 both as `[]`. By default the output does the same, so its JSON matches the API's; with
-`'object'` they come out as `{}`.
+`'object'` they come out as `{}`. It is all or nothing: it applies to every empty map of
+the answer (`modes`, and `platforms` or `images` when the schema has none…), with no
+choice per key.
+
+`modes` is what the theme sets per mode, `{ <mode>: { color: { <name>: <color> } } }`:
+the colors a client uses instead of `tokens.color.<name>` in that mode, as the theme
+stores them (the engine neither derives nor resolves them). The only mode is `dark`
+(`ThemeFormat::MODES`). A schema declares no modes, so `defaults()` always gives it
+empty: `[]` by default, `{}` with `emptyMaps: 'object'`.
 
 ## PHP
 
@@ -118,11 +144,13 @@ product type.
 Public entry points:
 
 - `ThemeResolver`: `resolve($values, $schema, &$unresolved)` (the theme over its
-  schema's defaults, every alias resolved; `$unresolved` gets the values before their
-  aliases), `valid()` (what of a stored theme fits its schema, migrations applied),
+  schema's defaults, its aliases resolved as `resolve()` resolves them; `$unresolved`
+  gets the values before their aliases), `valid()` (what of a stored theme fits its schema, migrations applied),
   `inherit()`, `merge()`, `resolveAliases()`.
 - `ThemeSchemas`: `tuples()`, `meta()` (the meta-schema errors), `check()` (a schema in
-  tuples and, given the nodes it was compiled from, their editor metadata), `defaults()`, `siteDefaults()`, `declare()`, `kindAt()`, `specAt()`,
+  tuples and, given the nodes it was compiled from, their editor metadata), `defaults()`,
+  `siteDefaults()` (of a schema in tuples; the nodes or `tuples()`'s whole answer throw
+  a `TypeError`), `declare()`, `kindAt()`, `specAt()`,
   `propertySpec()`, `isComponent()`; the constants `PRODUCT_TYPES`, `KEY`, `VERSION`
   and `COMPILED` (the revision of what `tuples()` answers, for whoever caches it).
 - `ThemeSchemaPublisher`: `validate()`, what publishing checks before the registry
@@ -167,13 +195,20 @@ ordering-theme --version   # -v
   prints it; with `--out` it writes it. `--check` (requires `--out`) compares that file
   instead of writing it and exits 1 if it is out of date, for CI when the product
   commits the file. `--site` adds the site settings' defaults (`siteDefaults()`) under
-  `site`.
+  `site`, and leaves `site` out when the schema has none. A schema that is not in nodes,
+  or that does not compile (its compiler errors are printed), exits 1 and writes
+  nothing; it does not run the rest of `validate`.
 - `publish`: validates the schema locally and, if it passes, sends it to the Ordering.co API:
   `POST {THEME_PUBLISH_API}/system/theme_schemas` with `{ schema, v1_map?, dry_run? }`
   and the key in `X-Theme-Publish-Key-X`. Product type and version come from the schema
   (`product_type`, `version`). Without `--v1-map` no map is sent and the Ordering.co API uses the
-  last one published for the product type. `--dry-run`: the Ordering.co API checks everything and
-  saves nothing (`valid`).
+  last one published for the product type, while the local validation runs with no map:
+  a schema that passes here can still be a 422 there, on its v1 paths. A product with a
+  v1 map passes it. `--dry-run`: the Ordering.co API checks everything, the registry
+  included, and saves nothing. A version that would be stored answers `valid`; one
+  already published answers as publishing would: `unchanged` with the same content
+  (schema and v1 map), and 409 `schema.version_exists` with other content (outside
+  development mode, where it answers `valid`).
 
   Exits 0 if the Ordering.co API answers `created`, `replaced` (a product in development), `valid`
   or `unchanged` (that version is already published with the same content, so a deploy
@@ -185,12 +220,24 @@ ordering-theme --version   # -v
   Environment: `THEME_PUBLISH_API` (the API with its version, e.g.
   `https://apiv4.ordering.co/v400`) and `THEME_PUBLISH_KEY` (the environment's publish
   key, the Ordering.co API's `THEME_PUBLISH_KEY`). If either is missing, it validates and skips
-  publishing (exit 0), unless `--required` or `THEME_PUBLISH_REQUIRED=1` is set, which
-  exits 1: a deploy that cannot publish its schema does not deploy.
+  publishing (exit 0), unless `--required` is passed or `THEME_PUBLISH_REQUIRED` is `1`
+  or `true` (any case), which exits 1: a deploy that cannot publish its schema does not
+  deploy. No other variable is read: a CI's own flag (`WORKERS_CI`, `CI`) does not make
+  it required, so pass `--required` in a deploy.
 
-Exit codes: 0 done; 1 the schema or the Ordering.co API's answer fails, or a file cannot be read
-or is not JSON; 2 a usage error (unknown command or option, missing `<schema.json>`
-argument, `--check` without `--out`).
+`help`, `--help` or `-h` as the command, and `--help` or `-h` after one, print the usage
+on stdout and exit 0; `--version` or `-v` as the command prints the version.
+
+Exit codes:
+
+- 0: done (valid, written, up to date, published or skipped);
+- 1: the schema fails (`validate`, `publish`'s local check, a `defaults` schema not in
+  nodes or that does not compile), `--check` finds the file out of date, the Ordering.co
+  API rejects or cannot be reached, a `--required` publish lacks its environment, or a
+  file cannot be read or is not JSON;
+- 2: a usage error, with the reason on stderr: no command (the usage is printed on
+  stderr), an unknown command or option, no `<schema.json>` or more than one, and
+  `--check` without `--out`.
 
 In CI, for example:
 
@@ -212,8 +259,9 @@ The stages of `ThemeSchemaPublisher::validate()`; the first that fails sets the 
    are none, those of `check()` (header, tokens, components, `scope`, `slots`,
    platforms, `inherits`, visibility and images, `site`, `follows`, `derive`,
    `component_derive`, `matrix`, migrations, pages, the v1 map and, last, the editor
-   metadata, `checkEditor()`) and of `outOfRange()`. In both cases `version.semver` is added if the version is not
-   `major.minor.patch`.
+   metadata, `checkEditor()`, which runs because `validate()` passes `check()` the
+   nodes) and of `outOfRange()`. In both cases `version.semver` is added if the version
+   is not `major.minor.patch`.
 3. With `previous` (the last published version of its base): `schema.version_order` if
    the version is not greater within the same base (as PHP's `version_compare()`), and
    `schema.incompatible` with the errors of `diff()`. If valid, `changes` says what
@@ -246,7 +294,7 @@ What it does **not** do, and the Ordering.co API does:
 ## Where the rules come from
 
 From the schema. The engine is generic: whatever is specific to a product is declared by
-its `theme.schema.json` in the node format ([`docs/schema-format.md`](docs/schema-format.md)),
+its `theme.schema.json` in the node format ([`docs/schema-format.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/docs/schema-format.md)),
 under `$extensions["co.ordering"]`:
 
 - `scale` and `options`: each property's type;
@@ -260,11 +308,73 @@ The operations (HSL, mixing, WCAG contrast, shadow scales, ordering a page's sec
 belong to the engine and are the same for every product. A schema that declares no rules
 for a category uses the engine's for that category, as the Ordering.co API does; once it declares
 one, the engine's rules for that category no longer apply (§11 of
-[`docs/schema-format.md`](docs/schema-format.md)). A node without `$type` takes its
+[`docs/schema-format.md`](https://github.com/Finitless-com/ordering-theme-engine/blob/master/docs/schema-format.md)). A node without `$type` takes its
 group's. `co.ordering.editor` and the `editor` block belong to the editor: the engine
 resolves nothing with them, and `check()` validates them, given the nodes.
 
-## Parity between PHP and TypeScript
+## What the TypeScript engine leaves out
+
+- **It does not validate themes.** It assumes a valid theme: the Ordering.co API validates it on
+  save and, when serving it, drops whatever no longer fits the schema
+  (`ThemeResolver::valid()`). A theme the API would not accept may resolve differently
+  here. Like `valid()`, it does first move what the schema migrates
+  (`co.ordering.migrate`).
+- `resolve()` does not validate the schema (that is `validateFull()`'s job), nor does
+  `validate()` check the meta-schema (see above).
+- It does not convert or project v1 themes (`ThemeV1Bridge`), optimize images or fetch
+  the site settings (`values.site`): that belongs to the API.
+- It only reads node schemas (the Ordering.co API converts the ones registered as tuples).
+
+## Distribution
+
+Published publicly on npmjs as `@orderingco/ordering-theme-engine` (the `orderingco` npm
+organization) and on Packagist as `orderingco/ordering-theme-engine`. The repo is
+`Finitless-com/ordering-theme-engine` on GitHub, MIT licensed. One version number covers
+both: a change in what either resolves or validates changes both.
+
+The npm package ships `dist/`, `meta/`, `docs/` and `CHANGELOG.md` (`files` in
+`package.json`). The Composer dist is a git archive of the tag, without what
+`.gitattributes` marks `export-ignore`: it ships `composer.json`, `php/src`, `meta/`,
+`docs/`, the README, `CHANGELOG.md` and the license.
+
+### Releasing a version
+
+1. Bump `version` in `package.json` (semver: a change in what it resolves is a minor,
+   one that breaks the public API is a major), add the version to `CHANGELOG.md` and
+   merge to `master`. `composer.json` has no `version`: Composer takes it from the tag.
+2. Create the tag `v<version>` on that commit and push it (`git tag v<version> && git
+   push origin v<version>`).
+3. `.github/workflows/publish.yml` checks that the tag matches `package.json`, runs
+   typecheck and tests, builds and runs `npm publish --provenance` (provenance requires
+   a public repo). It authenticates with npm trusted publishing (OIDC). A published
+   version is never replaced: if it already exists, the workflow fails.
+4. Packagist publishes the same tag on its own (the package's GitHub hook); there is no
+   PHP publish step.
+
+The trusted publisher is set on npmjs (the package → *Settings → Trusted Publisher →
+GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
+environment, publish directly allowed). The repo keeps no npm token.
+
+`.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
+and build of the TypeScript engine; `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
+the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
+
+### Migrating from GitHub Packages
+
+Up to 0.2.1 the package was published privately on GitHub Packages as
+`@finitless-com/ordering-theme-engine`. To move a repo to the new name:
+
+1. Replace the dependency with `"@orderingco/ordering-theme-engine": "<exact version>"`
+   and update the imports.
+2. Remove the `@finitless-com:registry=https://npm.pkg.github.com` line from the
+   project's `.npmrc`, and the GitHub Packages setup from CI (the `registry-url`/`scope`
+   of `actions/setup-node`, `permissions: packages: read` and the token secret).
+
+## Contributing
+
+How the two implementations are kept equal, and how to work on them.
+
+### Parity between PHP and TypeScript
 
 The PHP engine (`php/src`) is the reference: it is what the Ordering.co API runs. The TypeScript
 engine must answer exactly what it answers, and CI checks it in two steps: the fixtures
@@ -344,20 +454,7 @@ changes the answer where PHP requires `is_int()` (a `step`'s `offset`, an image'
 also differs (JavaScript puts them first), and with it the order of their errors; no
 real schema has them.
 
-### What the TypeScript engine leaves out
-
-- **It does not validate themes.** It assumes a valid theme: the Ordering.co API validates it on
-  save and, when serving it, drops whatever no longer fits the schema
-  (`ThemeResolver::valid()`). A theme the API would not accept may resolve differently
-  here. Like `valid()`, it does first move what the schema migrates
-  (`co.ordering.migrate`).
-- `resolve()` does not validate the schema (that is `validateFull()`'s job), nor does
-  `validate()` check the meta-schema (see above).
-- It does not convert or project v1 themes (`ThemeV1Bridge`), optimize images or fetch
-  the site settings (`values.site`): that belongs to the API.
-- It only reads node schemas (the Ordering.co API converts the ones registered as tuples).
-
-## Development
+### Development
 
 ```sh
 nvm use            # Node 22.23.1
@@ -378,7 +475,7 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app -e COMPOSER_HOME=/
 docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app php:8.3.35-cli vendor/bin/phpunit
 ```
 
-### Refreshing the fixtures
+#### Refreshing the fixtures
 
 ```sh
 pnpm sync-fixtures   # bash scripts/sync-fixtures.sh
@@ -390,47 +487,3 @@ rewrites every fixture the PHP engine answers from the inputs above. A fixture i
 replaced only if its command succeeds and returns JSON. Run it after changing `php/src`
 or an input, review the diff, and then `pnpm test` tells whether the TypeScript engine
 still answers the same. It does not depend on the Ordering.co API.
-
-## Distribution
-
-Published publicly on npmjs as `@orderingco/ordering-theme-engine` (the `orderingco` npm
-organization) and on Packagist as `orderingco/ordering-theme-engine`. The repo is
-`Finitless-com/ordering-theme-engine` on GitHub, MIT licensed. One version number covers
-both: a change in what either resolves or validates changes both.
-
-The npm package ships `dist/` and `meta/` (`files` in `package.json`). The Composer dist
-is a git archive of the tag, without what `.gitattributes` marks `export-ignore`: it
-ships `composer.json`, `php/src`, `meta/`, `docs/`, the README and the license.
-
-### Releasing a version
-
-1. Bump `version` in `package.json` (semver: a change in what it resolves is a minor,
-   one that breaks the public API is a major) and merge to `master`. `composer.json` has
-   no `version`: Composer takes it from the tag.
-2. Create the tag `v<version>` on that commit and push it (`git tag v0.3.0 && git push
-   origin v0.3.0`).
-3. `.github/workflows/publish.yml` checks that the tag matches `package.json`, runs
-   typecheck and tests, builds and runs `npm publish --provenance` (provenance requires
-   a public repo). It authenticates with npm trusted publishing (OIDC). A published
-   version is never replaced: if it already exists, the workflow fails.
-4. Packagist publishes the same tag on its own (the package's GitHub hook); there is no
-   PHP publish step.
-
-The trusted publisher is set on npmjs (the package → *Settings → Trusted Publisher →
-GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
-environment, publish directly allowed). The repo keeps no npm token.
-
-`.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
-and build of the TypeScript engine; `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
-the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
-
-### Migrating from GitHub Packages
-
-Up to 0.2.1 the package was published privately on GitHub Packages as
-`@finitless-com/ordering-theme-engine`. To move a repo to the new name:
-
-1. Replace the dependency with `"@orderingco/ordering-theme-engine": "<exact version>"`
-   and update the imports.
-2. Remove the `@finitless-com:registry=https://npm.pkg.github.com` line from the
-   project's `.npmrc`, and the GitHub Packages setup from CI (the `registry-url`/`scope`
-   of `actions/setup-node`, `permissions: packages: read` and the token secret).

@@ -623,12 +623,29 @@ cannot say is checked on publish too (§12.3).
 
 `check()`, given the schema in nodes, also checks what the editor metadata says against
 the rest of the schema (`EditorRules::check()` in PHP, `checkEditor()` in TypeScript).
-Each error is `<path>.<rule>`, once, in the order of this list. The path is the node or
+Each error is `<path>.<rule>`, in the order of this list, and each code is reported once:
+two unknown pages in the same group give one `page_unknown`. The path is the node or
 group (`tokens.color.overlay`), the editor's group (`editor.sections.10.groups.2`), a
 component's card (`components.bottom_nav.$extensions.co.ordering.editor.groups.0`), a
 page's section (`pages.home.sections.hero`), or a node's field
-(`tokens.typography.h1.fields.line`). The nodes walked are those of `tokens`,
-`components`, `pages` and `site`, each with its own `$type` or its group's.
+(`tokens.typography.h1.fields.line`).
+
+What each rule walks:
+
+- `alpha`, `custom`, limits, line heights, the blocks of a page, fonts and texts: the
+  nodes (and, for `alpha`, `custom` and line heights, the groups) of `tokens`,
+  `components`, `pages` and `site`, each with its own `$type` or its group's;
+- platforms: those four blocks plus `visibility` and `images`;
+- where a visibility group is shown and every visibility key in one group: the groups
+  of `editor.sections`, the keys of `visibility` and, for components, each component's
+  cards;
+- a component's order: each component's nodes (its `scope` aside) and its cards;
+- the rows of the editor's sections and scales: the groups (and, for scales, the
+  components' cards) and the nodes at the paths they list, in any block;
+- a page's sections: the default of each page's `sections`;
+- visibility keys are booleans: the keys of `visibility`.
+
+The rules, in the order they run:
 
 - **`alpha`.** A color node whose default is translucent (`transparent`, `#RGBA` or
   `#RRGGBBAA` below full alpha, `rgba()`/`hsla()` or `rgb()`/`hsl()` with `/ a`, an alpha
@@ -638,18 +655,21 @@ page's section (`pages.home.sections.hero`), or a node's field
 - **Platforms.** `co.ordering.platforms` only on a visibility key
   (`platforms_not_visibility`); what it says there is §6's
   (`visibility.<key>.platforms.invalid`).
-- **Where a visibility group is shown.** Only a group of the `visibility` section says
-  `pages` (`pages_not_visibility`) or `components` (`components_not_visibility`), not
-  both (`pages_and_components`), naming pages (`page_unknown`) and components
-  (`component_unknown`) of the schema; a page or a component gets no two groups of the
-  same key (`page_group_repeated`, `component_group_repeated`). The shape of the lists
-  (at least one name, no repeats) is the meta-schema's. A component's own card then does
-  not list a path such a group already shows in that component, unless as its `toggle`
-  (`shown_by_visibility_group`, at the card).
+- **Where a visibility group is shown: pages.** Only a group of the `visibility`
+  section says `pages` (`pages_not_visibility`), naming pages of the schema
+  (`page_unknown`); a page gets no two groups of the same key (`page_group_repeated`).
 - **Every visibility key in one group.** Each visibility key is in exactly one group of
   the editor's sections, as a row (`paths`) or a card's switch (`toggle.path`)
   (`in_no_editor_group`, `in_several_editor_groups`), and the groups list only
   visibility keys that exist (`not_visibility_key`, at the path listed).
+- **Where a visibility group is shown: components.** Only a group of the `visibility`
+  section says `components` (`components_not_visibility`), not together with `pages`
+  (`pages_and_components`), naming components of the schema (`component_unknown`); a
+  component gets no two groups of the same key (`component_group_repeated`). The shape
+  of the `pages` and `components` lists (at least one name, no repeats) is the
+  meta-schema's. A component's own card then does not list a path such a group already
+  shows in that component, unless as its `toggle` (`shown_by_visibility_group`, at the
+  card).
 - **A component's order.** Under a component (its `scope` aside), the nodes of one group
   of the schema that share a card (`group`, or none: the rows) have different `order`s
   (`order_repeated`); in a component with cards (`groups`), every node has an `order`
