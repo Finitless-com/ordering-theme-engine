@@ -4,10 +4,10 @@
  * PHP's version_compare() and (string) cast over a fixed set of values, as
  * JSON on stdout: what src/php.ts versionCompare() and phpString() must
  * answer (validate() compares a schema's version with the previous one's,
- * and SchemaDiff compares options as strings). It runs with the PHP of
- * api-core's dev container, read from stdin:
+ * and SchemaDiff compares options as strings). scripts/sync-fixtures.sh
+ * runs it in PHP 8.3:
  *
- *   docker compose -f docker-compose.dev.yml exec -T api php < scripts/php-strings.php
+ *   php scripts/php-strings.php
  */
 
 declare(strict_types=1);

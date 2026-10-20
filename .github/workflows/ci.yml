@@ -28,3 +28,32 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+
+  # The PHP engine (php/src) in docker, and the parity contract: the
+  # fixtures the TypeScript tests compare with are exactly what this PHP
+  # answers. sync-fixtures.sh pins the PHP 8.3 they record.
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: composer validate and install
+        run: |
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app -e COMPOSER_HOME=/tmp/composer composer:2 validate --strict
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app -e COMPOSER_HOME=/tmp/composer composer:2 install --no-interaction --no-progress
+
+      # The lowest PHP composer.json accepts, and the one api-core runs.
+      - name: PHPUnit on PHP 8.1
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app php:8.1-cli vendor/bin/phpunit
+      - name: PHPUnit on PHP 8.3
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app php:8.3.35-cli vendor/bin/phpunit
+
+      - name: The fixtures are what the PHP engine answers
+        run: |
+          bash scripts/sync-fixtures.sh
+          if [ -n "$(git status --porcelain -- fixtures)" ]; then
+            git status --short -- fixtures
+            git diff --stat -- fixtures
+            echo "fixtures/ is not what php/src answers: run scripts/sync-fixtures.sh and commit it." >&2
+            exit 1
+          fi

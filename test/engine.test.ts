@@ -118,7 +118,7 @@ describe('compile', () => {
   })
 })
 
-describe('applyMigrations, as api-core\'s ThemeSchemaPublicationTest::testAThemeTakesWhatTheSchemaMovedWhereItWent', () => {
+describe('applyMigrations, as the PHP ThemeSchemaPublicationTest::testAThemeTakesWhatTheSchemaMovedWhereItWent', () => {
   it('moves each value unless its new place is set, and drops the maps it leaves empty', () => {
     const migrations = [
       { from: 'components.card.base.bg', to: 'components.card.base.background' },
@@ -159,7 +159,7 @@ describe('deriveColors', () => {
   })
 })
 
-describe('Identity, as api-core\'s ThemeOverallTest::testAFollowedBorderOfNoneAndAPathThatIsNotThere', () => {
+describe('Identity, as the PHP ThemeOverallTest::testAFollowedBorderOfNoneAndAPathThatIsNotThere', () => {
   it('gives a followed border of none a border, and creates no path the defaults do not have', () => {
     const schema = compile(goldenSchema()).schema
     const card = (schema.components as JsonMap).card as JsonMap
@@ -175,7 +175,7 @@ describe('Identity, as api-core\'s ThemeOverallTest::testAFollowedBorderOfNoneAn
   })
 })
 
-describe('compile, as api-core\'s ThemeSchemaNodesTest::testWhatAGroupOrTheEngineSaysForANodeThatDoesNot', () => {
+describe('compile, as the PHP ThemeSchemaNodesTest::testWhatAGroupOrTheEngineSaysForANodeThatDoesNot', () => {
   const nodes = goldenSchema()
   const declared = compile(nodes).schema
 
@@ -204,7 +204,7 @@ describe('compile, as api-core\'s ThemeSchemaNodesTest::testWhatAGroupOrTheEngin
   })
 })
 
-describe('deriveColors, as api-core\'s ThemeColorsTest::testADerivedColorChangesWhatDerivesFromIt', () => {
+describe('deriveColors, as the PHP ThemeColorsTest::testADerivedColorChangesWhatDerivesFromIt', () => {
   const defaults = { primary: '#2C7BE5', primary_pressed: '#1A69D3', focus: '#1A69D3' }
   const set = { primary: '#FF5500' }
 
@@ -280,7 +280,7 @@ describe('component derivations', () => {
   })
 })
 
-describe('matrices, as api-core\'s ThemeDerivationsTest::testAMatrixRoleIsLegibleOverAColor', () => {
+describe('matrices, as the PHP ThemeDerivationsTest::testAMatrixRoleIsLegibleOverAColor', () => {
   it('derives a role legible over a color, and keeps one the color has with `when: missing`', () => {
     const button = {
       colors: { warning: { main: '#F5C400' }, primary: { main: '#1E72E3', ink: '#000000' } },
@@ -294,7 +294,7 @@ describe('matrices, as api-core\'s ThemeDerivationsTest::testAMatrixRoleIsLegibl
   })
 })
 
-describe('compile, as api-core\'s ThemeSchemaNodesTest::testAVisibilityKeyMayShowOtherwiseOnAPlatform', () => {
+describe('compile, as the PHP ThemeSchemaNodesTest::testAVisibilityKeyMayShowOtherwiseOnAPlatform', () => {
   it('serves a visibility key\'s platform default with the platform\'s', () => {
     const nodes = goldenSchema() as JsonMap
     const logo = ((nodes.visibility as JsonMap)['business.header.logo'] as JsonMap)

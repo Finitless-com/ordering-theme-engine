@@ -2,19 +2,15 @@
 
 /*
  * The golden cases of validate(): named mutations of the product's current
- * schema, each with what api-core's ThemeSchemaPublisher::validate()
- * answers for it, as JSON on stdout. It runs inside api-core's dev
- * container, read from stdin (the container does not see this repository):
+ * schema, each with what ThemeSchemaPublisher::validate() answers for it,
+ * as JSON on stdout. scripts/sync-fixtures.sh runs it in PHP 8.3:
  *
- *   docker compose -f docker-compose.dev.yml exec -T api \
- *     php -- resources/themes/marketplace_website/26.0.json \
- *            resources/themes/marketplace_website/v1-map.json < scripts/validate-cases.php
+ *   php scripts/validate-cases.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
  *
- * The paths are relative to api-core's root. Each case stores its mutation,
- * not the schema it produces: a list of operations over the schema
- * (`["set", path, value]`, `["delete", path]`, a path being a list of keys)
- * that the package's test applies the same way to its copies of the schema
- * and the version 1 map (fixtures/schema-26.0.nodes.json, fixtures/v1-map.json).
+ * Each case stores its mutation, not the schema it produces: a list of
+ * operations over the schema (`["set", path, value]`, `["delete", path]`, a
+ * path being a list of keys) that the TypeScript test applies the same way
+ * to the same schema and version 1 map.
  * The answer is computed over the case as it was written and read back, so
  * PHP validates exactly what the fixture says.
  *
@@ -22,16 +18,17 @@
  * (validate()'s last argument).
  *
  * Every case's schema passes the meta-schema (ThemeSchemas::meta()), which
- * the package leaves to its consumer: a case that does not fails the script.
+ * the TypeScript validate() leaves to validateFull(): a case that does not
+ * fails the script.
  */
 
 declare(strict_types=1);
 
-use App\Themes\Schema\NodeCompiler;
-use App\Themes\ThemeSchemaPublisher;
-use App\Themes\ThemeSchemas;
+use Ordering\ThemeEngine\Schema\NodeCompiler;
+use Ordering\ThemeEngine\ThemeSchemaPublisher;
+use Ordering\ThemeEngine\ThemeSchemas;
 
-require getcwd() . '/vendor/autoload.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
 
 // A warning (an array cast to a string…) is a broken case, not a quiet one.
 set_error_handler(function (int $severity, string $message, string $file, int $line) {
@@ -40,7 +37,7 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
 
 [ , $schema_path, $map_path ] = $argv + [ null, null, null ];
 if (!is_string($schema_path) || !is_file($schema_path) || !is_string($map_path) || !is_file($map_path)) {
-    fwrite(STDERR, "Usage: php -- <schema in nodes> <version 1 map> < validate-cases.php\n");
+    fwrite(STDERR, "Usage: php scripts/validate-cases.php <schema in nodes> <version 1 map>\n");
     exit(1);
 }
 $read = fn (string $path) => json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
@@ -478,7 +475,7 @@ foreach ($cases as $index => $entry) {
     $cases[$index]['expected'] = ThemeSchemaPublisher::validate($schema, $v1_map, $previous, $entry['development'] ?? false);
 }
 if ($meta_failures !== []) {
-    fwrite(STDERR, "These cases do not pass the meta-schema, which the package does not check:\n" . json_encode($meta_failures, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    fwrite(STDERR, "These cases do not pass the meta-schema, which the TypeScript validate() does not check:\n" . json_encode($meta_failures, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     exit(1);
 }
 

@@ -3,8 +3,8 @@ import { validate, validateFull, validateShape, type JsonMap, type NodeSchema, t
 import { json } from './fixtures.js'
 
 /**
- * What api-core's ThemeSchemaPublisher::validate() answers for each
- * mutation of the product's current schema (scripts/validate-cases.php):
+ * What the PHP ThemeSchemaPublisher::validate() answers for each mutation
+ * of the product's current schema (scripts/validate-cases.php):
  * validate() answers the same code, the same errors in the same order and
  * the same changes.
  */

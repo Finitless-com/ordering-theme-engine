@@ -1,40 +1,45 @@
 #!/usr/bin/env bash
 #
-# Refreshes fixtures/ from api-core, the source of truth of the engine:
+# Regenerates what fixtures/ derives from the PHP engine of this repository
+# (php/src), the reference the TypeScript engine is compared with:
 #
-# - fixtures/cases/*.json: api-core's golden cases (tests/fixtures/themes/cases);
-# - fixtures/schema.nodes.json: the frozen schema they resolve over
-#   (tests/fixtures/themes/schema-marketplace_website-26.0.json), converted to
-#   nodes by `ordering:theme-schema:convert`;
-# - fixtures/schema-26.0.nodes.json: the product's current schema
-#   (resources/themes/marketplace_website/26.0.json), and
-#   fixtures/schema-26.0.empty.json, the empty theme api-core resolves with it
-#   (scripts/resolve-empty.php);
-# - fixtures/php-round.json: PHP's round() over the values the engine rounds
-#   (scripts/php-round.php), and fixtures/php-strings.json, its
-#   version_compare() and (string) cast (scripts/php-strings.php);
-# - fixtures/v1-map.json: the product's version 1 map
-#   (resources/themes/marketplace_website/v1-map.json),
-#   fixtures/schema-26.0.compiled.json, the tuples NodeCompiler::compile()
-#   answers for the current schema with it (scripts/compile-schema.php), and
-#   fixtures/validate.json, what ThemeSchemaPublisher::validate() answers for
-#   each mutation of the current schema (scripts/validate-cases.php);
-# - meta/theme-schema-1.json: the format's meta-schema, which the package
-#   ships (resources/themes/meta/theme-schema-1.json).
+# - fixtures/cases/*.json: the `resolved` of each golden case, what
+#   ThemeResolver::resolve() answers for its `values` over the frozen schema
+#   (fixtures/schema.tuples.json; scripts/golden-fixtures.php);
+# - fixtures/schema.nodes.json: that frozen schema converted to nodes
+#   (scripts/convert-schema.php);
+# - fixtures/schema-26.0.empty.json: the empty theme over the product's
+#   current schema (fixtures/schema-26.0.nodes.json; scripts/resolve-empty.php);
+# - fixtures/schema-26.0.compiled.json: the tuples NodeCompiler::compile()
+#   answers for that schema with its version 1 map (fixtures/v1-map.json;
+#   scripts/compile-schema.php);
+# - fixtures/validate.json: what ThemeSchemaPublisher::validate() answers
+#   for each mutation of that schema (scripts/validate-cases.php);
+# - fixtures/php-round.json and fixtures/php-strings.json: PHP's round(),
+#   version_compare() and (string) cast (scripts/php-round.php,
+#   scripts/php-strings.php).
 #
-# It needs api-core's dev container running (docker-compose.dev.yml). It only
-# reads api-core: the container writes to its own /tmp, never to the repo.
+# What it reads and never writes: the cases' `description`, `migrate` and
+# `values`, the two schemas, the version 1 map and meta/theme-schema-1.json.
 #
-#   API_CORE=../api-core bash scripts/sync-fixtures.sh
+# It runs PHP in docker, pinned to the PHP 8.3 the fixtures record, so it
+# needs nothing but docker on the host; it installs vendor/ with composer:2
+# when it is missing. CI runs it and fails if it changes anything.
+#
+#   bash scripts/sync-fixtures.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-API_CORE="$(cd "${API_CORE:-$ROOT/../api-core}" && pwd)"
 FIXTURES="$ROOT/fixtures"
-CONTAINER_TMP="/tmp/ordering-theme-engine"
+PHP_IMAGE="${PHP_IMAGE:-php:8.3.35-cli}"
+COMPOSER_IMAGE="${COMPOSER_IMAGE:-composer:2}"
 
-api() {
-  (cd "$API_CORE" && docker compose -f docker-compose.dev.yml exec -T api "$@")
+in_docker() {
+  docker run --rm -i -u "$(id -u):$(id -g)" -v "$ROOT:/app" -w /app "$@"
+}
+
+php() {
+  in_docker "$PHP_IMAGE" php "$@"
 }
 
 # What a command writes, into $1 only when it succeeds and answers JSON.
@@ -42,7 +47,7 @@ into() {
   local target="$1" tmp
   shift
   tmp="$(mktemp)"
-  if ! "$@" > "$tmp" || ! node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$tmp"; then
+  if ! "$@" > "$tmp" || ! php -r 'json_decode(stream_get_contents(STDIN), flags: JSON_THROW_ON_ERROR);' < "$tmp"; then
     echo "Failed: $target was left as it was." >&2
     cat "$tmp" >&2
     rm -f "$tmp"
@@ -51,41 +56,25 @@ into() {
   mv "$tmp" "$target"
 }
 
-echo "api-core: $API_CORE ($(git -C "$API_CORE" rev-parse --abbrev-ref HEAD) @ $(git -C "$API_CORE" rev-parse --short HEAD), working tree included)"
+if [[ ! -f "$ROOT/vendor/autoload.php" ]]; then
+  in_docker -e COMPOSER_HOME=/tmp/composer "$COMPOSER_IMAGE" install --no-interaction --no-progress >&2
+fi
 
-# The golden cases, as api-core pins them.
-rm -f "$FIXTURES"/cases/*.json
-mkdir -p "$FIXTURES/cases"
-cp "$API_CORE"/tests/fixtures/themes/cases/*.json "$FIXTURES/cases/"
+echo "PHP: $(php -r 'echo PHP_VERSION;') ($PHP_IMAGE), engine at $(git -C "$ROOT" rev-parse --short HEAD) with the working tree"
 
-# Their schema in nodes, converted by api-core itself.
-api mkdir -p "$CONTAINER_TMP"
-api php artisan ordering:theme-schema:convert \
-  tests/fixtures/themes/schema-marketplace_website-26.0.json \
-  "$CONTAINER_TMP/golden.nodes.json" "$CONTAINER_TMP/golden.v1.json" >&2
-into "$FIXTURES/schema.nodes.json" api cat "$CONTAINER_TMP/golden.nodes.json"
+# The golden cases' answers, written in place.
+php scripts/golden-fixtures.php > /dev/null
 
-# The current schema and its empty theme.
-cp "$API_CORE/resources/themes/marketplace_website/26.0.json" "$FIXTURES/schema-26.0.nodes.json"
-into "$FIXTURES/schema-26.0.empty.json" api php -- resources/themes/marketplace_website/26.0.json < "$ROOT/scripts/resolve-empty.php"
+# Their schema in nodes.
+into "$FIXTURES/schema.nodes.json" php scripts/convert-schema.php fixtures/schema.tuples.json
 
-# PHP's round(), which the engine imitates.
-into "$FIXTURES/php-round.json" api php < "$ROOT/scripts/php-round.php"
+# The current schema: its empty theme, its tuples and what validate() answers for its mutations.
+into "$FIXTURES/schema-26.0.empty.json" php scripts/resolve-empty.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
+into "$FIXTURES/schema-26.0.compiled.json" php scripts/compile-schema.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
+into "$FIXTURES/validate.json" php scripts/validate-cases.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
 
-# PHP's version_compare() and (string), which validate() imitates.
-into "$FIXTURES/php-strings.json" api php < "$ROOT/scripts/php-strings.php"
+# PHP's round(), version_compare() and (string), which the TypeScript engine imitates.
+into "$FIXTURES/php-round.json" php scripts/php-round.php
+into "$FIXTURES/php-strings.json" php scripts/php-strings.php
 
-# What validate() answers, over the current schema and the product's version 1 map.
-cp "$API_CORE/resources/themes/marketplace_website/v1-map.json" "$FIXTURES/v1-map.json"
-into "$FIXTURES/schema-26.0.compiled.json" api php -- resources/themes/marketplace_website/26.0.json \
-  resources/themes/marketplace_website/v1-map.json < "$ROOT/scripts/compile-schema.php"
-into "$FIXTURES/validate.json" api php -- resources/themes/marketplace_website/26.0.json \
-  resources/themes/marketplace_website/v1-map.json < "$ROOT/scripts/validate-cases.php"
-
-# The meta-schema the package ships for its consumers' JSON Schema validator.
-mkdir -p "$ROOT/meta"
-cp "$API_CORE/resources/themes/meta/theme-schema-1.json" "$ROOT/meta/theme-schema-1.json"
-
-api rm -rf "$CONTAINER_TMP"
-
-echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') cases, the golden schema, the 26.0 schema, its empty theme and its tuples, PHP's round(), $(node -p 'require(process.argv[1]).cases.length' "$FIXTURES/validate.json") validate() cases; meta/theme-schema-1.json."
+echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') golden cases, the golden schema in nodes, the 26.0 schema's empty theme and tuples, $(php -r 'echo count(json_decode(file_get_contents("fixtures/validate.json"), true)["cases"]);') validate() cases, PHP's round() and strings."

@@ -2,10 +2,10 @@
 
 /*
  * PHP's round() over a fixed set of values, as JSON on stdout: what
- * src/php.ts phpRound() must answer. It runs with the PHP of api-core's dev
- * container (8.3), read from stdin:
+ * src/php.ts phpRound() must answer. scripts/sync-fixtures.sh runs it in
+ * PHP 8.3, the PHP api-core runs:
  *
- *   docker compose -f docker-compose.dev.yml exec -T api php < scripts/php-round.php
+ *   php scripts/php-round.php
  *
  * The values are the kind the engine rounds: channels of a mix of two
  * colors, offsets, blurs and opacities scaled by a shadow style, halves of

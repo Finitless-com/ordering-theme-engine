@@ -3,15 +3,15 @@ import { defaults, resolve } from '../src/index.js'
 import { cases, differences, goldenSchema, json, schemaFor, type Case } from './fixtures.js'
 
 /**
- * api-core's golden cases (tests/fixtures/themes/cases): each theme
- * resolves to exactly what ThemeResolver::resolve() answers for it, over
- * the node conversion of the frozen Web Marketplace 26 schema.
+ * The golden cases (fixtures/cases): each theme resolves to exactly what
+ * the PHP ThemeResolver::resolve() answers for it, the one api-core runs,
+ * over the node conversion of the frozen Web Marketplace 26 schema.
  */
-describe('the golden cases of api-core', () => {
+describe('the golden cases', () => {
   const schema = goldenSchema()
   const all = cases()
 
-  it('has the cases api-core pins, the empty theme among them', () => {
+  it('has the cases the PHP engine pins, the empty theme among them', () => {
     expect(all.length).toBeGreaterThanOrEqual(26)
     expect(all.map(([name]) => name)).toContain('empty')
   })
@@ -26,9 +26,9 @@ describe('the golden cases of api-core', () => {
 })
 
 /**
- * The product's current schema (api-core's
- * resources/themes/marketplace_website/26.0.json): what a site whose theme
- * sets nothing serves today.
+ * The product's current schema (fixtures/schema-26.0.nodes.json, a copy of
+ * api-core's resources/themes/marketplace_website/26.0.json): what a site
+ * whose theme sets nothing serves today.
  */
 describe('the current schema', () => {
   it('resolves the empty theme as api-core does', () => {

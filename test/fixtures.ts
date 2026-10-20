@@ -3,9 +3,9 @@ import { basename } from 'node:path'
 import type { Json, NodeSchema, ThemeValues } from '../src/index.js'
 
 /**
- * The fixtures api-core produces (scripts/sync-fixtures.sh): its golden
- * cases, the node schema they resolve over, and the empty theme of the
- * product's current schema.
+ * The fixtures the PHP engine produces (php/src, through
+ * scripts/sync-fixtures.sh): the golden cases, the node schema they
+ * resolve over, and the empty theme of the product's current schema.
  */
 const directory = new URL('../fixtures/', import.meta.url)
 
