@@ -4,10 +4,8 @@ name: Publish
 # already published is never replaced: the registry refuses it and the job fails.
 #
 # It authenticates with npm's trusted publishing (OIDC): the registry trusts
-# this workflow of this repository. npm only lets a package that already
-# exists configure its trusted publisher, so the first version goes out with
-# the NPM_TOKEN secret instead; npm tries OIDC first and falls back to the
-# token. Once the trusted publisher is set, the secret is deleted.
+# this workflow of this repository, and the repo keeps no npm token.
+
 on:
   push:
     tags: ['v*']
@@ -30,8 +28,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-          # Writes the .npmrc that reads NODE_AUTH_TOKEN, the first version's fallback.
-          registry-url: https://registry.npmjs.org
 
       - name: The tag is the package's version
         run: |
@@ -53,5 +49,3 @@ jobs:
       # publishConfig names the registry; prepack builds dist/ again.
       - name: Publish
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

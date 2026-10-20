@@ -1,6 +1,6 @@
 {
   "name": "@orderingco/ordering-theme-engine",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "api-core's theme engine (version 2 themes) in TypeScript: the same schema, the same rules, the same answer.",
   "license": "MIT",
   "author": "Ordering, Inc.",

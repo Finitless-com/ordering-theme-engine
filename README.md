@@ -19,7 +19,7 @@ schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
 pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
-Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.3.0"`):
+Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.3.1"`):
 a minor can change what it resolves, because it follows api-core.
 
 ## Usage
@@ -324,12 +324,9 @@ licensed.
    a public repo). It authenticates with npm trusted publishing (OIDC). A published
    version is never replaced: if it already exists, the workflow fails.
 
-The first version of a package on npmjs is published by the same workflow, but with the
-repo's `NPM_TOKEN` secret (a granular npm token with write access to `@orderingco`),
-because npm only lets you configure a trusted publisher on a package that already exists
-(on npmjs, the package → *Settings → Trusted Publisher → GitHub Actions*:
-`Finitless-com`, `ordering-theme-engine`, `publish.yml`, no environment). Once it is
-configured, the secret is deleted and npm publishes over OIDC.
+The trusted publisher is set on npmjs (the package → *Settings → Trusted Publisher →
+GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
+environment, publish directly allowed). The repo keeps no npm token.
 
 `.github/workflows/ci.yml` runs typecheck, tests and build on every PR and every push to
 `master`.
