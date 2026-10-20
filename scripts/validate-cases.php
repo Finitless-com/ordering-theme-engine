@@ -198,6 +198,11 @@ $case('rules-invalid', 'Rules of another kind, a pattern no engine reads, and a 
     set([ 'site', 'business_slug', '$value' ], 'abcdef'),
     set([ 'site', 'business_slug', '$extensions', 'co.ordering' ], [ 'max_length' => 3 ]),
 ]);
+$case('typography-line', 'A line height in px, and one above the ratio the format takes: invalid typography defaults.', [
+    set([ 'tokens', 'typography', 'h1', '$value', 'line' ], 40),
+    set([ 'tokens', 'typography', 'caption', '$value', 'line' ], 3.2),
+    set([ 'tokens', 'typography', 'body', '$value', 'line' ], 0.8),
+]);
 $case('tokens-values', "Token defaults that are not literals of their group's kind.", [
     set('tokens.color.primary.$value', 'red'),
     set('tokens.space.md.$value', -5),

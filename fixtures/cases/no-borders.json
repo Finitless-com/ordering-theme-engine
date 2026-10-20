@@ -49,67 +49,67 @@
             "typography": {
                 "display": {
                     "size": 36,
-                    "line": 44,
+                    "line": 1.22,
                     "weight": 600,
                     "family": "montserrat"
                 },
                 "h1": {
                     "size": 32,
-                    "line": 40,
+                    "line": 1.25,
                     "weight": 600,
                     "family": "montserrat"
                 },
                 "h2": {
                     "size": 24,
-                    "line": 36,
+                    "line": 1.5,
                     "weight": 600,
                     "family": "montserrat"
                 },
                 "h3": {
                     "size": 20,
-                    "line": 30,
+                    "line": 1.5,
                     "weight": 600,
                     "family": "montserrat"
                 },
                 "h4": {
                     "size": 18,
-                    "line": 26,
+                    "line": 1.44,
                     "weight": 600,
                     "family": "montserrat"
                 },
                 "body_lg": {
                     "size": 16,
-                    "line": 24,
+                    "line": 1.5,
                     "weight": 400,
                     "family": "archivo"
                 },
                 "body": {
                     "size": 14,
-                    "line": 24,
+                    "line": 1.71,
                     "weight": 400,
                     "family": "archivo"
                 },
                 "body_sm": {
                     "size": 13,
-                    "line": 20,
+                    "line": 1.54,
                     "weight": 400,
                     "family": "archivo"
                 },
                 "label": {
                     "size": 14,
-                    "line": 20,
+                    "line": 1.43,
                     "weight": 600,
                     "family": "archivo"
                 },
                 "caption": {
                     "size": 12,
-                    "line": 18,
+                    "line": 1.5,
                     "weight": 400,
                     "family": "archivo"
                 },
                 "overline": {
                     "size": 12,
-                    "line": 20,
+                    "line": 1.67,
                     "weight": 600,
                     "letter_spacing": 0.48,
                     "transform": "uppercase",
@@ -117,7 +117,7 @@
                 },
                 "button": {
                     "size": 16,
-                    "line": 30,
+                    "line": 1.88,
                     "weight": 400,
                     "family": "archivo"
                 }
@@ -447,7 +447,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 16,
-                            "line": 30,
+                            "line": 1.88,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -458,7 +458,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 16,
-                            "line": 30,
+                            "line": 1.88,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -469,7 +469,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 16,
-                            "line": 30,
+                            "line": 1.88,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -1110,7 +1110,7 @@
                     "sm": {
                         "text": {
                             "size": 12,
-                            "line": 18,
+                            "line": 1.5,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -1118,7 +1118,7 @@
                     "md": {
                         "text": {
                             "size": 14,
-                            "line": 24,
+                            "line": 1.71,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -1126,7 +1126,7 @@
                     "lg": {
                         "text": {
                             "size": 16,
-                            "line": 24,
+                            "line": 1.5,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -1176,7 +1176,7 @@
                     "icon_size": 20,
                     "text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1211,7 +1211,7 @@
                         "width": 48,
                         "text": {
                             "size": 20,
-                            "line": 30,
+                            "line": 1.5,
                             "weight": 600,
                             "family": "montserrat"
                         },
@@ -1251,7 +1251,7 @@
                 "base": {
                     "label": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
@@ -1259,14 +1259,14 @@
                     "label_gap": 8,
                     "helper": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "helper_color": "#616161",
                     "error": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1281,7 +1281,7 @@
                 "base": {
                     "redirect_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1291,7 +1291,7 @@
                     "social_margin": 24,
                     "checkbox_label_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1307,7 +1307,7 @@
                             "icon_size": 20,
                             "text": {
                                 "size": 16,
-                                "line": 24,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "archivo"
                             },
@@ -1342,7 +1342,7 @@
                                 "width": 48,
                                 "text": {
                                     "size": 20,
-                                    "line": 30,
+                                    "line": 1.5,
                                     "weight": 600,
                                     "family": "montserrat"
                                 },
@@ -1436,7 +1436,7 @@
                     },
                     "item_text": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1487,7 +1487,7 @@
                     },
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1532,7 +1532,7 @@
                 "base": {
                     "value": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1578,7 +1578,7 @@
                     "variant": "pill",
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1678,7 +1678,7 @@
                     "color": "#000000",
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1720,7 +1720,7 @@
                     "radius": 10,
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     }
@@ -1780,7 +1780,7 @@
                 "base": {
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1794,7 +1794,7 @@
                     "radius": 10,
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1835,7 +1835,7 @@
                     "background": "#FFFFFF",
                     "title": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -1888,7 +1888,7 @@
                     "gap": 8,
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1948,7 +1948,7 @@
                     "padding": 8,
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -1986,13 +1986,13 @@
                     "gap": 8,
                     "title": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2113,7 +2113,7 @@
                     "radius": 10,
                     "text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     }
@@ -2186,7 +2186,7 @@
                     "chevron_size": 20,
                     "header_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2217,7 +2217,7 @@
                     },
                     "mark": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2231,7 +2231,7 @@
                 "base": {
                     "text": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2334,7 +2334,7 @@
                     "color": "#000000",
                     "title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2422,7 +2422,7 @@
                     "link": "#2C7BE5",
                     "text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2432,7 +2432,7 @@
                     "border_top": null,
                     "powered_by_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2445,7 +2445,7 @@
                     "title_color": "#FFFFFF",
                     "title": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2480,7 +2480,7 @@
                     "field_icon_color": "#1E72E3",
                     "field_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2600,7 +2600,7 @@
                     "header_background": "#EFEFEF",
                     "status": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2608,20 +2608,20 @@
                     "status_opacity": 0.7,
                     "name": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "meta_lg": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2671,13 +2671,13 @@
                     "image_background": "transparent",
                     "label": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "label_plain": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2706,7 +2706,7 @@
                     "cover_height": 324,
                     "closed_text": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2714,28 +2714,28 @@
                     "logo_size": 120,
                     "name": {
                         "size": 32,
-                        "line": 40,
+                        "line": 1.25,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "city": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "city_color": "#000000",
                     "address": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "address_color": "#000000",
                     "description": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -2800,7 +2800,7 @@
                             "variant": "pill",
                             "text": {
                                 "size": 14,
-                                "line": 24,
+                                "line": 1.71,
                                 "weight": 400,
                                 "family": "archivo"
                             },
@@ -2912,19 +2912,19 @@
                     "image_radius": 10,
                     "name": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
                     "description": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "price": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -2947,7 +2947,7 @@
                     "description_lines": 2,
                     "offer_price": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3007,21 +3007,21 @@
                     "thumb_gap": 20,
                     "name": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "description": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "description_color": "#616161",
                     "price": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3029,7 +3029,7 @@
                     "offer_price_color": "#616161",
                     "meta": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3095,21 +3095,21 @@
                     "radius": 10,
                     "title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "title_color": "#000000",
                     "description": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "description_color": "#616161",
                     "price": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3156,33 +3156,33 @@
                     "drawer_width": 500,
                     "business_name": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "line_image_size": 65,
                     "bill_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "total_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "checkout_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "footer_background": "#FFFFFF",
                     "bar_price": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     }
@@ -3212,7 +3212,7 @@
                     "section_gap": 24,
                     "section_title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3221,7 +3221,7 @@
                     "business_logo_radius": 10,
                     "business_name": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3232,7 +3232,7 @@
                         "main_width": 55,
                         "section_title": {
                             "size": 20,
-                            "line": 30,
+                            "line": 1.5,
                             "weight": 600,
                             "family": "montserrat"
                         }
@@ -3271,7 +3271,7 @@
                     "gap": 8,
                     "subtitle": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3281,7 +3281,7 @@
                     "multi": {
                         "subtitle": {
                             "size": 16,
-                            "line": 24,
+                            "line": 1.5,
                             "weight": 400,
                             "family": "archivo"
                         }
@@ -3320,7 +3320,7 @@
                     "radius": 10,
                     "text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3342,14 +3342,14 @@
                     "padding": 16,
                     "amount": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "amount_color": "#000000",
                     "label": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3361,7 +3361,7 @@
                     "loyalty_image_radius": 10,
                     "loyalty_name": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     }
@@ -3377,20 +3377,20 @@
                     "debit_color": "#E63757",
                     "description": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
                     "date": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "date_color": "#616161",
                     "amount": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     }
@@ -3400,7 +3400,7 @@
                 "base": {
                     "text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3418,7 +3418,7 @@
                 "base": {
                     "description_title_text": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3426,7 +3426,7 @@
                     "description_title_color_on_page": "#000000",
                     "description_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3453,7 +3453,7 @@
                     "color": "#FFFFFF",
                     "text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     }
@@ -3476,14 +3476,14 @@
                     "font_role": "body",
                     "name": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3491,7 +3491,7 @@
                     "status_color": "#1E72E3",
                     "total": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3540,21 +3540,21 @@
                 "base": {
                     "status_text": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "status_color": "#000000",
                     "info_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "progress_size": "lg",
                     "total_text": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3566,7 +3566,7 @@
                     "rating_size": "lg",
                     "address_title": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     }
@@ -3610,14 +3610,14 @@
                     "step_inactive": "#D8D8D8",
                     "status_text": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "status_color": "#1E72E3",
                     "eta_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3724,14 +3724,14 @@
                     "logo_radius": 10,
                     "name": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3751,14 +3751,14 @@
                 "base": {
                     "title": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "title_color": "#000000",
                     "description": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3771,7 +3771,7 @@
                     "page": {
                         "title": {
                             "size": 32,
-                            "line": 40,
+                            "line": 1.25,
                             "weight": 600,
                             "family": "montserrat"
                         },
@@ -3801,21 +3801,21 @@
                     },
                     "expiry_text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
                     "expiry_color": "#616161",
                     "name_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "name_color": "#000000",
                     "description_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3836,7 +3836,7 @@
                     "code_color": "#1E72E3",
                     "code_text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
@@ -3866,7 +3866,7 @@
                     "radius": 10,
                     "text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3930,14 +3930,14 @@
                     "overlay": "transparent",
                     "header_text": {
                         "size": 24,
-                        "line": 36,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
                     "header_color": "#000000",
                     "title": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     },
@@ -3945,7 +3945,7 @@
                     "show_titles": true,
                     "item_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -3986,7 +3986,7 @@
                     "icon_size": 20,
                     "label_text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     }
@@ -4093,7 +4093,7 @@
                     "mark": "#CBCBCB",
                     "label": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -4109,13 +4109,13 @@
                     "day_color": "#000000",
                     "day_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "weekday_text": {
                         "size": 16,
-                        "line": 24,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "archivo"
                     },
@@ -4138,13 +4138,13 @@
                     "gap": 4,
                     "name_text": {
                         "size": 14,
-                        "line": 24,
+                        "line": 1.71,
                         "weight": 400,
                         "family": "archivo"
                     },
                     "number_text": {
                         "size": 20,
-                        "line": 30,
+                        "line": 1.5,
                         "weight": 600,
                         "family": "montserrat"
                     }
@@ -4155,7 +4155,7 @@
                     "radius": 9999,
                     "text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "archivo"
                     },
@@ -4985,7 +4985,7 @@
                         "base": {
                             "field_text": {
                                 "size": 12,
-                                "line": 18,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "archivo"
                             }
@@ -5018,7 +5018,7 @@
                         "base": {
                             "amount": {
                                 "size": 24,
-                                "line": 36,
+                                "line": 1.5,
                                 "weight": 600,
                                 "family": "montserrat"
                             }
@@ -5028,7 +5028,7 @@
                         "base": {
                             "text": {
                                 "size": 13,
-                                "line": 20,
+                                "line": 1.54,
                                 "weight": 400,
                                 "family": "archivo"
                             }
@@ -5038,7 +5038,7 @@
                         "base": {
                             "meta": {
                                 "size": 13,
-                                "line": 20,
+                                "line": 1.54,
                                 "weight": 400,
                                 "family": "archivo"
                             }
@@ -5048,7 +5048,7 @@
                         "base": {
                             "status_text": {
                                 "size": 16,
-                                "line": 24,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "archivo"
                             }
@@ -5059,7 +5059,7 @@
                             "logo_size": 48,
                             "meta": {
                                 "size": 12,
-                                "line": 18,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "archivo"
                             }

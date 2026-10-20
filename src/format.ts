@@ -303,6 +303,10 @@ export function isShadow(value: unknown): boolean {
 }
 
 /** A typography style. */
+/** A typography's line height, a ratio of its size (ThemeFormat::LINE_MIN and LINE_MAX). */
+export const LINE_MIN = 0.8
+export const LINE_MAX = 3
+
 export function isTypography(value: unknown): boolean {
   if (!isArray(value) || !hasKeys(value, ['size', 'line', 'weight', 'letter_spacing', 'transform'])) {
     return false
@@ -314,7 +318,7 @@ export function isTypography(value: unknown): boolean {
   // isset(): null counts as missing.
   return size !== null && line !== null && weight !== null
     && isNumber(size) && size <= 200
-    && isNumber(line) && line <= 300
+    && typeof line === 'number' && line >= LINE_MIN && line <= LINE_MAX
     && isInt(weight) && (WEIGHTS as readonly number[]).includes(weight)
     && (!has(value, 'letter_spacing') || (typeof spacing === 'number' && Math.abs(spacing) <= 20))
     && (!has(value, 'transform') || get(value, 'transform') === 'none' || get(value, 'transform') === 'uppercase')

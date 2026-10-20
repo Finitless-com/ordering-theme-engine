@@ -859,6 +859,62 @@
             }
         },
         {
+            "name": "typography-line",
+            "description": "A line height in px, and one above the ratio the format takes: invalid typography defaults.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "h1",
+                            "$value",
+                            "line"
+                        ],
+                        40
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "caption",
+                            "$value",
+                            "line"
+                        ],
+                        3.2
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "body",
+                            "$value",
+                            "line"
+                        ],
+                        0.8
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.typography.h1",
+                        "code": "tokens.typography.h1.invalid"
+                    },
+                    {
+                        "path": "tokens.typography.caption",
+                        "code": "tokens.typography.caption.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
             "name": "tokens-values",
             "description": "Token defaults that are not literals of their group's kind.",
             "schema": {

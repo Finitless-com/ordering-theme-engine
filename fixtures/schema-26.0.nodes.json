@@ -3175,7 +3175,7 @@
             "display": {
                 "$value": {
                     "size": 36,
-                    "line": 44,
+                    "line": 1.22,
                     "weight": 600
                 },
                 "$extensions": {
@@ -3304,7 +3304,7 @@
             "h1": {
                 "$value": {
                     "size": 32,
-                    "line": 40,
+                    "line": 1.25,
                     "weight": 600
                 },
                 "$extensions": {
@@ -3433,7 +3433,7 @@
             "h2": {
                 "$value": {
                     "size": 24,
-                    "line": 36,
+                    "line": 1.5,
                     "weight": 600
                 },
                 "$extensions": {
@@ -3562,7 +3562,7 @@
             "h3": {
                 "$value": {
                     "size": 20,
-                    "line": 30,
+                    "line": 1.5,
                     "weight": 600
                 },
                 "$extensions": {
@@ -3691,7 +3691,7 @@
             "h4": {
                 "$value": {
                     "size": 18,
-                    "line": 26,
+                    "line": 1.44,
                     "weight": 600
                 },
                 "$extensions": {
@@ -3820,7 +3820,7 @@
             "body_lg": {
                 "$value": {
                     "size": 16,
-                    "line": 24,
+                    "line": 1.5,
                     "weight": 400
                 },
                 "$extensions": {
@@ -3949,7 +3949,7 @@
             "body": {
                 "$value": {
                     "size": 14,
-                    "line": 24,
+                    "line": 1.71,
                     "weight": 400
                 },
                 "$extensions": {
@@ -4078,7 +4078,7 @@
             "body_sm": {
                 "$value": {
                     "size": 13,
-                    "line": 20,
+                    "line": 1.54,
                     "weight": 400
                 },
                 "$extensions": {
@@ -4207,7 +4207,7 @@
             "label": {
                 "$value": {
                     "size": 14,
-                    "line": 20,
+                    "line": 1.43,
                     "weight": 600
                 },
                 "$extensions": {
@@ -4336,7 +4336,7 @@
             "caption": {
                 "$value": {
                     "size": 12,
-                    "line": 18,
+                    "line": 1.5,
                     "weight": 400
                 },
                 "$extensions": {
@@ -4465,7 +4465,7 @@
             "overline": {
                 "$value": {
                     "size": 12,
-                    "line": 20,
+                    "line": 1.67,
                     "weight": 600,
                     "letter_spacing": 0.48,
                     "transform": "uppercase"
@@ -4596,7 +4596,7 @@
             "button": {
                 "$value": {
                     "size": 16,
-                    "line": 30,
+                    "line": 1.88,
                     "weight": 400
                 },
                 "$extensions": {

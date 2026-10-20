@@ -9,32 +9,32 @@
             "typography": {
                 "h1": {
                     "size": 40,
-                    "line": 48,
+                    "line": 1.2,
                     "weight": 800
                 },
                 "h2": {
                     "size": 28,
-                    "line": 36,
+                    "line": 1.29,
                     "weight": 700
                 },
                 "h3": {
                     "size": 22,
-                    "line": 30,
+                    "line": 1.36,
                     "weight": 700
                 },
                 "body": {
                     "size": 16,
-                    "line": 26,
+                    "line": 1.63,
                     "weight": 400
                 },
                 "body_lg": {
                     "size": 17,
-                    "line": 26,
+                    "line": 1.53,
                     "weight": 400
                 },
                 "button": {
                     "size": 15,
-                    "line": 24,
+                    "line": 1.6,
                     "weight": 600,
                     "letter_spacing": 1,
                     "transform": "uppercase"
@@ -109,67 +109,67 @@
             "typography": {
                 "display": {
                     "size": 36,
-                    "line": 44,
+                    "line": 1.22,
                     "weight": 600,
                     "family": "playfair_display"
                 },
                 "h1": {
                     "size": 40,
-                    "line": 48,
+                    "line": 1.2,
                     "weight": 800,
                     "family": "playfair_display"
                 },
                 "h2": {
                     "size": 28,
-                    "line": 36,
+                    "line": 1.29,
                     "weight": 700,
                     "family": "playfair_display"
                 },
                 "h3": {
                     "size": 22,
-                    "line": 30,
+                    "line": 1.36,
                     "weight": 700,
                     "family": "playfair_display"
                 },
                 "h4": {
                     "size": 18,
-                    "line": 26,
+                    "line": 1.44,
                     "weight": 600,
                     "family": "playfair_display"
                 },
                 "body_lg": {
                     "size": 17,
-                    "line": 26,
+                    "line": 1.53,
                     "weight": 400,
                     "family": "inter"
                 },
                 "body": {
                     "size": 16,
-                    "line": 26,
+                    "line": 1.63,
                     "weight": 400,
                     "family": "inter"
                 },
                 "body_sm": {
                     "size": 13,
-                    "line": 20,
+                    "line": 1.54,
                     "weight": 400,
                     "family": "inter"
                 },
                 "label": {
                     "size": 14,
-                    "line": 20,
+                    "line": 1.43,
                     "weight": 600,
                     "family": "inter"
                 },
                 "caption": {
                     "size": 12,
-                    "line": 18,
+                    "line": 1.5,
                     "weight": 400,
                     "family": "inter"
                 },
                 "overline": {
                     "size": 12,
-                    "line": 20,
+                    "line": 1.67,
                     "weight": 600,
                     "letter_spacing": 0.48,
                     "transform": "uppercase",
@@ -177,7 +177,7 @@
                 },
                 "button": {
                     "size": 15,
-                    "line": 24,
+                    "line": 1.6,
                     "weight": 600,
                     "letter_spacing": 1,
                     "transform": "uppercase",
@@ -509,7 +509,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 15,
-                            "line": 24,
+                            "line": 1.6,
                             "weight": 600,
                             "letter_spacing": 1,
                             "transform": "uppercase",
@@ -522,7 +522,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 15,
-                            "line": 24,
+                            "line": 1.6,
                             "weight": 600,
                             "letter_spacing": 1,
                             "transform": "uppercase",
@@ -535,7 +535,7 @@
                         "padding_x": 16,
                         "text": {
                             "size": 15,
-                            "line": 24,
+                            "line": 1.6,
                             "weight": 600,
                             "letter_spacing": 1,
                             "transform": "uppercase",
@@ -1178,7 +1178,7 @@
                     "sm": {
                         "text": {
                             "size": 12,
-                            "line": 18,
+                            "line": 1.5,
                             "weight": 400,
                             "family": "inter"
                         }
@@ -1186,7 +1186,7 @@
                     "md": {
                         "text": {
                             "size": 16,
-                            "line": 26,
+                            "line": 1.63,
                             "weight": 400,
                             "family": "inter"
                         }
@@ -1194,7 +1194,7 @@
                     "lg": {
                         "text": {
                             "size": 17,
-                            "line": 26,
+                            "line": 1.53,
                             "weight": 400,
                             "family": "inter"
                         }
@@ -1244,7 +1244,7 @@
                     "icon_size": 20,
                     "text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1279,7 +1279,7 @@
                         "width": 48,
                         "text": {
                             "size": 22,
-                            "line": 30,
+                            "line": 1.36,
                             "weight": 700,
                             "family": "playfair_display"
                         },
@@ -1327,7 +1327,7 @@
                 "base": {
                     "label": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
@@ -1335,14 +1335,14 @@
                     "label_gap": 8,
                     "helper": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
                     "helper_color": "#616161",
                     "error": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1357,7 +1357,7 @@
                 "base": {
                     "redirect_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1367,7 +1367,7 @@
                     "social_margin": 24,
                     "checkbox_label_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1434,7 +1434,7 @@
                     },
                     "item_text": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1489,7 +1489,7 @@
                     },
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1534,7 +1534,7 @@
                 "base": {
                     "value": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1584,7 +1584,7 @@
                     "variant": "underline",
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1704,7 +1704,7 @@
                     "color": "#000000",
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1746,7 +1746,7 @@
                     "radius": 20,
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     }
@@ -1806,7 +1806,7 @@
                 "base": {
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1820,7 +1820,7 @@
                     "radius": 20,
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1861,7 +1861,7 @@
                     "background": "#FFFFFF",
                     "title": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -1914,7 +1914,7 @@
                     "gap": 8,
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -1994,7 +1994,7 @@
                     "padding": 8,
                     "text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2036,13 +2036,13 @@
                     "gap": 8,
                     "title": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2163,7 +2163,7 @@
                     "radius": 20,
                     "text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     }
@@ -2248,7 +2248,7 @@
                     "chevron_size": 20,
                     "header_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -2283,7 +2283,7 @@
                     },
                     "mark": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2297,7 +2297,7 @@
                 "base": {
                     "text": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -2380,7 +2380,7 @@
                     "color": "#000000",
                     "title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -2472,7 +2472,7 @@
                     "link": "#2C7BE5",
                     "text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2486,7 +2486,7 @@
                     },
                     "powered_by_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2499,7 +2499,7 @@
                     "title_color": "#FFFFFF",
                     "title": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -2538,7 +2538,7 @@
                     "field_icon_color": "#1E72E3",
                     "field_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2658,7 +2658,7 @@
                     "header_background": "#EFEFEF",
                     "status": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -2666,20 +2666,20 @@
                     "status_opacity": 0.7,
                     "name": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
                     "meta_lg": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2729,13 +2729,13 @@
                     "image_background": "transparent",
                     "label": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
                     "label_plain": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2764,7 +2764,7 @@
                     "cover_height": 324,
                     "closed_text": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -2772,28 +2772,28 @@
                     "logo_size": 120,
                     "name": {
                         "size": 40,
-                        "line": 48,
+                        "line": 1.2,
                         "weight": 800,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "city": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
                     "city_color": "#000000",
                     "address": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
                     "address_color": "#000000",
                     "description": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -2862,7 +2862,7 @@
                             "variant": "underline",
                             "text": {
                                 "size": 16,
-                                "line": 26,
+                                "line": 1.63,
                                 "weight": 400,
                                 "family": "inter"
                             },
@@ -2974,19 +2974,19 @@
                     "image_radius": 20,
                     "name": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
                     "description": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
                     "price": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -3009,7 +3009,7 @@
                     "description_lines": 2,
                     "offer_price": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3069,21 +3069,21 @@
                     "thumb_gap": 20,
                     "name": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "description": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
                     "description_color": "#616161",
                     "price": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -3091,7 +3091,7 @@
                     "offer_price_color": "#616161",
                     "meta": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3161,21 +3161,21 @@
                     "radius": 20,
                     "title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "title_color": "#000000",
                     "description": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "inter"
                     },
                     "description_color": "#616161",
                     "price": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3222,33 +3222,33 @@
                     "drawer_width": 500,
                     "business_name": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "line_image_size": 65,
                     "bill_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
                     "total_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
                     "checkout_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "footer_background": "#FFFFFF",
                     "bar_price": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     }
@@ -3278,7 +3278,7 @@
                     "section_gap": 24,
                     "section_title": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -3287,7 +3287,7 @@
                     "business_logo_radius": 20,
                     "business_name": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -3298,7 +3298,7 @@
                         "main_width": 55,
                         "section_title": {
                             "size": 22,
-                            "line": 30,
+                            "line": 1.36,
                             "weight": 700,
                             "family": "playfair_display"
                         }
@@ -3337,7 +3337,7 @@
                     "gap": 8,
                     "subtitle": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3347,7 +3347,7 @@
                     "multi": {
                         "subtitle": {
                             "size": 17,
-                            "line": 26,
+                            "line": 1.53,
                             "weight": 400,
                             "family": "inter"
                         }
@@ -3386,7 +3386,7 @@
                     "radius": 20,
                     "text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -3408,14 +3408,14 @@
                     "padding": 16,
                     "amount": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "amount_color": "#000000",
                     "label": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3427,7 +3427,7 @@
                     "loyalty_image_radius": 20,
                     "loyalty_name": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     }
@@ -3443,20 +3443,20 @@
                     "debit_color": "#E63757",
                     "description": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
                     "date": {
                         "size": 13,
-                        "line": 20,
+                        "line": 1.54,
                         "weight": 400,
                         "family": "inter"
                     },
                     "date_color": "#616161",
                     "amount": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     }
@@ -3466,7 +3466,7 @@
                 "base": {
                     "text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3484,7 +3484,7 @@
                 "base": {
                     "description_title_text": {
                         "size": 36,
-                        "line": 44,
+                        "line": 1.22,
                         "weight": 600,
                         "family": "playfair_display"
                     },
@@ -3492,7 +3492,7 @@
                     "description_title_color_on_page": "#000000",
                     "description_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3519,7 +3519,7 @@
                     "color": "#FFFFFF",
                     "text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     }
@@ -3538,14 +3538,14 @@
                     "font_role": "body",
                     "name": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3553,7 +3553,7 @@
                     "status_color": "#1E72E3",
                     "total": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3602,21 +3602,21 @@
                 "base": {
                     "status_text": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "status_color": "#000000",
                     "info_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
                     "progress_size": "lg",
                     "total_text": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -3628,7 +3628,7 @@
                     "rating_size": "lg",
                     "address_title": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     }
@@ -3672,14 +3672,14 @@
                     "step_inactive": "#D8D8D8",
                     "status_text": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "status_color": "#1E72E3",
                     "eta_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3790,14 +3790,14 @@
                     "logo_radius": 20,
                     "name": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "meta": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3817,14 +3817,14 @@
                 "base": {
                     "title": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "title_color": "#000000",
                     "description": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3837,7 +3837,7 @@
                     "page": {
                         "title": {
                             "size": 40,
-                            "line": 48,
+                            "line": 1.2,
                             "weight": 800,
                             "family": "playfair_display"
                         },
@@ -3863,21 +3863,21 @@
                     },
                     "expiry_text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
                     "expiry_color": "#616161",
                     "name_text": {
                         "size": 18,
-                        "line": 26,
+                        "line": 1.44,
                         "weight": 600,
                         "family": "playfair_display"
                     },
                     "name_color": "#000000",
                     "description_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -3898,7 +3898,7 @@
                     "code_color": "#1E72E3",
                     "code_text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
@@ -3928,7 +3928,7 @@
                     "radius": 9999,
                     "text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -4004,14 +4004,14 @@
                     "overlay": "transparent",
                     "header_text": {
                         "size": 28,
-                        "line": 36,
+                        "line": 1.29,
                         "weight": 700,
                         "family": "playfair_display"
                     },
                     "header_color": "#000000",
                     "title": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     },
@@ -4019,7 +4019,7 @@
                     "show_titles": true,
                     "item_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -4068,7 +4068,7 @@
                     "icon_size": 20,
                     "label_text": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     }
@@ -4183,7 +4183,7 @@
                     "mark": "#CBCBCB",
                     "label": {
                         "size": 12,
-                        "line": 18,
+                        "line": 1.5,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -4199,13 +4199,13 @@
                     "day_color": "#000000",
                     "day_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
                     "weekday_text": {
                         "size": 17,
-                        "line": 26,
+                        "line": 1.53,
                         "weight": 400,
                         "family": "inter"
                     },
@@ -4232,13 +4232,13 @@
                     "gap": 4,
                     "name_text": {
                         "size": 16,
-                        "line": 26,
+                        "line": 1.63,
                         "weight": 400,
                         "family": "inter"
                     },
                     "number_text": {
                         "size": 22,
-                        "line": 30,
+                        "line": 1.36,
                         "weight": 700,
                         "family": "playfair_display"
                     }
@@ -4249,7 +4249,7 @@
                     "radius": 9999,
                     "text": {
                         "size": 14,
-                        "line": 20,
+                        "line": 1.43,
                         "weight": 600,
                         "family": "inter"
                     },
@@ -5083,7 +5083,7 @@
                         "base": {
                             "field_text": {
                                 "size": 12,
-                                "line": 18,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "inter"
                             }
@@ -5116,7 +5116,7 @@
                         "base": {
                             "amount": {
                                 "size": 28,
-                                "line": 36,
+                                "line": 1.29,
                                 "weight": 700,
                                 "family": "playfair_display"
                             }
@@ -5126,7 +5126,7 @@
                         "base": {
                             "text": {
                                 "size": 13,
-                                "line": 20,
+                                "line": 1.54,
                                 "weight": 400,
                                 "family": "inter"
                             }
@@ -5136,7 +5136,7 @@
                         "base": {
                             "meta": {
                                 "size": 13,
-                                "line": 20,
+                                "line": 1.54,
                                 "weight": 400,
                                 "family": "inter"
                             }
@@ -5146,7 +5146,7 @@
                         "base": {
                             "status_text": {
                                 "size": 17,
-                                "line": 26,
+                                "line": 1.53,
                                 "weight": 400,
                                 "family": "inter"
                             }
@@ -5157,7 +5157,7 @@
                             "logo_size": 48,
                             "meta": {
                                 "size": 12,
-                                "line": 18,
+                                "line": 1.5,
                                 "weight": 400,
                                 "family": "inter"
                             }
