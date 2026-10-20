@@ -1,133 +1,134 @@
-# Crear el esquema de temas de un producto
+# Creating a product's theme schema
 
-Guía paso a paso para el equipo de un producto (una app nativa, el Call Center, una web)
-que crea su esquema de temas desde cero. El formato completo está en
-[schema-format.md](schema-format.md); aquí va el camino.
+A step-by-step guide for a product team (a native app, the Call Center, a website)
+creating its theme schema from scratch. The full format is in
+[schema-format.md](schema-format.md); this is the path.
 
-El esquema es un archivo JSON en el repo del producto (por ejemplo `theme.schema.json`),
-junto al código que lo lee. Quien agrega un componente o una clave en el código la agrega
-al esquema en el mismo PR. El CI del producto lo valida y lo publica en api-core, que es
-la autoridad: lo vuelve a validar, guarda cada versión y resuelve con ella los temas de
-los sitios de ese tipo de producto.
+The schema is a JSON file in the product's repo (for example `theme.schema.json`), next
+to the code that reads it. Whoever adds a component or a key in the code adds it to the
+schema in the same PR. The product's CI validates it and publishes it to api-core, which
+is the authority: it validates it again, stores each version and uses it to resolve the
+themes of the sites of that product type.
 
-1. [Registrar el tipo de producto en api-core](#1-registrar-el-tipo-de-producto-en-api-core)
-2. [Partir del vocabulario común](#2-partir-del-vocabulario-común)
-3. [El meta-esquema y el editor](#3-el-meta-esquema-y-el-editor)
-4. [Validar en local](#4-validar-en-local)
-5. [Publicar](#5-publicar)
-6. [Versiones y migraciones](#6-versiones-y-migraciones)
-7. [Usar el resultado: `resolve()` y `defaults()`](#7-usar-el-resultado-resolve-y-defaults)
-8. [Ejemplo mínimo completo](#8-ejemplo-mínimo-completo)
+1. [Register the product type in api-core](#1-register-the-product-type-in-api-core)
+2. [Start from the common vocabulary](#2-start-from-the-common-vocabulary)
+3. [The meta-schema and the editor](#3-the-meta-schema-and-the-editor)
+4. [Validate locally](#4-validate-locally)
+5. [Publish](#5-publish)
+6. [Versions and migrations](#6-versions-and-migrations)
+7. [Using the result: `resolve()` and `defaults()`](#7-using-the-result-resolve-and-defaults)
+8. [Complete minimal example](#8-complete-minimal-example)
 
-## 1. Registrar el tipo de producto en api-core
+## 1. Register the product type in api-core
 
-`product_type` tiene que ser un tipo del catálogo del Builder. Hoy son:
+`product_type` must be a type in the Builder catalog. Today they are:
 
 `marketplace_app`, `franchise_app`, `marketplace_website`, `franchise_website`,
-`store_app`, `driver_app`, `kiosk_app`, `call_center` y `dashboard`.
+`store_app`, `driver_app`, `kiosk_app`, `call_center` and `dashboard`.
 
-- **Si tu producto es uno de ellos, no hay nada que hacer en api-core.** Usa ese valor.
-- **Si es un tipo nuevo**, es el único cambio en api-core: un PR que agrega un caso a
-  `App\Enums\BuilderProductTypeEnum` (`app/Enums/BuilderProductTypeEnum.php`), con un
-  valor `^[a-z0-9_]+$` de hasta 40 caracteres. En ese PR se decide si es una app
-  (`appValues()`, se compila desde una base del Builder) o una web (`webValues()`), y,
-  si es una web, su `webSiteType()` y su `temporalDomainSuffix()`: eso es del Builder, no
-  del tema. Hasta que ese PR esté desplegado, api-core rechaza el esquema con
+- **If your product is one of them, there is nothing to do in api-core.** Use that value.
+- **If it is a new type**, that is the only change in api-core: a PR that adds a case to
+  `App\Enums\BuilderProductTypeEnum` (`app/Enums/BuilderProductTypeEnum.php`), with a
+  value `^[a-z0-9_]+$` of up to 40 characters. That PR decides whether it is an app
+  (`appValues()`, compiled from a Builder base) or a website (`webValues()`), and, if it
+  is a website, its `webSiteType()` and its `temporalDomainSuffix()`: that belongs to the
+  Builder, not to the theme. Until that PR is deployed, api-core rejects the schema with
   `product_type.invalid`.
 
-  Este paquete tiene su propia copia de la lista (`PRODUCT_TYPES`), así que un tipo
-  nuevo también necesita una versión del paquete que lo incluya; si no, `validate()` en
-  local responde `product_type.invalid` aunque api-core ya lo acepte.
+  This package has its own copy of the list (`PRODUCT_TYPES`), so a new type also needs
+  a package version that includes it; otherwise, `validate()` answers
+  `product_type.invalid` locally even if api-core already accepts it.
 
-Además necesitas, para cada entorno de api-core en que publiques (local, staging,
-producción), su **clave de publicación** (`THEME_PUBLISH_KEY` en ese api-core). La da
-quien opera api-core; va en los secretos del CI y nunca en el repo. Un entorno sin clave
-configurada rechaza toda publicación.
+You also need, for each api-core environment you publish to (local, staging,
+production), its **publish key** (`THEME_PUBLISH_KEY` in that api-core). Whoever runs
+api-core provides it; it goes in the CI secrets and never in the repo. An environment
+with no key configured rejects every publish.
 
-## 2. Partir del vocabulario común
+## 2. Start from the common vocabulary
 
-Los nombres de los tokens son los mismos en todos los productos
-([schema-format.md §4](schema-format.md#4-tokens)): así un preset o un color de marca
-significa lo mismo en la web, en la app y en el Call Center. Lo que cada producto decide
-son los defaults y qué parte del vocabulario usa:
+Token names are the same in every product
+([schema-format.md §4](schema-format.md#4-tokens)): that way a preset or a brand color
+means the same thing on the web, in the app and in the Call Center. What each product
+decides is the defaults and which part of the vocabulary it uses:
 
-1. **Escalas completas.** Copia `font`, `radius`, `size`, `icon`, `space`, `layout`,
-   `motion`, `border` y `shadow` con todos sus nombres (el ejemplo de §8 los tiene con
-   los defaults de la web) y ajusta los valores. Son números sin unidad: px en la web,
-   pt en nativo.
-2. **Colores, tipografías y opacidades.** Elige del catálogo solo los que tu código lee,
-   al menos uno de cada grupo. No inventes nombres: uno fuera del catálogo se rechaza
-   (`tokens.color.brand.unknown`). Si te falta uno, se agrega al catálogo del formato
-   (aquí y en api-core) antes de usarlo.
-3. **Tipos y opciones exactos.** Cada token lleva el `$type` del catálogo; los de
-   `font`, `layout.mode` y los grupos de Identidad, además, exactamente sus `options`, en
-   el mismo orden. La forma más simple es poner el `$type` en el grupo.
-4. **Identidad, opcional.** `shadow_style`, `border_style`, `motion_style`,
-   `focus_ring` y `scrollbar` son ajustes generales; decláralos si tu editor los ofrece.
-   Las propiedades que siguen a Identidad llevan `co.ordering.follows`
-   ([§11.2](schema-format.md#112-identidad-follows)).
-5. **Declara tus derivaciones.** Si un color tuyo deriva de otro (el `pressed` del
-   primario), dilo con `co.ordering.derive`. Si el esquema no declara ninguna, el motor
-   usa sus reglas por defecto y **agrega al tema resuelto colores que tu esquema no
-   tiene** (`primary_subtle`, `focus`, `primary_text`…); con un solo `derive`, no
-   ([§11.5](schema-format.md#115-las-reglas-del-motor)). Lo mismo vale para `follows` y
-   para los `derive` y `matrix` de los componentes: declarar uno reemplaza todas las
-   reglas del motor de esa categoría.
+1. **Complete scales.** Copy `font`, `radius`, `size`, `icon`, `space`, `layout`,
+   `motion`, `border` and `shadow` with all their names (the example in §8 has them with
+   the web's defaults) and adjust the values. They are unitless numbers: px on the web,
+   pt on native.
+2. **Colors, typographies and opacities.** Choose from the catalog only the ones your
+   code reads, at least one of each group. Do not invent names: one outside the catalog
+   is rejected (`tokens.color.brand.unknown`). If you are missing one, it is added to
+   the format's catalog (here and in api-core) before you use it.
+3. **Exact types and options.** Each token carries the catalog's `$type`; those of
+   `font`, `layout.mode` and the Identity groups also carry exactly their `options`, in
+   the same order. The simplest way is to put the `$type` on the group.
+4. **Identity, optional.** `shadow_style`, `border_style`, `motion_style`,
+   `focus_ring` and `scrollbar` are general settings; declare them if your editor offers
+   them. Properties that follow Identity carry `co.ordering.follows`
+   ([§11.2](schema-format.md#112-identity-follows)).
+5. **Declare your derivations.** If one of your colors derives from another (the
+   primary's `pressed`), say so with `co.ordering.derive`. If the schema declares none,
+   the engine uses its default rules and **adds to the resolved theme colors your schema
+   does not have** (`primary_subtle`, `focus`, `primary_text`…); with a single `derive`,
+   it does not ([§11.5](schema-format.md#115-the-engines-rules)). The same goes for
+   `follows` and for components' `derive` and `matrix`: declaring one replaces all the
+   engine's rules of that category.
 
-Después vienen tus `components`, `visibility`, `images`, `pages` y, si los tienes, los
-ajustes de tu sitio (`site`). Todo lo que tu código lee del tema tiene que estar en el
-esquema, con su default: un tema guarda solo lo que cambia, y lo demás sale de ahí.
+Then come your `components`, `visibility`, `images`, `pages` and, if you have them, your
+site's settings (`site`). Everything your code reads from the theme must be in the
+schema, with its default: a theme stores only what changes, and the rest comes from
+there.
 
-## 3. El meta-esquema y el editor
+## 3. The meta-schema and the editor
 
-El paquete trae el meta-esquema del formato (JSON Schema 2020-12):
+The package ships the format's meta-schema (JSON Schema 2020-12):
 
 ```
 node_modules/@orderingco/ordering-theme-engine/meta/theme-schema-1.json
 ```
 
-importable como `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`.
+importable as `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`.
 
-**`$schema` no puede apuntar al archivo.** Tiene que ser exactamente
-`"urn:ordering:theme-schema:1"`: es como api-core reconoce el formato, y con cualquier
-otro valor responde `schema.format`. Eso limita el autocompletado:
+**`$schema` cannot point to the file.** It must be exactly
+`"urn:ordering:theme-schema:1"`: that is how api-core recognizes the format, and with any
+other value it answers `schema.format`. That limits autocompletion:
 
-- Los editores que leen `$schema` antes que sus propias asociaciones (VS Code, por
-  ejemplo) intentan cargar el URN, no pueden, y no usan una asociación por nombre de
-  archivo (`json.schemas` con `fileMatch`) mientras el archivo tenga ese `$schema`.
-- Los editores que permiten asociar un JSON Schema a un archivo por su nombre o ruta, y
-  dan prioridad a esa asociación, pueden usar el archivo de arriba.
+- Editors that read `$schema` before their own associations (VS Code, for example) try
+  to load the URN, cannot, and do not use an association by file name (`json.schemas`
+  with `fileMatch`) while the file has that `$schema`.
+- Editors that let you associate a JSON Schema with a file by its name or path, and give
+  that association priority, can use the file above.
 
-Mientras tanto, la referencia es `ordering-theme validate` (§4), que valida contra el
-mismo meta-esquema y da cada error con su ruta.
+Meanwhile, the reference is `ordering-theme validate` (§4), which validates against the
+same meta-schema and gives each error with its path.
 
-## 4. Validar en local
+## 4. Validate locally
 
-Instala el paquete como dependencia de desarrollo, con una versión exacta. Se publica en
-npmjs y no necesita token:
+Install the package as a dev dependency, with an exact version. It is published on
+npmjs and needs no token:
 
 ```sh
 pnpm add -D --save-exact @orderingco/ordering-theme-engine
 ```
 
-### Con la CLI
+### With the CLI
 
 ```sh
-pnpm exec ordering-theme validate theme.schema.json                     # meta-esquema + reglas, como api-core
-pnpm exec ordering-theme validate theme.schema.json --previous prev.json # y contra la última versión de tu base (§6)
+pnpm exec ordering-theme validate theme.schema.json                     # meta-schema + rules, like api-core
+pnpm exec ordering-theme validate theme.schema.json --previous prev.json # and against the latest version of your base (§6)
 pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json
-pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check  # en el CI: ¿está al día?
+pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check  # in CI: is it up to date?
 ```
 
-`validate` termina con código 1 si el esquema no pasa, y lista cada `{ path, code }`
-([schema-format.md §15](schema-format.md#15-errores)). `ordering-theme --help` da todas
-las opciones.
+`validate` exits with code 1 if the schema does not pass, and lists each `{ path, code }`
+([schema-format.md §15](schema-format.md#15-errors)). `ordering-theme --help` lists all
+the options.
 
-### Desde código
+### From code
 
-`validateFull(schema, options?)` hace lo mismo que la CLI: el meta-esquema (compilado
-dentro del paquete, sin Ajv) y después `validate()`, que aplica las mismas reglas que
-api-core, en el mismo orden y con los mismos códigos:
+`validateFull(schema, options?)` does the same as the CLI: the meta-schema (compiled
+inside the package, without Ajv) and then `validate()`, which applies the same rules as
+api-core, in the same order and with the same codes:
 
 ```ts
 import { readFileSync } from 'node:fs'
@@ -135,149 +136,149 @@ import { validateFull } from '@orderingco/ordering-theme-engine'
 
 const schema = JSON.parse(readFileSync('theme.schema.json', 'utf8'))
 
-// Con `previous`, la última versión publicada de tu base, también compara las versiones (§6).
+// With `previous`, the latest published version of your base, it also compares the versions (§6).
 const { code, errors } = validateFull(schema)
 if (code !== null) throw new Error(`${code}: ${errors.map((e) => e.code).join(', ')}`)
 ```
 
-Lo que solo api-core puede decir es si la versión ya está publicada con otro contenido
-(`schema.version_exists`); para eso está `publish --dry-run`.
+What only api-core can tell is whether the version is already published with different
+content (`schema.version_exists`); that is what `publish --dry-run` is for.
 
-## 5. Publicar
+## 5. Publish
 
 ```sh
-export THEME_PUBLISH_API=https://apiv4.ordering.co/v400   # el api-core del entorno, con su versión
-export THEME_PUBLISH_KEY=…                                # la clave de ese entorno
+export THEME_PUBLISH_API=https://apiv4.ordering.co/v400   # the environment's api-core, with its version
+export THEME_PUBLISH_KEY=…                                # that environment's key
 
-pnpm exec ordering-theme publish theme.schema.json --dry-run   # todo menos guardar
+pnpm exec ordering-theme publish theme.schema.json --dry-run   # everything but storing
 pnpm exec ordering-theme publish theme.schema.json
 ```
 
-`publish` valida primero en local y no envía nada si el esquema no pasa. Sin
-`THEME_PUBLISH_API` o `THEME_PUBLISH_KEY` no publica y termina bien; con `--required`
-(o `THEME_PUBLISH_REQUIRED=1`) termina con error, que es lo que conviene en un deploy.
+`publish` validates locally first and sends nothing if the schema does not pass. Without
+`THEME_PUBLISH_API` or `THEME_PUBLISH_KEY` it does not publish and exits successfully;
+with `--required` (or `THEME_PUBLISH_REQUIRED=1`) it exits with an error, which is what
+you want in a deploy.
 
-Lo recomendado en el CI:
+Recommended in CI:
 
-- **en cada PR:** `publish --dry-run` contra staging. Responde lo mismo que publicar,
-  sin guardar nada;
-- **en cada deploy:** `publish` contra el api-core de ese entorno, antes de desplegar.
-  Volver a publicar la misma versión con el mismo contenido responde `unchanged`, así que
-  el deploy se puede repetir.
+- **on every PR:** `publish --dry-run` against staging. It answers the same as
+  publishing, without storing anything;
+- **on every deploy:** `publish` against that environment's api-core, before deploying.
+  Publishing the same version again with the same content answers `unchanged`, so the
+  deploy can be repeated.
 
-Por debajo es una llamada a api-core (rutas de sistema, solo con la clave):
+Under the hood it is a call to api-core (system routes, key only):
 
 ```http
 POST {THEME_PUBLISH_API}/system/theme_schemas
-X-Theme-Publish-Key-X: <clave>
+X-Theme-Publish-Key-X: <key>
 Content-Type: application/json
 
 { "schema": { … }, "dry_run": true }
 ```
 
-- `schema`: el esquema tal cual.
-- `v1_map`: solo para un producto con temas v1 que api-core convierte (hoy, la web
-  marketplace). Un producto nuevo no lo manda.
-- `dry_run`: `true` comprueba todo y no guarda.
+- `schema`: the schema as is.
+- `v1_map`: only for a product with v1 themes that api-core converts (today, the
+  marketplace website). A new product does not send it.
+- `dry_run`: `true` checks everything and stores nothing.
 
-Respuestas (`{ error, result, … }`, como todo api-core):
+Responses (`{ error, result, … }`, like all of api-core):
 
-| HTTP | Cuándo | Cuerpo |
+| HTTP | When | Body |
 |---|---|---|
-| 201 | se publicó | `result: { status: "created", product_type, version, sha256, changes }` |
-| 200 | la versión ya existía con el mismo contenido / `dry_run` válido / reemplazada en modo desarrollo | `status: "unchanged"` / `"valid"` / `"replaced"` |
-| 401 | sin clave, clave equivocada o el entorno no tiene clave | `result: ["You don't have permission"]` |
-| 409 | `schema.version_exists`, `schema.version_order` | `error_codes: [código]`, `errors: [{ path, code }]` |
-| 422 | `schema.format`, `schema.invalid`, `schema.incompatible` | ídem |
+| 201 | published | `result: { status: "created", product_type, version, sha256, changes }` |
+| 200 | the version already existed with the same content / valid `dry_run` / replaced in development mode | `status: "unchanged"` / `"valid"` / `"replaced"` |
+| 401 | no key, wrong key or the environment has no key | `result: ["You don't have permission"]` |
+| 409 | `schema.version_exists`, `schema.version_order` | `error_codes: [code]`, `errors: [{ path, code }]` |
+| 422 | `schema.format`, `schema.invalid`, `schema.incompatible` | same |
 
-`changes` es `{ added, removed, migrated, deprecated }` contra la última versión de la
-base (null si es la primera). Con la misma clave, `GET {api}/system/theme_schemas/{product_type}`
-lista las versiones publicadas (`{ version, sha256, created_at }`) y
-`GET {api}/system/theme_schemas/{product_type}/{version}` devuelve una.
+`changes` is `{ added, removed, migrated, deprecated }` against the latest version of the
+base (null if it is the first). With the same key, `GET {api}/system/theme_schemas/{product_type}`
+lists the published versions (`{ version, sha256, created_at }`) and
+`GET {api}/system/theme_schemas/{product_type}/{version}` returns one.
 
-## 6. Versiones y migraciones
+## 6. Versions and migrations
 
-`version` es `base.minor.patch`. La base es la versión mayor del producto (por ejemplo
-`26` para las apps v26), y **un tema se resuelve con la última versión publicada de su
-base**. Así, publicar `26.3.0` cambia lo que ven todos los sitios con temas de la base
-26, sin que nadie migre nada, siempre que la versión nueva sea compatible con las
-anteriores. Las reglas exactas están en
-[schema-format.md §13](schema-format.md#13-versiones-y-compatibilidad); en resumen:
+`version` is `base.minor.patch`. The base is the product's major version (for example
+`26` for the v26 apps), and **a theme is resolved with the latest published version of
+its base**. So publishing `26.3.0` changes what every site with base-26 themes sees,
+without anyone migrating anything, as long as the new version is compatible with the
+earlier ones. The exact rules are in
+[schema-format.md §13](schema-format.md#13-versions-and-compatibility); in short:
 
-| Cambio | Versión |
+| Change | Version |
 |---|---|
-| Textos, etiquetas y metadatos del editor | patch |
-| Agregar una clave, un componente, una opción; cambiar un default | minor |
-| Marcar una clave `$deprecated` | minor |
-| Quitar una clave que la versión anterior ya marcaba `$deprecated` | minor |
-| Renombrar o mover una propiedad de componente, con su migración | minor |
-| Quitar una clave no deprecada, cambiar un tipo o la escala de una `dimension`, quitar una opción, quitar una migración | **rompe**: base nueva |
+| Texts, labels and editor metadata | patch |
+| Add a key, a component, an option; change a default | minor |
+| Mark a key `$deprecated` | minor |
+| Remove a key the previous version already marked `$deprecated` | minor |
+| Rename or move a component property, with its migration | minor |
+| Remove a non-deprecated key, change a type or a `dimension`'s scale, remove an option, remove a migration | **breaks**: new base |
 
-Cambiar la escala de una `dimension` (`size` → `space`) rompe los temas guardados, que
-nombran un nivel de la escala anterior: dentro de una base se rechaza igual que un cambio
-de tipo (`<ruta>.scale_changed`).
+Changing a `dimension`'s scale (`size` → `space`) breaks saved themes, which name a level
+of the previous scale: within a base it is rejected just like a type change
+(`<path>.scale_changed`).
 
-**Cuándo basta `co.ordering.migrate`.** Para renombrar o mover una propiedad, una
-variante o un estado de un componente: declara `{ from, to }` en la raíz y api-core mueve
-el valor de cada tema guardado al leerlo y al guardarlo
-([schema-format.md §14](schema-format.md#14-migraciones-coorderingmigrate)).
+**When `co.ordering.migrate` is enough.** To rename or move a component's property,
+variant or state: declare `{ from, to }` at the root and api-core moves the value of each
+saved theme when reading and saving it
+([schema-format.md §14](schema-format.md#14-migrations-coorderingmigrate)).
 
-**Cuándo hace falta una migración de datos en api-core.** Cuando lo que cambia no se
-puede declarar:
+**When a data migration in api-core is needed.** When what changes cannot be declared:
 
-- quitar o renombrar un token (`tokens.*`), porque los temas tienen alias a él;
-- mover una clave de `visibility`, `images` o `pages`, o convertir una en otra (una clave
-  de visibilidad que pasa a ser una sección de página);
-- cambiar el significado de un valor guardado (una altura de línea en px que pasa a ser
-  proporción);
-- cualquier cambio que rompe dentro de una base con temas ya guardados.
+- removing or renaming a token (`tokens.*`), because themes have aliases to it;
+- moving a `visibility`, `images` or `pages` key, or turning one into another (a
+  visibility key that becomes a page section);
+- changing the meaning of a stored value (a line height in px that becomes a ratio);
+- any change that breaks within a base with themes already saved.
 
-Eso es un PR en api-core con una migración que reescribe los temas guardados
-(`site_themes.values` y `draft_values` de cada proyecto) y los presets, que se despliega
-antes de publicar la versión del esquema que lo necesita. Coordínalo con quien mantiene
+That is a PR in api-core with a migration that rewrites the saved themes
+(`site_themes.values` and `draft_values` of each project) and the presets, deployed
+before publishing the schema version that needs it. Coordinate it with whoever maintains
 api-core.
 
-**Mientras el producto está en desarrollo.** Un api-core con
-`THEME_SCHEMA_DEVELOPMENT=true` (local y staging hasta el lanzamiento de los temas v2)
-reemplaza una versión ya publicada y no rechaza por orden ni por compatibilidad. En
-producción está apagado: allí las reglas valen desde la primera versión.
+**While the product is in development.** An api-core with
+`THEME_SCHEMA_DEVELOPMENT=true` (local and staging until v2 themes launch) replaces an
+already published version and does not reject for order or compatibility. In production
+it is off: there the rules apply from the first version.
 
-## 7. Usar el resultado: `resolve()` y `defaults()`
+## 7. Using the result: `resolve()` and `defaults()`
 
-El tema de cada sitio lo resuelve api-core en tiempo de ejecución. El paquete calcula lo
-mismo en el cliente para lo que tiene que existir sin la respuesta del API, o antes:
+api-core resolves each site's theme at runtime. The package computes the same thing on
+the client for whatever has to exist without the API's response, or before it:
 
 ```ts
 import { defaults, resolve } from '@orderingco/ordering-theme-engine'
 import schema from './theme.schema.json' with { type: 'json' }
 
-const empty = defaults(schema)               // el tema vacío resuelto
-const theme = resolve(schema, themeValues)   // un tema (lo que guarda: solo lo que cambia) sobre los defaults
+const empty = defaults(schema)               // the resolved empty theme
+const theme = resolve(schema, themeValues)   // a theme (what it stores: only what changes) over the defaults
 ```
 
-- **Defaults locales.** `defaults(schema)` (o `ordering-theme defaults`) es lo que pinta
-  el producto antes de la primera respuesta, sin conexión o con el API caído. En una app
-  nativa es crítico: el binario publicado no cambia, así que se genera en el build con la
-  versión del esquema de ese build.
-- **Vista previa.** `resolve(schema, valores)` da lo que api-core serviría para esos
-  valores, sin latencia.
+- **Local defaults.** `defaults(schema)` (or `ordering-theme defaults`) is what the
+  product paints before the first response, offline or with the API down. In a native
+  app it is critical: the published binary does not change, so it is generated at build
+  time with that build's schema version.
+- **Preview.** `resolve(schema, values)` gives what api-core would serve for those
+  values, with no latency.
 
-El resultado tiene `tokens`, `components`, `visibility`, `images`, `pages`, `modes` y
-`platforms`, con cada alias reemplazado por su valor y cada tipografía con su `family`
-(la fuente de su rol). Los valores propios de una plataforma vienen aparte, en
-`platforms.<plataforma>`, y el cliente los aplica encima. Por defecto los mapas vacíos
-salen como `[]`, como los sirve api-core; con `{ emptyMaps: 'object' }` salen como `{}`.
+The result has `tokens`, `components`, `visibility`, `images`, `pages`, `modes` and
+`platforms`, with each alias replaced by its value and each typography with its `family`
+(the font of its role). A platform's own values come separately, in
+`platforms.<platform>`, and the client applies them on top. By default empty maps come
+out as `[]`, as api-core serves them; with `{ emptyMaps: 'object' }` they come out as
+`{}`.
 
-`resolve()` supone un tema válido para el esquema: no aplica las migraciones ni descarta
-los valores que ya no encajan, como sí hace api-core al servirlo. Los ajustes del sitio
-(`values.site`) no los resuelve: son del sitio, y los sirve api-core.
+`resolve()` assumes a theme valid for the schema: it does not apply migrations or drop
+values that no longer fit, as api-core does when serving it. It does not resolve site
+settings (`values.site`): they belong to the site, and api-core serves them.
 
-## 8. Ejemplo mínimo completo
+## 8. Complete minimal example
 
-Un esquema completo y válido (pasa el meta-esquema y `validate()`) para un Call Center:
-las escalas completas, unos pocos colores y tipografías, un botón que sigue a Identidad en
-su redondeo y deriva el fondo de su estado `pressed`, una clave de visibilidad, una
-imagen, una página y un ajuste del sitio.
+A complete, valid schema (it passes the meta-schema and `validate()`) for a Call Center:
+the complete scales, a few colors and typographies, a button that follows Identity in its
+radius and derives the background of its `pressed` state, a visibility key, an image, a
+page and a site setting.
 
 ```json
 {
@@ -438,7 +439,7 @@ imagen, una página y un ajuste del sitio.
 }
 ```
 
-`defaults()` de este esquema da, por ejemplo:
+`defaults()` for this schema gives, for example:
 
 ```jsonc
 {
@@ -460,6 +461,6 @@ imagen, una página y un ajuste del sitio.
 }
 ```
 
-Y un tema que solo cambia el primario (`{ "tokens": { "color": { "primary": "#FF0000" } } }`)
-resuelve `primary_pressed` y el fondo del botón presionado a `#DB0000`: los dos derivan
-del primario.
+And a theme that only changes the primary (`{ "tokens": { "color": { "primary": "#FF0000" } } }`)
+resolves `primary_pressed` and the pressed button's background to `#DB0000`: both derive
+from the primary.
