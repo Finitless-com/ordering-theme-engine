@@ -1,4 +1,4 @@
-import { kindOf, tokenType } from './format.js'
+import { FORMER_TYPES, NARROWABLE, kindOf, tokenType } from './format.js'
 import { asMap, clone, entries, get, has, identical, isArray, isList, isMap, phpString, type Json, type JsonMap } from './php.js'
 import { kindAt } from './schemas.js'
 import type { NodeSchema, SchemaError, TupleSchema, V1Map } from './types.js'
@@ -49,7 +49,8 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
     }
   }
 
-  tuples.tokens = tokens(isArray(schema.tokens) ? schema.tokens : {}, fail)
+  const tokenOptions: JsonMap = {}
+  tuples.tokens = tokens(isArray(schema.tokens) ? schema.tokens : {}, fail, tokenOptions)
 
   const components: JsonMap = {}
   const inherits: JsonMap = {}
@@ -121,6 +122,10 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
 
   if (has(schema, 'platforms')) {
     tuples.platforms = schema.platforms!
+  }
+  // The options a schema keeps of a token it narrows (NARROWABLE).
+  if (Object.keys(tokenOptions).length > 0) {
+    tuples.token_options = tokenOptions
   }
   // The renames and moves a theme's values follow (ThemeMigrations).
   const migrate = dig(schema, '$extensions', MIGRATE)
@@ -204,7 +209,7 @@ export function isNode(value: unknown): value is JsonMap {
   return isArray(value) && has(value, '$value')
 }
 
-function tokens(groups: Json, fail: Fail): JsonMap {
+function tokens(groups: Json, fail: Fail, narrowed: JsonMap): JsonMap {
   const answer: JsonMap = {}
   const colors = Object.keys(children(get(groups, 'color') ?? {}))
   for (const [group, value] of entries(children(groups))) {
@@ -220,8 +225,16 @@ function tokens(groups: Json, fail: Fail): JsonMap {
       // The type and options the validator reads the token with.
       const expected = tokenType(group, name, colors)
       const options = extension(token, 'options')
-      if (expected !== null && ((get(token, '$type') ?? shared) !== expected[0] || !identical(options, expected[1] as Json))) {
+      const type = get(token, '$type') ?? shared
+      const catalog = expected === null ? [] : (expected[1] ?? []) as readonly Json[]
+      const narrows = expected !== null && (NARROWABLE as readonly string[]).includes(`${group}.${name}`) && !identical(options, expected[1] as Json)
+        && isArray(options) && isList(options) && Object.keys(options).length > 0
+        && new Set(Object.values(options).map((option) => JSON.stringify(option))).size === Object.keys(options).length
+        && Object.values(options).every((option) => catalog.some((known) => identical(known, option)))
+      if (expected !== null && ((type !== expected[0] && type !== (FORMER_TYPES[group] ?? null)) || (!identical(options, expected[1] as Json) && !narrows))) {
         fail(path, 'type')
+      } else if (narrows) {
+        narrowed[`${group}.${name}`] = options
       }
       names[name] = token.$value!
     }
@@ -300,8 +313,11 @@ function tree(changes: JsonMap, path: string, fail: Fail): JsonMap {
 }
 
 /**
- * A node as its tuple `[kind, default, options?]`. A node without a type
- * of its own is answered as its value (api-core's check refuses it).
+ * A node as its tuple `[kind, default, options?, rules?]`, the rules what
+ * else its value must be: `custom` (a typography that may hold its own
+ * values, from its editor), `max_length` and `pattern` (a string). A node
+ * without a type of its own is answered as its value (api-core's check
+ * refuses it).
  */
 function tuple(node: Json, path: string, fail: Fail): Json {
   if (!isNode(node)) {
@@ -319,9 +335,23 @@ function tuple(node: Json, path: string, fail: Fail): Json {
     return node.$value!
   }
 
+  const rules: JsonMap = {}
+  if (dig(node, '$extensions', EDITOR, 'custom') === true) {
+    rules.custom = true
+  }
+  for (const key of ['max_length', 'pattern']) {
+    const rule = get(own, key)
+    if (rule !== null) {
+      rules[key] = rule
+    }
+  }
   const answer: Json[] = [kind, node.$value!]
-  if (has(own, 'options')) {
+  const ruled = Object.keys(rules).length > 0
+  if (has(own, 'options') || ruled) {
     answer.push(get(own, 'options'))
+  }
+  if (ruled) {
+    answer.push(rules)
   }
   return answer
 }

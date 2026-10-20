@@ -23,9 +23,22 @@ function within(list: readonly Json[], value: unknown): boolean {
 
 /**
  * What is wrong with a value of a kind (null when nothing): `invalid` or
- * `alias` (ThemeValidator::value()).
+ * `alias` (ThemeValidator::value()). Its rules (validRules()) may let a
+ * typography also be its own values, and keep a string shorter or to a
+ * pattern (an empty string is unset, so any pattern takes it).
  */
-export function valueError(kind: string, value: Json, options: Json = null): string | null {
+export function valueError(kind: string, value: Json, options: Json = null, rules: Json = null): string | null {
+  if (kind === 'text' && get(rules, 'custom') === true && isTypography(value)) {
+    return null
+  }
+  if (kind === 'string' && typeof value === 'string' && value !== '') {
+    const maxLength = get(rules, 'max_length')
+    const pattern = get(rules, 'pattern')
+    if (mbStrlen(value) > (typeof maxLength === 'number' ? maxLength : STRING_MAX_LENGTH)
+      || (typeof pattern === 'string' && !new RegExp(pattern, 'u').test(value))) {
+      return 'invalid'
+    }
+  }
   if (kind === 'role' && typeof value === 'string' && ROLE.test(value)) {
     return null
   }
@@ -187,6 +200,39 @@ function validToken(group: string, name: string, value: Json): boolean {
   }
 }
 
+/**
+ * The rules a property's fourth element may set (ThemeValidator::validRules()):
+ * `custom` (true, on a typography), `max_length` (characters, at most the
+ * engine's) and `pattern` (a regular expression ECMAScript and PCRE read
+ * alike), on a string.
+ */
+export function validRules(kind: string, rules: Json): boolean {
+  if (!isArray(rules) || values(rules).length === 0 || isList(rules)
+    || !entries(rules).every(([key]) => ['custom', 'max_length', 'pattern'].includes(key))) {
+    return false
+  }
+  if (has(rules, 'custom') && (kind !== 'text' || get(rules, 'custom') !== true)) {
+    return false
+  }
+  const maxLength = get(rules, 'max_length')
+  if (has(rules, 'max_length') && (kind !== 'string' || !isInt(maxLength) || maxLength < 1 || maxLength > STRING_MAX_LENGTH)) {
+    return false
+  }
+  if (!has(rules, 'pattern')) {
+    return true
+  }
+  const pattern = get(rules, 'pattern')
+  if (kind !== 'string' || typeof pattern !== 'string' || pattern === '') {
+    return false
+  }
+  try {
+    new RegExp(pattern, 'u')
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Every format a schema may give an image key (ThemeImage::FORMATS). */
 export const IMAGE_FORMATS = ['jpg', 'png', 'webp', 'avif', 'ico', 'svg'] as const
 
@@ -203,12 +249,12 @@ export function validFormats(formats: Json): boolean {
 }
 
 /**
- * `{ size?: [width, height], ratio?: "w:h", alpha?: bool, max_kb?: n }`,
+ * `{ size?: [width, height], ratio?: "w:h", alpha?: bool, max_kb?: n, safe?: "w:h" }`,
  * positive integers and nothing else (ThemeImage::validHints()).
  */
 export function validHints(hints: Json): boolean {
   if (!isArray(hints) || (values(hints).length > 0 && isList(hints))
-    || !entries(hints).every(([key]) => ['size', 'ratio', 'alpha', 'max_kb'].includes(key))) {
+    || !entries(hints).every(([key]) => ['size', 'ratio', 'alpha', 'max_kb', 'safe'].includes(key))) {
     return false
   }
   const positive = (value: Json): value is number => isInt(value) && value > 0
@@ -219,9 +265,9 @@ export function validHints(hints: Json): boolean {
       return false
     }
   }
-  if (has(hints, 'ratio')) {
-    const ratio = get(hints, 'ratio')
-    if (!(typeof ratio === 'string' && /^[1-9]\d{0,3}:[1-9]\d{0,3}\n?$/.test(ratio))) {
+  for (const key of ['ratio', 'safe']) {
+    const ratio = get(hints, key)
+    if (has(hints, key) && !(typeof ratio === 'string' && /^[1-9]\d{0,3}:[1-9]\d{0,3}\n?$/.test(ratio))) {
       return false
     }
   }

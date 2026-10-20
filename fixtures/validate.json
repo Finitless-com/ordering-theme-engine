@@ -533,8 +533,326 @@
                 "code": "schema.invalid",
                 "errors": [
                     {
+                        "path": "tokens.radius.xl",
+                        "code": "tokens.radius.xl.required"
+                    },
+                    {
+                        "path": "tokens.color.brand",
+                        "code": "tokens.color.brand.unknown"
+                    },
+                    {
+                        "path": "tokens.extra",
+                        "code": "tokens.extra.unknown"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "token-narrowed",
+            "description": "The focus ring offers some of its colors and distances, its default among them, and the scrollbar's tokens are dimensions: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "color",
+                            "$value"
+                        ],
+                        "primary"
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "color",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "primary",
+                            "secondary",
+                            "text",
+                            "border_strong",
+                            "info",
+                            "success",
+                            "warning",
+                            "danger"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "offset",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "xxs",
+                            "xs",
+                            "sm"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "scrollbar",
+                            "$type"
+                        ],
+                        "dimension"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "token-narrowed-default",
+            "description": "A narrowed token whose default is not among its options.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "offset",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "xs"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "token_options.focus_ring.offset",
+                        "code": "token_options.focus_ring.offset.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "token-not-narrowable",
+            "description": "A token that may not be narrowed, and the focus ring's color narrowed to one of no catalog: the compiler's type errors.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "width",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "thin"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "focus_ring",
+                            "color",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "focus",
+                            "brand"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "tokens.focus_ring.width",
+                        "code": "tokens.focus_ring.width.type"
+                    },
+                    {
                         "path": "tokens.focus_ring.color",
                         "code": "tokens.focus_ring.color.type"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules",
+            "description": "A custom typography, a string with a longest value and one with a pattern, and an image with a safe area: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "sizes",
+                            "sm",
+                            "text",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "custom"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "max_length": 60
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "smart_banner",
+                            "apple_id",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "^\\d{6,12}$"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "business_listing_hero",
+                            "$extensions",
+                            "co.ordering",
+                            "hints",
+                            "safe"
+                        ],
+                        "4:1"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "rules-invalid",
+            "description": "Rules of another kind, a pattern no engine reads, and a default its rule refuses.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "site",
+                            "description",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "custom"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "pattern": "("
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "color",
+                            "$extensions",
+                            "co.ordering",
+                            "max_length"
+                        ],
+                        3
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$value"
+                        ],
+                        "abcdef"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "business_slug",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "max_length": 3
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "components.link.base.color.rules",
+                        "code": "components.link.base.color.rules.invalid"
+                    },
+                    {
+                        "path": "site.business_slug.default",
+                        "code": "site.business_slug.default.invalid"
+                    },
+                    {
+                        "path": "site.name.rules",
+                        "code": "site.name.rules.invalid"
+                    },
+                    {
+                        "path": "site.description.rules",
+                        "code": "site.description.rules.invalid"
                     }
                 ],
                 "changes": null
@@ -1330,7 +1648,7 @@
                         ],
                         {
                             "size": [
-                                0,
+                                20000,
                                 10
                             ]
                         }

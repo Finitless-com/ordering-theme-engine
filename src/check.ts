@@ -1,5 +1,5 @@
 import {
-  LEVEL_OPTION_KINDS, OPTION_KINDS, OVERALL_GROUPS, OWN_GROUPS, PRODUCT_TYPES, PROPERTY_KINDS, SLOT_AXES, TOKENS, VERSION, alias, tokenNames,
+  LEVEL_OPTION_KINDS, NARROWABLE, OPTION_KINDS, OVERALL_GROUPS, OWN_GROUPS, PRODUCT_TYPES, PROPERTY_KINDS, SLOT_AXES, TOKENS, VERSION, alias, tokenNames, tokenType,
 } from './format.js'
 import { checkPages } from './pages.js'
 import {
@@ -7,7 +7,7 @@ import {
 } from './php.js'
 import { kindAt, propertySpec } from './schemas.js'
 import type { SchemaError, TupleSchema } from './types.js'
-import { tokenErrors, validFormats, validHints, valueError } from './validator.js'
+import { tokenErrors, validFormats, validHints, validRules, valueError } from './validator.js'
 
 type Fail = (path: string, rule: string) => void
 
@@ -16,7 +16,7 @@ const KEY = /^[a-z0-9_]+(\.[a-z0-9_]+){0,7}\n?$/
 const SCHEMA_VERSION = /^\d{1,4}(\.\d{1,4}){0,2}\n?$/
 const SECTIONS = [
   'product_type', 'version', 'format', 'tokens', 'components', 'inherits', 'visibility', 'images', 'pages', 'platforms',
-  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate',
+  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'token_options',
 ]
 
 /** PHP's in_array($value, $list, true) for a list of strings. */
@@ -90,6 +90,17 @@ export function check(schema: TupleSchema): SchemaError[] {
     refers(get(schema, section) ?? [], section)
   }
   errors.push(...tokenErrors(tokens, 'tokens'))
+  // A token it narrows keeps some of its options, its default among them.
+  const tokenOptions = get(schema, 'token_options') ?? []
+  for (const [token, options] of isArray(tokenOptions) ? entries(tokenOptions) : [['', null] as [string, Json]]) {
+    const [group = '', name = ''] = token.split(/\.(.*)/s)
+    const catalog = tokenType(group, name, Object.keys(get(tokens, 'color') ?? {}))?.[1] ?? []
+    const value = get(get(tokens, group), name)
+    if (!(NARROWABLE as readonly string[]).includes(token) || !isArray(options) || isEmpty(options) || !isList(options)
+      || !values(options).every((option) => catalog.some((known) => identical(known, option))) || !values(options).some((option) => identical(option, value))) {
+      fail(token === '' ? 'token_options' : `token_options.${token}`, 'invalid')
+    }
+  }
 
   let platforms = get(schema, 'platforms') ?? []
   if (!isArray(platforms) || !isList(platforms)) {
@@ -335,7 +346,7 @@ function checkScope(schema: TupleSchema, group: string, scope: Json, path: strin
         fail(`${scopedPath}.${leaf}`, 'unknown')
       } else if (!isArray(spec) || !isList(spec) || get(spec, 0) !== own[0] || !identical(get(spec, 2), get(own, 2)) || count(spec) < 2) {
         fail(`${scopedPath}.${leaf}`, 'invalid')
-      } else if (valueError(get(spec, 0) as string, get(spec, 1), get(spec, 2)) !== null) {
+      } else if (valueError(get(spec, 0) as string, get(spec, 1), get(spec, 2), get(own, 3)) !== null) {
         fail(`${scopedPath}.${leaf}.default`, 'invalid')
       }
     }
@@ -428,9 +439,13 @@ function checkProps(props: Json, path: string, fail: Fail): void {
   for (const [prop, spec] of entries(props)) {
     const propPath = `${path}.${prop}`
     const kind = isArray(spec) ? get(spec, 0) : null
-    if (!NAME.test(prop) || !isArray(spec) || !isList(spec) || count(spec) < 2 || count(spec) > 3
+    if (!NAME.test(prop) || !isArray(spec) || !isList(spec) || count(spec) < 2 || count(spec) > 4
       || typeof kind !== 'string' || !has(PROPERTY_KINDS, kind)) {
       fail(propPath, 'invalid')
+      continue
+    }
+    if (has(spec, 3) && !validRules(kind, get(spec, 3))) {
+      fail(`${propPath}.rules`, 'invalid')
       continue
     }
 
@@ -446,7 +461,7 @@ function checkProps(props: Json, path: string, fail: Fail): void {
     }
     // A color without a default of its own.
     const unset = get(spec, 1) === null && (kind === 'color' || kind === 'role')
-    if (!unset && valueError(kind, get(spec, 1), options) !== null) {
+    if (!unset && valueError(kind, get(spec, 1), options, get(spec, 3)) !== null) {
       fail(`${propPath}.default`, 'invalid')
     }
   }

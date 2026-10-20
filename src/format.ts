@@ -237,10 +237,19 @@ export function tokenType(group: string, name: string, colors: readonly string[]
       return name === 'radius' ? ['option', RADIUS] : name === 'width' ? ['option', [NO_BORDER, ...BORDER]] : ['option', BORDER_STYLES]
     case 'motion_style': return name === 'easing' ? ['option', EASINGS] : ['boolean', null]
     case 'focus_ring': return name === 'width' ? ['option', BORDER] : name === 'offset' ? ['option', SPACE] : ['option', colors]
-    case 'scrollbar': return ['number', null]
+    case 'scrollbar': return ['dimension', null]
     default: return null
   }
 }
+
+/**
+ * The tokens whose options a schema may narrow to some of the ones
+ * tokenType() gives (NodeFormat::NARROWABLE): a theme then takes only those.
+ */
+export const NARROWABLE = ['focus_ring.color', 'focus_ring.offset'] as const
+
+/** The type a group's tokens had before, which a schema published with it may still declare (NodeFormat::FORMER_TYPES). */
+export const FORMER_TYPES: Readonly<Record<string, string>> = { scrollbar: 'number' }
 
 // PCRE's \s without the u modifier: ASCII whitespace only.
 const COLOR_HEX = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\n?$/

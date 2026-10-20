@@ -172,6 +172,32 @@ $case('tokens-required-unknown', 'A token missing, one the format does not have,
     set('tokens.color.brand', node('color', '#123456')),
     set('tokens.extra', [ 'one' => node('number', 1) ]),
 ]);
+$case('token-narrowed', "The focus ring offers some of its colors and distances, its default among them, and the scrollbar's tokens are dimensions: valid.", [
+    set('tokens.focus_ring.color.$value', 'primary'),
+    set([ 'tokens', 'focus_ring', 'color', '$extensions', 'co.ordering', 'options' ], [ 'primary', 'secondary', 'text', 'border_strong', 'info', 'success', 'warning', 'danger' ]),
+    set([ 'tokens', 'focus_ring', 'offset', '$extensions', 'co.ordering', 'options' ], [ 'none', 'xxs', 'xs', 'sm' ]),
+    set('tokens.scrollbar.$type', 'dimension'),
+]);
+$case('token-narrowed-default', 'A narrowed token whose default is not among its options.', [
+    set([ 'tokens', 'focus_ring', 'offset', '$extensions', 'co.ordering', 'options' ], [ 'none', 'xs' ]),
+]);
+$case('token-not-narrowable', "A token that may not be narrowed, and the focus ring's color narrowed to one of no catalog: the compiler's type errors.", [
+    set([ 'tokens', 'focus_ring', 'width', '$extensions', 'co.ordering', 'options' ], [ 'thin' ]),
+    set([ 'tokens', 'focus_ring', 'color', '$extensions', 'co.ordering', 'options' ], [ 'focus', 'brand' ]),
+]);
+$case('rules', 'A custom typography, a string with a longest value and one with a pattern, and an image with a safe area: valid.', [
+    set([ 'components', 'link', 'sizes', 'sm', 'text', '$extensions', 'co.ordering.editor', 'custom' ], true),
+    set([ 'site', 'name', '$extensions', 'co.ordering' ], [ 'max_length' => 60 ]),
+    set([ 'site', 'smart_banner', 'apple_id', '$extensions', 'co.ordering' ], [ 'pattern' => '^\\d{6,12}$' ]),
+    set([ 'images', 'business_listing_hero', '$extensions', 'co.ordering', 'hints', 'safe' ], '4:1'),
+]);
+$case('rules-invalid', 'Rules of another kind, a pattern no engine reads, and a default its rule refuses.', [
+    set([ 'site', 'description', '$extensions', 'co.ordering.editor', 'custom' ], true),
+    set([ 'site', 'name', '$extensions', 'co.ordering' ], [ 'pattern' => '(' ]),
+    set([ 'components', 'link', 'base', 'color', '$extensions', 'co.ordering', 'max_length' ], 3),
+    set([ 'site', 'business_slug', '$value' ], 'abcdef'),
+    set([ 'site', 'business_slug', '$extensions', 'co.ordering' ], [ 'max_length' => 3 ]),
+]);
 $case('tokens-values', "Token defaults that are not literals of their group's kind.", [
     set('tokens.color.primary.$value', 'red'),
     set('tokens.space.md.$value', -5),
@@ -232,7 +258,7 @@ $case('visibility-images', 'Visibility and image defaults that do not fit, image
     set('visibility.footer.$value', null),
     set('images.logo.$value', 'ftp://example.com/logo.png'),
     set([ 'images', 'logo', '$extensions', 'co.ordering', 'formats' ], [ 'gif' ]),
-    set([ 'images', 'favicon', '$extensions', 'co.ordering', 'hints' ], [ 'size' => [ 0, 10 ] ]),
+    set([ 'images', 'favicon', '$extensions', 'co.ordering', 'hints' ], [ 'size' => [ 20000, 10 ] ]),
     set([ 'images', 'app_icon', '$extensions', 'co.ordering', 'hints' ], [ 'max_kb' => 9000 ]),
 ]);
 $case('visibility-v1', 'Version 1 paths of visibility and images that are not a string or null.', [], null, [

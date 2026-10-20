@@ -748,7 +748,7 @@
             }
         },
         "scrollbar": {
-            "$type": "number",
+            "$type": "dimension",
             "size": {
                 "$value": 6
             },

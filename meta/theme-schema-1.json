@@ -468,7 +468,7 @@
           }
         },
         "hints": {
-          "type": "object"
+          "$ref": "#/$defs/hints"
         },
         "follows": {
           "enum": [
@@ -493,6 +493,15 @@
           "additionalProperties": {
             "type": "boolean"
           }
+        },
+        "max_length": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A string node's longest value, in characters."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "A regular expression (ECMAScript and PCRE alike) a string node's value matches when it is not empty: an empty value is unset."
         }
       },
       "additionalProperties": false
@@ -606,6 +615,18 @@
               },
               "label_platform": {
                 "$ref": "#/$defs/text"
+              },
+              "weights": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 900,
+                  "multipleOf": 100
+                },
+                "minItems": 1,
+                "uniqueItems": true,
+                "description": "On an option of a font control: the weights the font has. The editor offers only those in the weight of the typographies that use it."
               }
             },
             "additionalProperties": false
@@ -649,6 +670,10 @@
         "alpha": {
           "type": "boolean",
           "description": "A color that may be translucent: the picker shows its opacity. Colors without it are opaque."
+        },
+        "custom": {
+          "type": "boolean",
+          "description": "A typography that may also be set as its own values: the editor offers the scale's levels and a custom one, with the fields of the typography group's editor (tokens.typography). Only on a typography node with control level."
         },
         "info_off": {
           "$ref": "#/$defs/text"
@@ -708,6 +733,37 @@
             "type": "object",
             "properties": {
               "label": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "placeholder": {
+          "$ref": "#/$defs/text",
+          "description": "What a text control shows while it is empty: an example of a value."
+        },
+        "multiline": {
+          "type": "boolean",
+          "description": "A text control of several lines."
+        },
+        "section_groups": {
+          "type": "array",
+          "description": "On a sections node: the blocks its sections move in (the `group` of its sections), each with its label and help, in the order of the page.",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/text"
+              },
+              "info": {
                 "$ref": "#/$defs/text"
               }
             },
@@ -863,6 +919,7 @@
             },
             "page_section_groups": {
               "type": "object",
+              "description": "Read by no editor since 26.1.0 (a sections node says its groups in section_groups); kept so a schema published before still registers.",
               "additionalProperties": {
                 "$ref": "#/$defs/text"
               }
@@ -1001,6 +1058,15 @@
           "uniqueItems": true,
           "description": "The pages (keys of the schema's pages) this group belongs to: the editor shows it inside each of those pages, under its sections, instead of in its own section. Only for groups of the visibility section."
         },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The components (keys of the schema's components) this group belongs to: the editor shows it inside each of those components' panels instead of in its own section. Only for groups of the visibility section, and not with pages."
+        },
         "control": {
           "enum": [
             "color",
@@ -1052,6 +1118,13 @@
             "after"
           ],
           "description": "Before or after the tab's rows."
+        },
+        "ordered": {
+          "enum": [
+            "ascending",
+            "descending"
+          ],
+          "description": "A scale: each value of the group's paths is at least (ascending) or at most (descending) the one before it (a typography, by its size). The editor keeps each one between its neighbours."
         }
       },
       "additionalProperties": false
@@ -1199,6 +1272,38 @@
           "additionalProperties": {
             "$ref": "#/$defs/derive"
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "hints": {
+      "description": "What an image should be (an image node's hints): its size in px, its ratio, whether it may be transparent, its weight in kB and its safe area.",
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "ratio": {
+          "type": "string",
+          "pattern": "^[1-9]\\d{0,3}:[1-9]\\d{0,3}$"
+        },
+        "alpha": {
+          "type": "boolean"
+        },
+        "max_kb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "safe": {
+          "type": "string",
+          "pattern": "^[1-9]\\d{0,3}:[1-9]\\d{0,3}$",
+          "description": "The ratio of the central part every container shows, whatever it crops: what matters goes inside it."
         }
       },
       "additionalProperties": false
