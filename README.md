@@ -1,10 +1,10 @@
-# @finitless-com/ordering-theme-engine
+# @orderingco/ordering-theme-engine
 
 El motor de temas v2 de api-core, en TypeScript. Resuelve un tema exactamente como
-lo hace `ThemeResolver::resolve()` de api-core, para que la web
-(`website-marketplace-v26`) y el Dashboard calculen lo mismo sin copiar las reglas:
-los defaults locales, la vista previa sin latencia y los artefactos de CI
-(`docs/THEMES_V2_PLAN.md` §6.3.4 y §6.3.7 de api-core). Y valida un esquema como
+lo hace `ThemeResolver::resolve()` de api-core, para que cada producto (la web, el
+Dashboard, las apps) calcule lo mismo sin copiar las reglas: los defaults locales, la
+vista previa sin latencia y los artefactos de CI (`docs/THEMES_V2_PLAN.md` §6.3.4 y
+§6.3.7 de api-core). Y valida un esquema como
 `ThemeSchemaPublisher::validate()`, para que el CI de un producto sepa antes de
 publicar lo que api-core le va a responder.
 
@@ -19,16 +19,16 @@ escribir el de un producto: [`docs/creating-a-schema.md`](docs/creating-a-schema
 Se publica en npmjs, público: no hace falta `.npmrc` ni token.
 
 ```sh
-pnpm add -E @finitless-com/ordering-theme-engine   # o npm i -E, yarn add -E
+pnpm add -E @orderingco/ordering-theme-engine   # o npm i -E, yarn add -E
 ```
 
-Una versión exacta en `package.json` (`"@finitless-com/ordering-theme-engine": "0.3.0"`):
+Una versión exacta en `package.json` (`"@orderingco/ordering-theme-engine": "0.3.0"`):
 un minor puede cambiar lo que resuelve, porque sigue a api-core.
 
 ## Uso
 
 ```ts
-import { resolve, defaults } from '@finitless-com/ordering-theme-engine'
+import { resolve, defaults } from '@orderingco/ordering-theme-engine'
 import schema from './theme.schema.json' // el esquema en nodos
 
 const tema = resolve(schema, site_theme.values) // lo mismo que sirve api-core
@@ -38,7 +38,7 @@ const vacio = defaults(schema)                  // el tema vacío resuelto
 Validar un esquema antes de publicarlo:
 
 ```ts
-import { validateFull } from '@finitless-com/ordering-theme-engine'
+import { validateFull } from '@orderingco/ordering-theme-engine'
 
 const { code, errors, changes } = validateFull(schema, { previous, v1Map }) // el meta-esquema y lo demás, como api-core
 // code: null (válido), 'schema.format', 'schema.invalid', 'schema.version_order' o 'schema.incompatible'
@@ -69,7 +69,7 @@ API pública:
   editor (`<path>.default_out_of_range`).
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` con
   `changes: { added, removed, migrated, deprecated }`.
-- El meta-esquema del formato, `@finitless-com/ordering-theme-engine/meta/theme-schema-1.json`
+- El meta-esquema del formato, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), copiado tal cual de api-core.
 - Los tipos: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
   `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`…
@@ -82,7 +82,7 @@ API pública:
 
 Lo que el repo de un producto corre sobre su esquema, para que ninguno copie sus propios
 scripts. Con el paquete instalado, `pnpm exec ordering-theme` (o `npx ordering-theme`);
-sin instalarlo, `npx @finitless-com/ordering-theme-engine <comando>`.
+sin instalarlo, `npx @orderingco/ordering-theme-engine <comando>`.
 
 ```sh
 ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous last.json]
@@ -175,8 +175,8 @@ Lo que **no** hace, y api-core sí:
 ## De dónde salen las reglas
 
 Del esquema. El motor es genérico: lo que es propio de cada producto lo declara su
-`theme.schema.json` en el formato de nodos (`docs/THEMES_V2_SCHEMA_FORMAT.md` de
-api-core), en `$extensions["co.ordering"]`:
+`theme.schema.json` en el formato de nodos ([`docs/schema-format.md`](docs/schema-format.md)),
+en `$extensions["co.ordering"]`:
 
 - `scale` y `options`: el tipo de cada propiedad;
 - `inherits`: los componentes que siguen a otro;
@@ -187,8 +187,10 @@ api-core), en `$extensions["co.ordering"]`:
 
 Las operaciones (HSL, mezcla, contraste WCAG, escalas de sombra, orden de las secciones
 de una página) son del motor y las mismas para todos los productos. Un esquema que no
-declara `follows`, `derive` ni `matrix` usa las reglas del motor, como api-core, y un
-nodo sin `$type` toma el de su grupo.
+declara reglas de una categoría usa las del motor para esa categoría, como api-core; en
+cuanto declara una, las del motor de esa categoría dejan de aplicarse
+([`docs/schema-format.md`](docs/schema-format.md) §11). Un nodo sin `$type` toma el de
+su grupo.
 `co.ordering.editor` y el bloque `editor` son del editor: el motor no los lee.
 
 ## El contrato con api-core
@@ -301,9 +303,10 @@ Después, `pnpm test` dice si el motor sigue respondiendo lo mismo que api-core.
 
 ## Distribución
 
-Se publica en npmjs, público (decidido el 2026-10-20; antes, en GitHub Packages): quien
-lo usa no necesita token ni `.npmrc`. El nombre conserva el scope de la organización,
-`@finitless-com`.
+Se publica en npmjs, público, como `@orderingco/ordering-theme-engine` (la organización
+`orderingco` de npm), desde la 0.3.0: quien lo usa no necesita token ni `.npmrc`. Hasta
+la 0.2.1 se publicaba privado en GitHub Packages como `@finitless-com/ordering-theme-engine`.
+El repo es público en GitHub (`Finitless-com/ordering-theme-engine`), bajo licencia MIT.
 
 ### Publicar una versión
 
@@ -312,14 +315,15 @@ lo usa no necesita token ni `.npmrc`. El nombre conserva el scope de la organiza
 2. Crear el tag `v<version>` sobre ese commit y subirlo (`git tag v0.3.0 && git push
    origin v0.3.0`).
 3. `.github/workflows/publish.yml` comprueba que el tag coincide con `package.json`,
-   corre los tipos y las pruebas, compila y publica con `npm publish --provenance`. Se
-   autentica con la publicación de confianza de npm (OIDC): no hay token en los
-   secretos. Una versión publicada no se reemplaza: si ya existe, el workflow falla.
+   corre los tipos y las pruebas, compila y publica con `npm publish --provenance` (la
+   procedencia exige que el repo sea público). Se autentica con la publicación de
+   confianza de npm (OIDC): no hay token en los secretos. Una versión publicada no se reemplaza: si ya existe, el workflow falla.
 
 La primera versión en npmjs también sale del workflow, pero con el secreto `NPM_TOKEN`
-del repo (un token granular de npm con permiso de publicar en `@finitless-com`): npm
-solo deja configurar el publicador de confianza (*Settings → Trusted publishing*: este
-repo y `publish.yml`) en un paquete que ya existe. Configurado, el secreto se borra y npm
+del repo (un token granular de npm con permiso de escritura en `@orderingco`): npm solo
+deja configurar el publicador de confianza en un paquete que ya existe (en npmjs, el
+paquete → *Settings → Trusted Publisher → GitHub Actions*: `Finitless-com`,
+`ordering-theme-engine`, `publish.yml`, sin entorno). Configurado, el secreto se borra y npm
 publica por OIDC.
 
 `.github/workflows/ci.yml` corre los tipos, las pruebas y la compilación en cada PR y
@@ -327,7 +331,13 @@ en cada push a `master`.
 
 ### Pasar de GitHub Packages a npmjs
 
-Un repo que lo instalaba de GitHub Packages quita del `.npmrc` del proyecto la línea
-`@finitless-com:registry=https://npm.pkg.github.com` (si no, sigue buscando el paquete
-ahí), el token de `~/.npmrc` si no lo usa para nada más y, en GitHub Actions, el
-`registry-url`/`scope` de `actions/setup-node` y `permissions: packages: read`.
+El paquete cambió de nombre al pasar a npmjs. Un repo que usaba
+`@finitless-com/ordering-theme-engine` (hoy, `tools/theme` de la web, en la 0.1.0):
+
+1. Cambia la dependencia por `"@orderingco/ordering-theme-engine": "<versión exacta>"`
+   y los `import` al nombre nuevo.
+2. Quita del `.npmrc` del proyecto la línea
+   `@finitless-com:registry=https://npm.pkg.github.com`, el token de GitHub Packages de
+   `~/.npmrc` si no lo usa para nada más y, en GitHub Actions o en el build de
+   Cloudflare, el `registry-url`/`scope` de `actions/setup-node`, `permissions:
+   packages: read` y el secreto con ese token.

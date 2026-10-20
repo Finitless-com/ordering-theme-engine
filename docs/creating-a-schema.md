@@ -83,10 +83,10 @@ esquema, con su default: un tema guarda solo lo que cambia, y lo demás sale de 
 El paquete trae el meta-esquema del formato (JSON Schema 2020-12):
 
 ```
-node_modules/@finitless-com/ordering-theme-engine/meta/theme-schema-1.json
+node_modules/@orderingco/ordering-theme-engine/meta/theme-schema-1.json
 ```
 
-importable como `@finitless-com/ordering-theme-engine/meta/theme-schema-1.json`.
+importable como `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`.
 
 **`$schema` no puede apuntar al archivo.** Tiene que ser exactamente
 `"urn:ordering:theme-schema:1"`: es como api-core reconoce el formato, y con cualquier
@@ -107,7 +107,7 @@ Instala el paquete como dependencia de desarrollo, con una versión exacta. Se p
 npmjs y no necesita token:
 
 ```sh
-pnpm add -D --save-exact @finitless-com/ordering-theme-engine
+pnpm add -D --save-exact @orderingco/ordering-theme-engine
 ```
 
 ### Con la CLI
@@ -125,27 +125,18 @@ las opciones.
 
 ### Desde código
 
-`validateFull(schema, options?)` hace lo mismo que la CLI: el meta-esquema y después
-`validate()`, que aplica las mismas reglas que api-core, en el mismo orden y con los
-mismos códigos. Con una versión del paquete que no lo trae, son dos pasos: el
-meta-esquema, con tu validador de JSON Schema 2020-12, y `validate()`:
+`validateFull(schema, options?)` hace lo mismo que la CLI: el meta-esquema (compilado
+dentro del paquete, sin Ajv) y después `validate()`, que aplica las mismas reglas que
+api-core, en el mismo orden y con los mismos códigos:
 
 ```ts
 import { readFileSync } from 'node:fs'
-import Ajv2020 from 'ajv/dist/2020.js'
-import meta from '@finitless-com/ordering-theme-engine/meta/theme-schema-1.json' with { type: 'json' }
-import { validate } from '@finitless-com/ordering-theme-engine'
+import { validateFull } from '@orderingco/ordering-theme-engine'
 
 const schema = JSON.parse(readFileSync('theme.schema.json', 'utf8'))
 
-// 1. La forma. strict: false porque el meta-esquema usa uniones de tipos y
-//    condiciones que el modo estricto de Ajv avisa (no cambian el resultado).
-const shape = new Ajv2020({ allErrors: true, strict: false }).compile(meta)
-if (!shape(schema)) throw new Error(JSON.stringify(shape.errors, null, 2))
-
-// 2. Lo demás. Con `previous`, la última versión publicada de tu base, también
-//    compara las versiones (§6).
-const { code, errors } = validate(schema)
+// Con `previous`, la última versión publicada de tu base, también compara las versiones (§6).
+const { code, errors } = validateFull(schema)
 if (code !== null) throw new Error(`${code}: ${errors.map((e) => e.code).join(', ')}`)
 ```
 
@@ -257,7 +248,7 @@ El tema de cada sitio lo resuelve api-core en tiempo de ejecución. El paquete c
 mismo en el cliente para lo que tiene que existir sin la respuesta del API, o antes:
 
 ```ts
-import { defaults, resolve } from '@finitless-com/ordering-theme-engine'
+import { defaults, resolve } from '@orderingco/ordering-theme-engine'
 import schema from './theme.schema.json' with { type: 'json' }
 
 const empty = defaults(schema)               // el tema vacío resuelto

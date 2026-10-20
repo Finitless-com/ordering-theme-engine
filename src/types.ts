@@ -6,8 +6,7 @@ export type { Json, JsonMap }
 export type Collection = JsonMap | Json[]
 
 /**
- * A theme schema in the node format (api-core's
- * docs/THEMES_V2_SCHEMA_FORMAT.md): every value a node shaped like a DTCG
+ * A theme schema in the node format (docs/schema-format.md): every value a node shaped like a DTCG
  * token, `{ $type, $value, $extensions }`, grouped in `tokens`,
  * `components`, `visibility`, `images`, `pages` and `site`. The engine reads
  * `$extensions["co.ordering"]` and ignores `co.ordering.editor` and the

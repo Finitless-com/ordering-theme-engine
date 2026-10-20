@@ -1,5 +1,5 @@
 {
-  "name": "@finitless-com/ordering-theme-engine",
+  "name": "@orderingco/ordering-theme-engine",
   "version": "0.3.0",
   "description": "api-core's theme engine (version 2 themes) in TypeScript: the same schema, the same rules, the same answer.",
   "license": "MIT",
