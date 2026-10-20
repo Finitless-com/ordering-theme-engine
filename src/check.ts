@@ -173,12 +173,19 @@ export function check(schema: TupleSchema): SchemaError[] {
       const path = `${section}.${key}`
       const second = isArray(entry) ? get(entry, 1) : null
       if (!KEY.test(key) || !isArray(entry) || !isList(entry)
-        || !(section === 'images' ? [2, 3, 4] : [2]).includes(count(entry))
+        || !(section === 'images' ? [2, 3, 4] : [2, 3]).includes(count(entry))
         || !(typeof second === 'string' || second === null)) {
         fail(path, 'invalid')
         continue
       }
-      if (get(entry, 2) !== null && !validFormats(get(entry, 2))) {
+      if (section === 'visibility' && has(entry, 2)) {
+        // Its default on each platform that shows it otherwise: a declared one, a bool.
+        const own = get(entry, 2)
+        if (!isArray(own) || isEmpty(own) || isList(own)
+          || entries(own).some(([platform, visible]) => !platformNames.some((name) => name === platform) || typeof visible !== 'boolean')) {
+          fail(`${path}.platforms`, 'invalid')
+        }
+      } else if (get(entry, 2) !== null && !validFormats(get(entry, 2))) {
         fail(`${path}.formats`, 'invalid')
       }
       if (has(entry, 3) && !validHints(get(entry, 3))) {

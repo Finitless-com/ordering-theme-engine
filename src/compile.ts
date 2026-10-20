@@ -69,6 +69,11 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
   const visibility: JsonMap = {}
   for (const [key, node] of entries(children(isArray(schema.visibility) ? schema.visibility : {}))) {
     visibility[key] = [get(node, '$value'), dig(v1Map, 'visibility', key)]
+    // Its default on a platform that shows it otherwise (`platforms.<platform>.visibility`).
+    const own = isArray(node) ? dig(node, '$extensions', EXTENSION) : {}
+    if (has(own, 'platforms')) {
+      ;(visibility[key] as Json[]).push(get(own, 'platforms'))
+    }
   }
   tuples.visibility = visibility
 

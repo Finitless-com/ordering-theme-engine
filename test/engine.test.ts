@@ -3,7 +3,7 @@ import { deriveColors } from '../src/colors.js'
 import { insets, matrices, shades } from '../src/derivations.js'
 import { applyOverall, follows } from '../src/overall.js'
 import { schemaDefaults } from '../src/schemas.js'
-import { compile, defaults, resolve, type JsonMap, type NodeSchema } from '../src/index.js'
+import { check, compile, defaults, resolve, type JsonMap, type NodeSchema } from '../src/index.js'
 import { cases, differences, goldenSchema } from './fixtures.js'
 
 /** A copy of $schema without the rules it declares under `co.ordering`. */
@@ -250,5 +250,23 @@ describe('matrices, as api-core\'s ThemeDerivationsTest::testAMatrixRoleIsLegibl
 
     expect(((variants.warning as JsonMap).ghost as JsonMap).color).toBe('#7B6200')
     expect(((variants.primary as JsonMap).ghost as JsonMap).color).toBe('#000000')
+  })
+})
+
+describe('compile, as api-core\'s ThemeSchemaNodesTest::testAVisibilityKeyMayShowOtherwiseOnAPlatform', () => {
+  it('serves a visibility key\'s platform default with the platform\'s', () => {
+    const nodes = goldenSchema() as JsonMap
+    const logo = ((nodes.visibility as JsonMap)['business.header.logo'] as JsonMap)
+    logo.$extensions = { ...(logo.$extensions as JsonMap ?? {}), 'co.ordering': { platforms: { mobile_web: false } } }
+    const { schema, errors } = compile(nodes as NodeSchema)
+    expect(errors).toEqual([])
+    expect(((schema.visibility as JsonMap)['business.header.logo'] as unknown[])[2]).toEqual({ mobile_web: false })
+    expect(check(schema)).toEqual([])
+    const resolved = schemaDefaults(schema)
+    expect((resolved.visibility as JsonMap)['business.header.logo']).toBe(true)
+    expect(((resolved.platforms as JsonMap).mobile_web as JsonMap).visibility).toEqual({ 'business.header.logo': false })
+
+    ;((schema.visibility as JsonMap)['business.header.logo'] as unknown[])[2] = { tv: false }
+    expect(check(schema).map((error) => error.code)).toEqual(['visibility.business.header.logo.platforms.invalid'])
   })
 })

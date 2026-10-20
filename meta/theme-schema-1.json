@@ -483,6 +483,16 @@
         },
         "matrix": {
           "$ref": "#/$defs/matrix"
+        },
+        "platforms": {
+          "description": "A visibility key's default on each platform that shows it otherwise (`mobile_web`); without one, the platform follows the key's own.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          }
         }
       },
       "additionalProperties": false

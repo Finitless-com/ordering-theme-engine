@@ -62,6 +62,13 @@ export function schemaDefaults(schema: TupleSchema): JsonMap {
     }
     defaults[section] = answer
   }
+  for (const [key, entry] of entries(schema.visibility)) {
+    for (const [platform, visible] of entries(get(entry, 2))) {
+      const override = (platforms[platform] ??= {}) as JsonMap
+      const shown = (override.visibility ??= {}) as JsonMap
+      shown[key] = visible
+    }
+  }
   defaults.pages = pageDefaults(schema)
   defaults.modes = {}
   defaults.platforms = platforms
