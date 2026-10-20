@@ -5,6 +5,7 @@ namespace Ordering\ThemeEngine;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
 
+use Ordering\ThemeEngine\Schema\EditorRules;
 use Ordering\ThemeEngine\Schema\NodeCompiler;
 use Ordering\ThemeEngine\Schema\NodeConverter;
 use Ordering\ThemeEngine\Schema\NodeFormat;
@@ -166,12 +167,15 @@ class ThemeSchemas
     }
 
     /**
-     * What a schema document gets wrong.
+     * What a schema document gets wrong. Given the schema in nodes it was
+     * compiled from, it then checks the editor metadata NodeCompiler drops
+     * (EditorRules::check()).
      *
      * @param array<string, mixed> $schema
+     * @param array<string, mixed>|null $nodes in nodes, what $schema was compiled from
      * @return array<int, array{path: string, code: string}>
      */
-    public static function check(array $schema): array
+    public static function check(array $schema, ?array $nodes = null): array
     {
         $errors = [];
         $fail = function (string $path, string $rule) use (&$errors) {
@@ -422,6 +426,12 @@ class ThemeSchemas
                 $fail("v1.{$v2_path}", 'duplicate');
             }
             $v1_paths += array_fill_keys($list, true);
+        }
+
+        if ($nodes !== null) {
+            foreach (EditorRules::check($nodes) as $error) {
+                $errors[] = $error;
+            }
         }
 
         return $errors;

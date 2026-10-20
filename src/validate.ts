@@ -14,8 +14,8 @@ const SEMVER = /^\d{1,4}\.\d{1,4}\.\d{1,4}\n?$/
  *
  * 1. `schema.format`: the schema is not in nodes;
  * 2. `schema.invalid`: the compiler's errors or, when there are none,
- *    check()'s and outOfRange()'s, and in both cases a version that is not
- *    semver (`version.semver`);
+ *    check()'s (its editor checks included) and outOfRange()'s, and in both
+ *    cases a version that is not semver (`version.semver`);
  * 3. against `previous`, the last version published of its base:
  *    `schema.version_order` when the version is not greater, and
  *    `schema.incompatible` with SchemaDiff's errors (diff()).
@@ -33,7 +33,7 @@ export function validate(schema: NodeSchema, options: ValidateOptions = {}): Val
     return { code: 'schema.format', errors: [{ path: '$schema', code: 'schema.format' }], changes: null }
   }
   const compiled = compile(schema, options.v1Map ?? {})
-  const errors = compiled.errors.length > 0 ? compiled.errors : [...check(compiled.schema), ...outOfRange(schema)]
+  const errors = compiled.errors.length > 0 ? compiled.errors : [...check(compiled.schema, schema), ...outOfRange(schema)]
   if (!SEMVER.test(phpString(get(schema, 'version') ?? ''))) {
     errors.push({ path: 'version', code: 'version.semver' })
   }

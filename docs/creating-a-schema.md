@@ -123,7 +123,10 @@ pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.jso
 ```
 
 `validate` exits with code 1 if the schema does not pass, and lists each `{ path, code }`
-([schema-format.md §15](schema-format.md#15-errors)). `ordering-theme --help` lists all
+([schema-format.md §15](schema-format.md#15-errors)). The rules include the editor
+metadata's ([§12.3](schema-format.md#123-rules)): every path a group lists exists, each
+visibility key is in one group, the orders, limits, scales and fonts agree; a product
+repository needs no script of its own for them. `ordering-theme --help` lists all
 the options.
 
 ### From code

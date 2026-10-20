@@ -10,6 +10,7 @@ export { siteDefaults } from './schemas.js'
 export { validate, validateFull, outOfRange } from './validate.js'
 export { validateShape, type ShapeError } from './shape.js'
 export { check } from './check.js'
+export { checkEditor } from './editor.js'
 export { diff } from './diff.js'
 export type {
   Changes,

@@ -69,7 +69,11 @@ alone.
   `ThemeSchemas::meta()`: one per path, `{ path, code: '<path>.schema', message }`
   (`message` is the validator's explanation; api-core does not send it). `[]` if it
   passes.
-- `check(compiled)`: `ThemeSchemas::check()` over the tuples from `compile()`.
+- `check(compiled, nodes?)`: `ThemeSchemas::check()` over the tuples from `compile()`;
+  given the schema in nodes they come from, it then runs `checkEditor()` on it.
+- `checkEditor(schema)`: what the editor metadata gets wrong (`co.ordering.editor` and
+  the `editor` block, which the compiler drops), `EditorRules::check()`: the rules of §12.3
+  of [`docs/schema-format.md`](docs/schema-format.md).
 - `outOfRange(schema)`: numeric defaults outside the `min`/`max` of their editor
   control (`<path>.default_out_of_range`).
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` with
@@ -118,7 +122,7 @@ Public entry points:
   aliases), `valid()` (what of a stored theme fits its schema, migrations applied),
   `inherit()`, `merge()`, `resolveAliases()`.
 - `ThemeSchemas`: `tuples()`, `meta()` (the meta-schema errors), `check()` (a schema in
-  tuples), `defaults()`, `siteDefaults()`, `declare()`, `kindAt()`, `specAt()`,
+  tuples and, given the nodes it was compiled from, their editor metadata), `defaults()`, `siteDefaults()`, `declare()`, `kindAt()`, `specAt()`,
   `propertySpec()`, `isComponent()`; the constants `PRODUCT_TYPES`, `KEY`, `VERSION`
   and `COMPILED` (the revision of what `tuples()` answers, for whoever caches it).
 - `ThemeSchemaPublisher`: `validate()`, what publishing checks before the registry
@@ -130,7 +134,8 @@ Public entry points:
   `validHints()`, `FORMATS`, `DEFAULT_FORMATS`).
 - `Schema\NodeCompiler` (`compile()`, `isNodes()`), `Schema\NodeConverter` (`convert()`
   from tuples to nodes, `declare()`, `json()`), `Schema\SchemaDiff` (`compare()`),
-  `Schema\EditorMetadata` (`inject()`).
+  `Schema\EditorMetadata` (`inject()`), `Schema\EditorRules` (`check()`, the editor
+  metadata's rules, and `translucent()`).
 - `ThemeFormat`, `ThemeColors`, `ThemeDerivations`, `ThemeShadows`, `ThemeOverall` and
   `ThemePages` hold the format's catalog and the operations the resolver applies.
 
@@ -206,8 +211,8 @@ The stages of `ThemeSchemaPublisher::validate()`; the first that fails sets the 
    token that does not declare the type or options it is validated with) or, if there
    are none, those of `check()` (header, tokens, components, `scope`, `slots`,
    platforms, `inherits`, visibility and images, `site`, `follows`, `derive`,
-   `component_derive`, `matrix`, migrations, pages and the v1 map) and of
-   `outOfRange()`. In both cases `version.semver` is added if the version is not
+   `component_derive`, `matrix`, migrations, pages, the v1 map and, last, the editor
+   metadata, `checkEditor()`) and of `outOfRange()`. In both cases `version.semver` is added if the version is not
    `major.minor.patch`.
 3. With `previous` (the last published version of its base): `schema.version_order` if
    the version is not greater within the same base (as PHP's `version_compare()`), and
@@ -255,8 +260,8 @@ belong to the engine and are the same for every product. A schema that declares 
 for a category uses the engine's for that category, as api-core does; once it declares
 one, the engine's rules for that category no longer apply (§11 of
 [`docs/schema-format.md`](docs/schema-format.md)). A node without `$type` takes its
-group's. `co.ordering.editor` and the `editor` block belong to the editor; the engine
-does not read them.
+group's. `co.ordering.editor` and the `editor` block belong to the editor: the engine
+resolves nothing with them, and `check()` validates them, given the nodes.
 
 ## Parity between PHP and TypeScript
 
@@ -294,13 +299,15 @@ What the PHP engine answers for them:
   and `(string)` cast of a float (`scripts/php-strings.php`);
 - `fixtures/validate.json`: the golden cases of `validate()`
   (`scripts/validate-cases.php`). It starts from the current schema (with version
-  `26.0.0` and the two `signup_page` paddings inside their control, the "base") and
+  `26.0.0`, the two `signup_page` paddings inside their control and the editor
+  metadata the 26.0 schema gets wrong made right, `editor_fixes()`: the "base") and
   applies to each case a mutation, a list of `["set", path, value]` / `["delete", path]`
   operations on the schema, the `previous` and the v1 map, and stores what
   `ThemeSchemaPublisher::validate()` answers. The test applies the same operations and
   compares the whole answer, errors in order. The cases cover every rule: the original
-  as is (out of range and without semver), format, product type, compiler, each
-  `check()` failure, the schema's own colors in migrations and the v1 map, `outOfRange()`, semver, version order (equal, lower, two-part, an
+  as is (out of range, without semver and with the editor errors of 26.0), format, product type, compiler, each
+  `check()` failure, each editor rule, the schema's own colors in migrations and the v1
+  map, `outOfRange()`, semver, version order (equal, lower, two-part, an
   earlier pre-release) and `diff()` (a patch that changes a default or only editor texts
   and metadata, a minor that adds, removing with and without `$deprecated`,
   `$deprecated: "0"`, migrating, changing the type, changing the scale, removing an

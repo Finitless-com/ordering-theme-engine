@@ -1,12 +1,13 @@
 import {
   LEVEL_OPTION_KINDS, NARROWABLE, OPTION_KINDS, OVERALL_GROUPS, OWN_GROUPS, PRODUCT_TYPES, PROPERTY_KINDS, SLOT_AXES, TOKENS, VERSION, alias, tokenNames, tokenType,
 } from './format.js'
+import { checkEditor } from './editor.js'
 import { checkPages } from './pages.js'
 import {
   count, entries, get, has, identical, isArray, isEmpty, isInt, isList, phpString, uniqueCount, values, type Json, type JsonMap,
 } from './php.js'
 import { kindAt, propertySpec } from './schemas.js'
-import type { SchemaError, TupleSchema } from './types.js'
+import type { NodeSchema, SchemaError, TupleSchema } from './types.js'
 import { tokenErrors, validFormats, validHints, validRules, valueError } from './validator.js'
 
 type Fail = (path: string, rule: string) => void
@@ -27,9 +28,11 @@ const among = (list: readonly string[], value: unknown): boolean => typeof value
  * the order api-core finds it: the header, the tokens, the components, the
  * inherits, visibility and images, the site, what follows Identity, the
  * derivations, the matrices, the migrations, the pages and the version 1
- * map. compile() answers the tuples it reads.
+ * map. compile() answers the tuples it reads. Given the schema in nodes
+ * they were compiled from, it then checks the editor metadata the compiler
+ * drops (checkEditor()).
  */
-export function check(schema: TupleSchema): SchemaError[] {
+export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
   const errors: SchemaError[] = []
   const fail: Fail = (path, rule) => {
     errors.push({ path, code: `${path}.${rule}` })
@@ -300,6 +303,10 @@ export function check(schema: TupleSchema): SchemaError[] {
       fail(`v1.${v2Path}`, 'duplicate')
     }
     paths.forEach((path) => v1Paths.add(path))
+  }
+
+  if (nodes !== undefined) {
+    errors.push(...checkEditor(nodes))
   }
 
   return errors

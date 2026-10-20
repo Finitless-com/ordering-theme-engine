@@ -547,7 +547,8 @@ None of this changes how a theme is resolved, with three exceptions: `custom` (�
 `min`/`max` (a numeric default outside them is rejected with
 `<path>.default_out_of_range`, in `tokens`, `components`, `pages` and `site`) and `alpha`
 (below). Everything is optional: when it is missing, the editor follows its usual rule.
-The meta-schema validates the shape; keys not in this list are rejected.
+The meta-schema validates the shape; keys not in this list are rejected. What the shape
+cannot say is checked on publish too (§12.3).
 
 ### 12.1 On each node or group
 
@@ -618,8 +619,85 @@ The meta-schema validates the shape; keys not in this list are rejected.
   longer read by any editor; it is kept so that an earlier schema stays valid.
 - **`props`:** `{ property: { label, info } }`, the label by property name.
 
-Neither the engine nor api-core checks that every path in `paths` exists, or that each
-visibility key is in a single group: that is the product CI's responsibility.
+### 12.3 Rules
+
+`check()`, given the schema in nodes, also checks what the editor metadata says against
+the rest of the schema (`EditorRules::check()` in PHP, `checkEditor()` in TypeScript).
+Each error is `<path>.<rule>`, once, in the order of this list. The path is the node or
+group (`tokens.color.overlay`), the editor's group (`editor.sections.10.groups.2`), a
+component's card (`components.bottom_nav.$extensions.co.ordering.editor.groups.0`), a
+page's section (`pages.home.sections.hero`), or a node's field
+(`tokens.typography.h1.fields.line`). The nodes walked are those of `tokens`,
+`components`, `pages` and `site`, each with its own `$type` or its group's.
+
+- **`alpha`.** A color node whose default is translucent (`transparent`, `#RGBA` or
+  `#RRGGBBAA` below full alpha, `rgba()`/`hsla()` or `rgb()`/`hsl()` with `/ a`, an alpha
+  below 1 or 100%), or an alias to a token marked `alpha` or translucent, says `alpha:
+  true` (`alpha_required`). Nothing that is not a color node says `alpha`, a group
+  included (`alpha_not_color`).
+- **Platforms.** `co.ordering.platforms` only on a visibility key
+  (`platforms_not_visibility`); what it says there is §6's
+  (`visibility.<key>.platforms.invalid`).
+- **Where a visibility group is shown.** Only a group of the `visibility` section says
+  `pages` (`pages_not_visibility`) or `components` (`components_not_visibility`), not
+  both (`pages_and_components`), naming pages (`page_unknown`) and components
+  (`component_unknown`) of the schema; a page or a component gets no two groups of the
+  same key (`page_group_repeated`, `component_group_repeated`). The shape of the lists
+  (at least one name, no repeats) is the meta-schema's. A component's own card then does
+  not list a path such a group already shows in that component, unless as its `toggle`
+  (`shown_by_visibility_group`, at the card).
+- **Every visibility key in one group.** Each visibility key is in exactly one group of
+  the editor's sections, as a row (`paths`) or a card's switch (`toggle.path`)
+  (`in_no_editor_group`, `in_several_editor_groups`), and the groups list only
+  visibility keys that exist (`not_visibility_key`, at the path listed).
+- **A component's order.** Under a component (its `scope` aside), the nodes of one group
+  of the schema that share a card (`group`, or none: the rows) have different `order`s
+  (`order_repeated`); in a component with cards (`groups`), every node has an `order`
+  (`order_missing`). Each card lists paths that exist (`path_unknown`) and its
+  component's nodes in their `order` (`order_decreasing`); a base node it lists says its
+  key as `group` (`group_mismatch`, at the node), and a base node that says a `group` is
+  listed by a card (`in_no_card`).
+- **The rows of the editor's sections.** In a group of `editor.sections`, the paths that
+  say an `order` say it in the order they are listed, from 1, each the row before (a
+  pair shares it) or the next (`order_not_consecutive`), and the `group` they say is that
+  group's key (`group_mismatch`, at the node).
+- **`custom`.** Only on a typography node with control `level` (`custom_not_level`); every
+  such node of `components` says `custom: true` (`custom_required`). `custom: true` on a
+  property of another type is §10.1's `<path>.rules.invalid` instead.
+- **Limits.** A field of a composite default (`fields`, a typography style's) has its
+  `min` at most its `max` (`<path>.fields.<field>.min_over_max`) and the default's number
+  within them (`<path>.fields.<field>.default_out_of_range`). A `range`, and a `level`
+  that says a `unit` (it takes a custom number), says a numeric `min` and `max`
+  (`limits_required`), `min` at most `max` (`min_over_max`); its default outside them is
+  `<path>.default_out_of_range` (above).
+- **Line heights.** The `line` field of a typography's editor (a level's, the group's, a
+  component's) is a ratio of the size: `unit` `x` (`<path>.fields.line.unit_not_x`) and
+  its `min` and `max` within 0.8 and 3 (`<path>.fields.line.limits_not_ratio`). The
+  fields of the `tokens.typography` group, the custom typography's, are at least as wide
+  as each level's (`tokens.typography.fields.<field>.min_not_widest`,
+  `max_not_widest`). A default's `line` is §3's.
+- **Scales.** A group or card that says `ordered` lists only nodes (`ordered_not_node`)
+  whose default is a number or a typography with a size (`ordered_not_number`), each at
+  least (`ascending`) or at most (`descending`) the one before (`not_ordered`).
+- **The blocks of a page.** `section_groups` only on a `sections` node
+  (`section_groups_not_sections`); one whose sections have a `group` says it
+  (`section_groups_required`): its keys without repeats (`section_groups_repeated`), and
+  exactly the groups of its sections in the order they first come
+  (`section_groups_mismatch`).
+- **Fonts.** `weights` only on an option of a `font` control (`weights_not_font`). A font
+  control that lists `options` lists each font of the node's `co.ordering.options` once
+  (`font_listed_twice`), no other (`font_unknown`) and none less (`font_unlisted`), and
+  each option's weights go up (`weights_not_increasing`).
+- **Texts.** `max_length` and `pattern` only on a `string` (`rules_not_string`, for a
+  token or a slot; on a property it is §10.1's `<path>.rules.invalid`, and a default
+  longer than `max_length` or off its `pattern` is `<path>.default.invalid`).
+  `placeholder` and `multiline` only on a `text` control (`placeholder_not_text`,
+  `multiline_not_text`).
+- **A page's sections.** A `group` holds at least two sections, since one alone cannot
+  move (`alone_in_group`, at the section); a section's `key` and `group` start with a
+  letter (`not_snake_case`). The rest of their shape is §8's.
+- **Visibility keys are booleans.** Each one's `$type`, its own or its block's, is
+  `boolean` (`not_boolean`); its default is §6's.
 
 ## 13. Versions and compatibility
 
@@ -732,11 +810,27 @@ Rules of each error:
 | `inherits.<c>.invalid`, `follows.<path>.invalid`, `derive.<color>.invalid`, `component_derive.<c>.<path>.invalid`, `matrix.<c>.invalid` | §5.1, §11 |
 | `migrate.<n>.invalid` | §14 |
 | `.default_out_of_range` | a numeric default outside its editor's `min`/`max` |
+| `.alpha_required`, `.alpha_not_color` | §12.3, `alpha` |
+| `.platforms_not_visibility` | §12.3, platforms |
+| `.pages_not_visibility`, `.page_unknown`, `.page_group_repeated`, `.components_not_visibility`, `.pages_and_components`, `.component_unknown`, `.component_group_repeated`, `.shown_by_visibility_group` | §12.3, where a visibility group is shown |
+| `.in_no_editor_group`, `.in_several_editor_groups`, `.not_visibility_key` | §12.3, every visibility key in one group |
+| `.order_missing`, `.order_repeated`, `.path_unknown`, `.order_decreasing`, `.group_mismatch`, `.in_no_card` | §12.3, a component's order |
+| `.order_not_consecutive`, `.group_mismatch` | §12.3, the rows of the editor's sections |
+| `.custom_not_level`, `.custom_required` | §12.3, `custom` |
+| `.limits_required`, `.min_over_max`, `.fields.<field>.min_over_max`, `.fields.<field>.default_out_of_range` | §12.3, limits |
+| `.fields.line.unit_not_x`, `.fields.line.limits_not_ratio`, `tokens.typography.fields.<field>.min_not_widest`, `.max_not_widest` | §12.3, line heights |
+| `.ordered_not_node`, `.ordered_not_number`, `.not_ordered` | §12.3, scales |
+| `.section_groups_not_sections`, `.section_groups_required`, `.section_groups_repeated`, `.section_groups_mismatch` | §12.3, the blocks of a page |
+| `.weights_not_font`, `.font_listed_twice`, `.font_unknown`, `.font_unlisted`, `.weights_not_increasing` | §12.3, fonts |
+| `.rules_not_string`, `.placeholder_not_text`, `.multiline_not_text` | §12.3, texts |
+| `.alone_in_group`, `.not_snake_case` | §12.3, a page's sections |
+| `.not_boolean` | §12.3, visibility keys |
 | `version.semver` | the version is not `base.minor.patch` |
 | `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed` | §13 |
 
 The paths of compiler and rule errors are those of the compiled tuple: the same as the
-schema's, plus `.default`, `.options` or `.rules` at the end. Meta-schema errors may name
+schema's, plus `.default`, `.options` or `.rules` at the end; those of the editor's rules,
+the ones §12.3 says. Meta-schema errors may name
 different paths depending on the validator (opis in api-core, Ajv in CI); whether the
 schema passes or not is the same.
 

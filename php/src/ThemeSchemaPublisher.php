@@ -22,13 +22,14 @@ final class ThemeSchemaPublisher
      * What publishing a schema checks without the registry, so that a
      * product's repository runs the same before it publishes (the
      * TypeScript engine's validateFull() mirrors it): the format, the
-     * meta-schema and the compiler, ThemeSchemas::check(), each default
-     * within its control, the semver version and, against the
-     * previous version, its order within the base and SchemaDiff. The first
-     * stage that fails answers its code: `schema.format`, `schema.invalid`,
-     * `schema.version_order` or `schema.incompatible`. In development the
-     * previous version is only compared for its changes: neither its order
-     * nor its compatibility refuses anything.
+     * meta-schema and the compiler, ThemeSchemas::check() with the editor
+     * metadata, each default within its control, the semver version and,
+     * against the previous version, its order within the base and
+     * SchemaDiff. The first stage that fails answers its code:
+     * `schema.format`, `schema.invalid`, `schema.version_order` or
+     * `schema.incompatible`. In development the previous version is only
+     * compared for its changes: neither its order nor its compatibility
+     * refuses anything.
      *
      * @param array<string, mixed> $schema in nodes
      * @param array<string, mixed>|null $v1_map null compiles no version 1 paths
@@ -41,7 +42,7 @@ final class ThemeSchemaPublisher
             return [ 'code' => 'schema.format', 'errors' => [ [ 'path' => '$schema', 'code' => 'schema.format' ] ], 'changes' => null ];
         }
         $compiled = ThemeSchemas::tuples($schema, $v1_map);
-        $errors = $compiled['errors'] !== [] ? $compiled['errors'] : [ ...ThemeSchemas::check($compiled['schema']), ...self::outOfRange($schema) ];
+        $errors = $compiled['errors'] !== [] ? $compiled['errors'] : [ ...ThemeSchemas::check($compiled['schema'], $schema), ...self::outOfRange($schema) ];
         if (!preg_match(self::SEMVER, (string) ($schema['version'] ?? ''))) {
             $errors[] = [ 'path' => 'version', 'code' => 'version.semver' ];
         }

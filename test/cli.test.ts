@@ -67,7 +67,11 @@ beforeAll(() => {
   directory = mkdtempSync(join(tmpdir(), 'ordering-theme-cli-'))
   write('valid.json', base)
   // Its version is not semver and two defaults are out of their control's range.
-  write('invalid.json', original)
+  write('invalid.json', apply(base, [
+    ['set', ['version'], '26.0'],
+    ['set', ['components', 'signup_page', 'base', 'padding_y', '$value'], 120],
+    ['set', ['components', 'signup_page', 'base', 'padding_x', '$value'], 130],
+  ]))
   // Not even its shape: no product type.
   write('shapeless.json', apply(base, [['delete', ['product_type']]]))
   write('next.json', apply(base, [['set', ['version'], '26.1.0']]))

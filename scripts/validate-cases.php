@@ -24,6 +24,7 @@
 
 declare(strict_types=1);
 
+use Ordering\ThemeEngine\Schema\EditorRules;
 use Ordering\ThemeEngine\Schema\NodeCompiler;
 use Ordering\ThemeEngine\ThemeSchemaPublisher;
 use Ordering\ThemeEngine\ThemeSchemas;
@@ -108,13 +109,147 @@ function version(string $version): array
     return set('version', $version);
 }
 
+/**
+ * The operations that make right what a schema gets wrong of its editor
+ * metadata (EditorRules), so that the base is valid: the colors it may make
+ * translucent, the typographies offered custom, the fields of its line
+ * heights and the blocks of its pages are declared; a number control
+ * without limits loses its control, a component whose props have no order
+ * loses its cards (and its props the card and order they name), and a
+ * group leaves out a path another group already lists or that breaks its
+ * rows. Each
+ * comes from an error the schema still has, so a schema that has none gets
+ * none; an error none of them makes right fails the script.
+ *
+ * @param array<string, mixed> $schema
+ * @return array<int, array>
+ */
+function editor_fixes(array $schema): array
+{
+    $editor = fn (array $segments) => [ ...$segments, '$extensions', 'co.ordering.editor' ];
+    $ops = [];
+    for ($round = 0; $round < 5; $round++) {
+        $added = [];
+        $add = function (array $op) use (&$added) {
+            $added[json_encode($op)] = $op;
+        };
+        foreach (EditorRules::check($schema) as [ 'path' => $path, 'code' => $code ]) {
+            $segments = explode('.', $path);
+            switch (substr($code, strlen($path) + 1)) {
+                case 'alpha_required':
+                    $add(set([ ...$editor($segments), 'alpha' ], true));
+                    break;
+                case 'custom_required':
+                    $add(set([ ...$editor($segments), 'custom' ], true));
+                    break;
+                case 'limits_required':
+                    $add(del([ ...$editor($segments), 'control' ]));
+                    break;
+                case 'unit_not_x':
+                case 'limits_not_ratio':
+                case 'default_out_of_range':
+                    $node = array_slice($segments, 0, -2);
+                    $field = $schema;
+                    foreach ([ ...$node, '$extensions', 'co.ordering.editor', 'fields', 'line' ] as $segment) {
+                        $field = $field[$segment] ?? [];
+                    }
+                    $add(set([ ...$editor($node), 'fields', 'line' ], [ 'unit' => 'x', 'min' => 0.8, 'max' => 3, 'step' => 0.05 ] + $field));
+                    break;
+                case 'section_groups_required':
+                    $used = [];
+                    foreach ($schema['pages'][$segments[1]]['sections']['$value'] as $section) {
+                        if ($section['group'] !== null && !in_array($section['group'], $used, true)) {
+                            $used[] = $section['group'];
+                        }
+                    }
+                    $add(set([ ...$editor($segments), 'section_groups' ], array_map(fn (string $group) => [
+                        'key' => $group,
+                        'label' => [ 'key' => 'BUILDER_THEME_SECTION_GROUP_' . strtoupper($group), 'default' => ucfirst(str_replace('_', ' ', $group)) ],
+                    ], $used)));
+                    break;
+                case 'order_missing':
+                    $component = $segments[1];
+                    $add(del([ 'components', $component, '$extensions', 'co.ordering.editor', 'groups' ]));
+                    foreach ($schema['components'][$component]['base'] ?? [] as $key => $node) {
+                        $own = $node['$extensions']['co.ordering.editor'] ?? [];
+                        if (isset($own['group'])) {
+                            unset($own['group'], $own['order']);
+                            $add(set([ 'components', $component, 'base', (string) $key, '$extensions', 'co.ordering.editor' ], $own));
+                        }
+                    }
+                    break;
+                case 'in_several_editor_groups':
+                    // It stays in the first group that lists it as a row (its order is that row's), else in the first switch.
+                    $listings = [];
+                    foreach ($schema['editor']['sections'] as $s => $section) {
+                        foreach ($section['groups'] ?? [] as $g => $group) {
+                            if (in_array($path, $group['paths'] ?? [], true)) {
+                                $listings[] = [ $s, $g, 'paths', $group['paths'] ];
+                            }
+                            if (($group['toggle']['path'] ?? null) === $path) {
+                                $listings[] = [ $s, $g, 'toggle', null ];
+                            }
+                        }
+                    }
+                    $rows = array_values(array_filter($listings, fn (array $listing) => $listing[2] === 'paths'));
+                    $kept = $rows[0] ?? $listings[0];
+                    foreach ($listings as $listing) {
+                        [ $s, $g, $where, $paths ] = $listing;
+                        if ($listing !== $kept) {
+                            $add($where === 'toggle'
+                                ? del([ 'editor', 'sections', $s, 'groups', $g, 'toggle' ])
+                                : set([ 'editor', 'sections', $s, 'groups', $g, 'paths' ], array_values(array_diff($paths, [ $path ]))));
+                        }
+                    }
+                    break;
+                case 'order_not_consecutive':
+                    $kept = [];
+                    $last = 0;
+                    foreach ($schema['editor']['sections'][$segments[2]]['groups'][$segments[4]]['paths'] as $item) {
+                        $node = $schema;
+                        foreach (explode('.', $item) as $segment) {
+                            $node = $node[$segment] ?? null;
+                        }
+                        $order = $node['$extensions']['co.ordering.editor']['order'] ?? null;
+                        if (is_int($order) && $order !== $last && $order !== $last + 1) {
+                            continue;
+                        }
+                        $kept[] = $item;
+                        $last = is_int($order) ? max($last, $order) : $last;
+                    }
+                    $add(set([ 'editor', 'sections', $segments[2], 'groups', $segments[4], 'paths' ], $kept));
+                    break;
+                case 'group_mismatch':
+                    // A path out of its row says the group of the row it is in: leaving it out of the group makes both right.
+                    break;
+                default:
+                    fwrite(STDERR, "The base schema has an editor error no fix makes right: {$code}\n");
+                    exit(1);
+            }
+        }
+        if ($added === []) {
+            break;
+        }
+        $schema = apply($schema, array_values($added));
+        $ops = [ ...$ops, ...array_values($added) ];
+    }
+    if (($left = EditorRules::check($schema)) !== []) {
+        fwrite(STDERR, "The base schema keeps editor errors: " . json_encode(array_column($left, 'code')) . "\n");
+        exit(1);
+    }
+
+    return $ops;
+}
+
 // The base every case starts from unless it says `original`: the product's
-// schema with a semver version and its two defaults within their control.
+// schema with a semver version, its two defaults within their control and
+// its editor metadata made right (editor_fixes()).
 $base = [
     version('26.0.0'),
     set('components.signup_page.base.padding_y.$value', 96),
     set('components.signup_page.base.padding_x.$value', 96),
 ];
+$base = [ ...$base, ...editor_fixes(apply($original, $base)) ];
 
 $cases = [];
 /**
@@ -353,6 +488,126 @@ $case('check-and-semver', "check()'s errors and the version's together.", [
     version('26'),
 ]);
 
+// --- The editor's metadata (EditorRules) ------------------------------------
+// The groups by index: 0 colors, 4 sizes (0 control heights), 8 site, 10
+// visibility (2 header, 6 bottom_nav, 7 home, 9 business_card); a group
+// added to the visibility section goes after its last. bottom_nav is the
+// component whose cards the base keeps.
+
+$group = fn (int $section, int $index) => $original['editor']['sections'][$section]['groups'][$index];
+$cards = $original['components']['bottom_nav']['$extensions']['co.ordering.editor']['groups'];
+$editor = fn (string|array $path, string $key) => [ ...path($path), '$extensions', 'co.ordering.editor', $key ];
+$fonts = $original['tokens']['font']['heading']['$extensions']['co.ordering']['options'];
+$label = fn (string $key, string $text) => [ 'key' => $key, 'default' => $text ];
+
+$case('editor-valid', 'Editor metadata the rules take: a visibility group shown in a page and one in a component, an ascending scale, a font control listing every font with its weights, a translucent color marked alpha, a typography group as wide as its levels and a text control with its placeholder.', [
+    set([ 'editor', 'sections', 10, 'groups', 7, 'pages' ], [ 'home' ]),
+    set([ 'editor', 'sections', 10, 'groups', 9, 'components' ], [ 'business_card' ]),
+    set([ 'editor', 'sections', 4, 'groups', 0, 'ordered' ], 'ascending'),
+    set($editor('tokens.font.heading', 'options'), array_map(fn (string $font) => [ 'value' => $font, 'weights' => [ 400, 700 ] ], $fonts)),
+    set('components.modal.base.background.$value', 'rgba(0,0,0,0.5)'),
+    set($editor('components.modal.base.background', 'alpha'), true),
+    set($editor('tokens.typography', 'fields'), [ 'size' => [ 'min' => 8, 'max' => 200 ], 'line' => [ 'unit' => 'x', 'min' => 0.8, 'max' => 3 ] ]),
+    set($editor('site.name', 'control'), 'text'),
+    set($editor('site.name', 'placeholder'), $label('BUILDER_THEME_SITE_NAME_EXAMPLE', 'My shop')),
+]);
+$case('editor-alpha', 'Colors the editor would show opaque (a translucent default, an alias to a token marked alpha), and alpha on a number and on a group.', [
+    set('components.modal.base.background.$value', '#00000080'),
+    set('components.card.base.background.$value', '{color.overlay}'),
+    set($editor('components.button.base.icon_gap', 'alpha'), true),
+    set($editor('tokens.color', 'alpha'), true),
+]);
+$case('editor-platforms', 'Platform defaults on a component property and on the visibility block, not on a key: visibility.<key>.platforms.invalid is check()\'s.', [
+    set([ 'components', 'modal', 'base', 'radius', '$extensions', 'co.ordering', 'platforms' ], [ 'mobile_web' => false ]),
+    set([ 'visibility', '$extensions', 'co.ordering', 'platforms' ], [ 'mobile_web' => true ]),
+]);
+$case('editor-pages', "Pages on a group of another section, a page the schema lacks, two groups of one key in a page, a visibility key in no group, one in two (a row and a card's switch), and a path that is no visibility key.", [
+    set([ 'editor', 'sections', 0, 'groups', 0, 'pages' ], [ 'home' ]),
+    set([ 'editor', 'sections', 10, 'groups', 7, 'pages' ], [ 'home', 'nowhere' ]),
+    set([ 'editor', 'sections', 10, 'groups', count($original['editor']['sections'][10]['groups']) ], [ 'key' => 'home', 'pages' => [ 'home' ] ]),
+    set([ 'visibility', 'header.glow' ], node('boolean', true)),
+    set([ 'editor', 'sections', 8, 'groups', 0, 'toggle' ], [ 'path' => 'visibility.footer' ]),
+    set([ 'editor', 'sections', 10, 'groups', 7, 'paths' ], [ ...$group(10, 7)['paths'], 'visibility.nope' ]),
+]);
+$case('editor-components', 'Components on a group of another section, pages and components on one group, a component the schema lacks, two groups of one key in a component, and a card that lists what a visibility group already shows in its component.', [
+    set([ 'editor', 'sections', 0, 'groups', 1, 'components' ], [ 'button' ]),
+    set([ 'editor', 'sections', 10, 'groups', 9, 'pages' ], [ 'home' ]),
+    set([ 'editor', 'sections', 10, 'groups', 9, 'components' ], [ 'business_card', 'nope' ]),
+    set([ 'editor', 'sections', 10, 'groups', 6, 'components' ], [ 'bottom_nav' ]),
+    set([ 'editor', 'sections', 10, 'groups', count($original['editor']['sections'][10]['groups']) ], [ 'key' => 'bottom_nav', 'components' => [ 'bottom_nav' ] ]),
+]);
+$case('editor-card-order', "A component's props and cards out of order: a prop without order, two of one order in a card, a path the schema lacks, a card listing a prop before one of a lower order, a prop in a card it does not name, and one naming a card that does not list it.", [
+    del($editor('components.bottom_nav.base.height', 'order')),
+    set($editor('components.bottom_nav.base.active', 'order'), 3),
+    set([ 'components', 'bottom_nav', '$extensions', 'co.ordering.editor', 'groups', 0, 'paths' ], [ ...$cards[0]['paths'], 'components.bottom_nav.base.nope' ]),
+    set([ 'components', 'bottom_nav', '$extensions', 'co.ordering.editor', 'groups', 1, 'paths' ], array_reverse($cards[1]['paths'])),
+    set($editor('components.bottom_nav.base.shadow', 'group'), 'padding'),
+    set('components.bottom_nav.base.glow', node('color', '#ffffff', [], [ 'group' => 'bar', 'order' => 5 ])),
+]);
+$case('editor-rows', "A group of the editor whose rows go back to order 4 first, and a token listed by a group it does not name.", [
+    set([ 'editor', 'sections', 4, 'groups', 0, 'paths' ], array_reverse($group(4, 0)['paths'])),
+    set($editor('tokens.size.sm', 'group'), 'icon_sizes'),
+]);
+$case('editor-custom', 'custom on a token, on a group, and false on a typography chosen by level in a component; on a property of another type it is check()\'s rules.invalid alone.', [
+    set($editor('tokens.typography.h1', 'custom'), true),
+    set($editor('components.button.base', 'custom'), true),
+    set($editor('components.link.sizes.sm.text', 'custom'), false),
+    set($editor('components.button.base.icon_gap', 'custom'), true),
+]);
+$case('editor-limits', "Limits of the number controls: a typography field whose min is over its max and one under its default, a level with a unit and no max, and a min over the max (the default within them is outOfRange()'s).", [
+    set([ 'tokens', 'typography', 'h1', '$extensions', 'co.ordering.editor', 'fields', 'size', 'min' ], 100),
+    set([ 'tokens', 'typography', 'body', '$extensions', 'co.ordering.editor', 'fields', 'size', 'max' ], 10),
+    del($editor('components.button.base.icon_gap', 'max')),
+    set($editor('components.button.base.speed', 'min'), 2000),
+]);
+$case('editor-lines', "Line height fields that are no ratio of the size (a unit of px, a max of 120), and a typography group narrower than its levels.", [
+    set([ 'tokens', 'typography', 'h2', '$extensions', 'co.ordering.editor', 'fields', 'line', 'unit' ], 'px'),
+    set([ 'tokens', 'typography', 'h3', '$extensions', 'co.ordering.editor', 'fields', 'line', 'max' ], 120),
+    set($editor('tokens.typography', 'fields'), [ 'size' => [ 'min' => 10, 'max' => 60 ] ]),
+]);
+$case('editor-ordered', 'Scales out of order: control heights said descending, and cards that list a color and a group.', [
+    set([ 'editor', 'sections', 4, 'groups', 0, 'ordered' ], 'descending'),
+    set([ 'components', 'bottom_nav', '$extensions', 'co.ordering.editor', 'groups', 0, 'ordered' ], 'ascending'),
+    set([ 'components', 'bottom_nav', '$extensions', 'co.ordering.editor', 'groups', 1, 'ordered' ], 'ascending'),
+    set([ 'components', 'bottom_nav', '$extensions', 'co.ordering.editor', 'groups', 1, 'paths' ], [ ...$cards[1]['paths'], 'components.bottom_nav.base' ]),
+]);
+$case('editor-section-groups', "The blocks of the pages: on a footer, missing on a page whose sections move in blocks, repeated, and in another order than the sections'.", [
+    set($editor('pages.home.footer', 'section_groups'), [ [ 'key' => 'main', 'label' => $label('BUILDER_THEME_SECTION_GROUP_MAIN', 'Main') ] ]),
+    del($editor('pages.orders.sections', 'section_groups')),
+    set($editor('pages.home.sections', 'section_groups'), [
+        [ 'key' => 'main', 'label' => $label('BUILDER_THEME_SECTION_GROUP_MAIN', 'Main') ],
+        [ 'key' => 'main', 'label' => $label('BUILDER_THEME_SECTION_GROUP_MAIN', 'Main') ],
+    ]),
+    set($editor('pages.checkout.sections', 'section_groups'), [
+        [ 'key' => 'side', 'label' => $label('BUILDER_THEME_SECTION_GROUP_SIDE', 'Side') ],
+        [ 'key' => 'main', 'label' => $label('BUILDER_THEME_SECTION_GROUP_MAIN', 'Main') ],
+    ]),
+]);
+$case('editor-fonts', 'Weights on a select, and a font control that lists a font twice, one that is not its own, leaves out the rest, and gives weights that go down.', [
+    set($editor('tokens.font.body', 'control'), 'select'),
+    set($editor('tokens.font.body', 'options'), [ [ 'value' => 'archivo', 'weights' => [ 400 ] ] ]),
+    set($editor('tokens.font.heading', 'options'), [ [ 'value' => 'archivo', 'weights' => [ 700, 400 ] ], [ 'value' => 'archivo' ], [ 'value' => 'comic_sans' ] ]),
+]);
+$case('editor-texts', "Rules of a string on a token and on a slot, a placeholder and multiline on controls that are no text; on another property they are check()'s rules.invalid.", [
+    set([ 'tokens', 'color', 'primary', '$extensions', 'co.ordering', 'max_length' ], 10),
+    set([ 'components', 'banner', 'slots', 'action', '$extensions', 'co.ordering', 'pattern' ], '^x$'),
+    set($editor('components.button.base.radius', 'placeholder'), $label('BUILDER_THEME_EXAMPLE', 'Example')),
+    set($editor('components.button.base.icon_gap', 'multiline'), true),
+]);
+$home_sections = $original['pages']['home']['sections']['$value'];
+$home_sections[2]['group'] = 'aside';
+$home_sections[4]['key'] = '_promo_banners';
+$case('editor-page-sections', "A page's sections: one alone in its group, and a key that does not start with a letter.", [
+    set('pages.home.sections.$value', $home_sections),
+    set($editor('pages.home.sections', 'section_groups'), [
+        [ 'key' => 'aside', 'label' => $label('BUILDER_THEME_SECTION_GROUP_ASIDE', 'Aside') ],
+        [ 'key' => 'main', 'label' => $label('BUILDER_THEME_SECTION_GROUP_MAIN', 'Main') ],
+    ]),
+]);
+$case('editor-visibility-type', 'A visibility key typed string: its default is still a bool, which check() asks.', [
+    set([ 'visibility', 'footer', '$type' ], 'string'),
+]);
+
 // --- Against the previous version ---------------------------------------------
 
 $case('version-equal', 'The same version as the previous one.', [], [ 'ops' => [] ]);
@@ -373,15 +628,16 @@ $case('diff-patch-texts', 'A patch that changes only texts and editor metadata.'
     version('26.0.1'),
     set('components.button.base.radius.$description', 'The rounding.'),
     set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'max' ], 64),
-    set([ 'components', 'button', '$extensions', 'co.ordering.editor', 'order' ], 99),
+    set([ 'components', 'button', '$extensions', 'co.ordering.editor', 'advanced' ], true),
     del('components.auth_form.scope.button.$extensions'),
     set([ 'editor', 'sections', 0, 'label', 'default' ], 'Colours'),
     set('$description', 'Web Marketplace 26.'),
 ], [ 'ops' => [] ]);
-$case('diff-minor-add', 'A minor that adds keys and changes a default.', [
+$case('diff-minor-add', 'A minor that adds keys (the visibility key in a group of the editor) and changes a default.', [
     version('26.1.0'),
     set('components.button.base.glow', node('color', '#ffffff')),
     set([ 'visibility', 'header.glow' ], node('boolean', true)),
+    set([ 'editor', 'sections', 10, 'groups', 2, 'paths' ], [ ...$group(10, 2)['paths'], 'visibility.header.glow' ]),
     set('tokens.color.primary.$value', '#123456'),
 ], [ 'ops' => [] ]);
 $case('diff-removed', 'A minor that removes a key that was not deprecated.', [
