@@ -311,9 +311,11 @@ lo usa no necesita token ni `.npmrc`. El nombre conserva el scope de la organiza
    autentica con la publicación de confianza de npm (OIDC): no hay token en los
    secretos. Una versión publicada no se reemplaza: si ya existe, el workflow falla.
 
-La primera versión en npmjs se publica a mano (`npm publish --access public`, con una
-cuenta de la organización): npm solo deja configurar el publicador de confianza
-(*Settings → Trusted publishing*: este repo y `publish.yml`) en un paquete que ya existe.
+La primera versión en npmjs también sale del workflow, pero con el secreto `NPM_TOKEN`
+del repo (un token granular de npm con permiso de publicar en `@finitless-com`): npm
+solo deja configurar el publicador de confianza (*Settings → Trusted publishing*: este
+repo y `publish.yml`) en un paquete que ya existe. Configurado, el secreto se borra y npm
+publica por OIDC.
 
 `.github/workflows/ci.yml` corre los tipos, las pruebas y la compilación en cada PR y
 en cada push a `master`.
