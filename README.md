@@ -1,14 +1,19 @@
 # @orderingco/ordering-theme-engine
 
-api-core's v2 theme engine in TypeScript. It resolves a theme exactly as api-core's
-`ThemeResolver::resolve()` does, so every product (the web, the Dashboard, the apps)
-computes the same result without copying the rules: local defaults, zero-latency
-preview and CI artifacts. It also validates a schema as
-`ThemeSchemaPublisher::validate()` does, so a product's CI knows before publishing what
-api-core will answer.
+The v2 theme engine, in two implementations that answer the same:
 
-No runtime dependencies. ESM, strict TypeScript, Node 22. It ships a CLI,
-`ordering-theme`, that validates a schema, computes its defaults and publishes it.
+- **PHP** (`orderingco/ordering-theme-engine` on Packagist, [below](#php)): the engine
+  api-core runs to resolve every site's theme and to validate the schemas products
+  publish.
+- **TypeScript** (`@orderingco/ordering-theme-engine` on npmjs): the same resolution and
+  validation for the products (the web, the Dashboard, the apps), so they compute what
+  api-core will serve or answer without copying the rules: local defaults, zero-latency
+  preview, CI artifacts. No runtime dependencies. ESM, strict TypeScript, Node 22. It
+  ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and
+  publishes it.
+
+Both live here and are checked against each other in one CI
+([parity](#parity-between-php-and-typescript)).
 
 Schema format: [`docs/schema-format.md`](docs/schema-format.md). Writing a product's
 schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
@@ -19,7 +24,7 @@ schema: [`docs/creating-a-schema.md`](docs/creating-a-schema.md).
 pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
-Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.3.1"`):
+Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.4.0"`):
 a minor can change what it resolves, because it follows api-core.
 
 ## Usage
@@ -70,13 +75,69 @@ alone.
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` with
   `changes: { added, removed, migrated, deprecated }`.
 - The format's meta-schema, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
-  (JSON Schema 2020-12), copied verbatim from api-core.
+  (JSON Schema 2020-12), the same file the PHP engine reads.
 - Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
   `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`…
 
 `options.emptyMaps`: PHP does not distinguish an empty map from an empty list and serves
 both as `[]`. By default the output does the same, so its JSON matches the API's; with
 `'object'` they come out as `{}`.
+
+## PHP
+
+```sh
+composer require orderingco/ordering-theme-engine
+```
+
+PHP 8.1 or later, with `ext-json` and `ext-mbstring`; its one dependency is
+`opis/json-schema`, which checks a schema against `meta/theme-schema-1.json` (the same
+file the TypeScript engine compiles). Namespace `Ordering\ThemeEngine\`, PSR-4 from
+`php/src/`. Every entry point is a static method over arrays: no framework, no database,
+no I/O beyond reading the meta-schema.
+
+```php
+use Ordering\ThemeEngine\ThemeResolver;
+use Ordering\ThemeEngine\ThemeSchemaPublisher;
+use Ordering\ThemeEngine\ThemeSchemas;
+
+$compiled = ThemeSchemas::tuples($nodes, $v1Map);              // ['schema' => tuples, 'errors' => [...]]
+$theme = ThemeResolver::resolve($values, $compiled['schema']); // what api-core serves
+$answer = ThemeSchemaPublisher::validate($nodes, $v1Map, $previous, $development);
+// ['code' => null|'schema.format'|'schema.invalid'|'schema.version_order'|'schema.incompatible', 'errors' => [...], 'changes' => ...]
+```
+
+The engine reads a schema as tuples: `ThemeSchemas::tuples()` checks one in nodes
+against the meta-schema and compiles it (one already in tuples comes back as it is).
+A null `$v1Map` compiles no version 1 paths: api-core passes the map it keeps for the
+product type.
+
+Public entry points:
+
+- `ThemeResolver`: `resolve($values, $schema, &$unresolved)` (the theme over its
+  schema's defaults, every alias resolved; `$unresolved` gets the values before their
+  aliases), `valid()` (what of a stored theme fits its schema, migrations applied),
+  `inherit()`, `merge()`, `resolveAliases()`.
+- `ThemeSchemas`: `tuples()`, `meta()` (the meta-schema errors), `check()` (a schema in
+  tuples), `defaults()`, `siteDefaults()`, `declare()`, `kindAt()`, `specAt()`,
+  `propertySpec()`, `isComponent()`; the constants `PRODUCT_TYPES`, `KEY`, `VERSION`
+  and `COMPILED` (the revision of what `tuples()` answers, for whoever caches it).
+- `ThemeSchemaPublisher`: `validate()`, what publishing checks before the registry
+  (`validateFull()` in TypeScript), and `outOfRange()`.
+- `ThemeValidator`: `validate()` (a theme against its schema), `settings()` (a site's
+  settings), `codes()`, `value()`.
+- `ThemeMigrations` (`apply()`, `check()`), `ThemeSources` (`of()`, `aliases()`: where
+  each value comes from, for the editor), `ThemeImage` (`formats()`, `validFormats()`,
+  `validHints()`, `FORMATS`, `DEFAULT_FORMATS`).
+- `Schema\NodeCompiler` (`compile()`, `isNodes()`), `Schema\NodeConverter` (`convert()`
+  from tuples to nodes, `declare()`, `json()`), `Schema\SchemaDiff` (`compare()`),
+  `Schema\EditorMetadata` (`inject()`).
+- `ThemeFormat`, `ThemeColors`, `ThemeDerivations`, `ThemeShadows`, `ThemeOverall` and
+  `ThemePages` hold the format's catalog and the operations the resolver applies.
+
+What stays in api-core: the registry of published schemas and its cache, publishing
+(`schema.version_exists`, looking up `previous`), reading a site's theme, version 1
+themes (`ThemeV1Bridge`), the site's settings, stored-data migrations and inspecting an
+uploaded image.
 
 ## The `ordering-theme` CLI
 
@@ -167,7 +228,7 @@ given no map, uses the last one published for the product type (or the one it ke
 What it does **not** do, and api-core does:
 
 - **Identical meta-schema errors.** Whether a schema passes is the same here and in
-  api-core, but api-core uses another validator (opis/json-schema): when it fails, the
+  api-core, but the PHP engine uses another validator (opis/json-schema): when it fails, the
   paths it names can differ (under an `anyOf`, one names the branches and the other only
   the node). The package compiles the meta-schema with Ajv at build time
   (`scripts/build-shape-validator.mjs`, which writes the unversioned
@@ -197,43 +258,56 @@ one, the engine's rules for that category no longer apply (§11 of
 group's. `co.ordering.editor` and the `editor` block belong to the editor; the engine
 does not read them.
 
-## Parity with api-core
+## Parity between PHP and TypeScript
 
-api-core is the reference. This package passes the same golden cases as api-core's
-`ThemeResolverGoldenTest`:
+The PHP engine (`php/src`) is the reference: it is what api-core runs. The TypeScript
+engine must answer exactly what it answers, and CI checks it in two steps: the fixtures
+are regenerated from `php/src` and must not change (`scripts/sync-fixtures.sh`), and the
+TypeScript tests compare themselves with those fixtures. A change of behavior lands in
+both implementations, and their fixtures, in the same PR.
 
-- `fixtures/cases/*.json`: `{ description, migrate?, values, resolved }`, copied from
-  api-core's `tests/fixtures/themes/cases`. Each theme (`values`) must resolve to its
-  `resolved`. `migrate`, when present, holds the migrations the schema declares in that
-  case (`co.ordering.migrate`): a theme stored before them.
-- `fixtures/schema.nodes.json`: the frozen schema of those cases
-  (`schema-marketplace_website-26.0.json`), converted to nodes by api-core's
-  `ordering:theme-schema:convert`.
-- `fixtures/schema-26.0.nodes.json` and `fixtures/schema-26.0.empty.json`: the product's
-  current schema (`resources/themes/marketplace_website/26.0.json`) and the empty theme
-  api-core resolves with it (`scripts/resolve-empty.php`).
-- `fixtures/schema-26.0.compiled.json`: the tuples api-core's `NodeCompiler::compile()`
-  returns for the current schema with its v1 map (`scripts/compile-schema.php`), which
-  `compile()` must match, translucent colors (`alpha`) included.
+Inputs, written by hand or copied from the product, which the scripts never write:
+
+- `fixtures/cases/*.json`: the golden cases, `{ description, migrate?, values, resolved }`.
+  `migrate`, when present, holds the migrations the schema declares in that case
+  (`co.ordering.migrate`): a theme stored before them.
+- `fixtures/schema.tuples.json`: the frozen schema of those cases (Web Marketplace 26 as
+  it was, in tuples).
+- `fixtures/schema-26.0.nodes.json` and `fixtures/v1-map.json`: the product's current
+  schema and its version 1 map (copies of api-core's
+  `resources/themes/marketplace_website/`).
+- `meta/theme-schema-1.json`: the format's meta-schema, which both implementations read.
+
+What the PHP engine answers for them:
+
+- the `resolved` of each case: `ThemeResolver::resolve()` over the frozen schema
+  (`scripts/golden-fixtures.php`; `ThemeResolverGoldenTest` checks them in PHP);
+- `fixtures/schema.nodes.json`: the frozen schema converted to nodes
+  (`scripts/convert-schema.php`), which the TypeScript golden test resolves over;
+- `fixtures/schema-26.0.empty.json`: the empty theme over the current schema
+  (`scripts/resolve-empty.php`);
+- `fixtures/schema-26.0.compiled.json`: the tuples `NodeCompiler::compile()` returns for
+  the current schema with its v1 map (`scripts/compile-schema.php`), which `compile()`
+  must match, translucent colors (`alpha`) included;
 - `fixtures/php-round.json`: PHP's `round()` over the values the engine rounds
   (`scripts/php-round.php`), and `fixtures/php-strings.json`, its `version_compare()`
-  and `(string)` cast of a float (`scripts/php-strings.php`).
-- `fixtures/validate.json`: the golden cases of `validate()`.
-  `scripts/validate-cases.php` runs in the container: it starts from the current schema
-  (with version `26.0.0` and the two `signup_page` paddings inside their control, the
-  "base") and applies to each case a mutation, a list of `["set", path, value]` /
-  `["delete", path]` operations on the schema, the `previous` and the v1 map
-  (`fixtures/v1-map.json`), and stores what `ThemeSchemaPublisher::validate()` answers.
-  The test applies the same operations and compares the whole answer, errors in order.
-  The cases cover every rule: the original as is (out of range and without semver),
-  format, product type, compiler, each `check()` failure, `outOfRange()`, semver,
-  version order (equal, lower, two-part, an earlier pre-release) and `diff()` (a patch
-  that changes a default or only editor texts and metadata, a minor that adds, removing
-  with and without `$deprecated`, `$deprecated: "0"`, migrating, changing the type,
-  changing the scale, removing an option, removing a migration, a new base, all errors
-  together and a valid one with all four kinds of change), plus several in development
-  mode. The script fails if a case does not pass the meta-schema, so `validateFull()`
-  answers the same as `validate()` in all of them.
+  and `(string)` cast of a float (`scripts/php-strings.php`);
+- `fixtures/validate.json`: the golden cases of `validate()`
+  (`scripts/validate-cases.php`). It starts from the current schema (with version
+  `26.0.0` and the two `signup_page` paddings inside their control, the "base") and
+  applies to each case a mutation, a list of `["set", path, value]` / `["delete", path]`
+  operations on the schema, the `previous` and the v1 map, and stores what
+  `ThemeSchemaPublisher::validate()` answers. The test applies the same operations and
+  compares the whole answer, errors in order. The cases cover every rule: the original
+  as is (out of range and without semver), format, product type, compiler, each
+  `check()` failure, `outOfRange()`, semver, version order (equal, lower, two-part, an
+  earlier pre-release) and `diff()` (a patch that changes a default or only editor texts
+  and metadata, a minor that adds, removing with and without `$deprecated`,
+  `$deprecated: "0"`, migrating, changing the type, changing the scale, removing an
+  option, removing a migration, a new base, all errors together and a valid one with
+  all four kinds of change), plus several in development mode. The script fails if a
+  case does not pass the meta-schema, so `validateFull()` answers the same as
+  `validate()` in all of them.
 
 The comparison treats empty `[]` and `{}` as equal and ignores key order (JavaScript puts
 numeric keys first), but compares every number exactly. If a case fails, the cause is in
@@ -262,7 +336,7 @@ changes the answer where PHP requires `is_int()` (a `step`'s `offset`, an image'
 also differs (JavaScript puts them first), and with it the order of their errors; no
 real schema has them.
 
-### Out of scope
+### What the TypeScript engine leaves out
 
 - **It does not validate themes.** It assumes a valid theme: api-core validates it on
   save and, when serving it, drops whatever no longer fits the schema
@@ -289,47 +363,58 @@ pnpm build         # dist/: ESM, .d.ts, the meta-schema validator and the CLI
 the test setup (`test/global-setup.ts`) write it. Ajv and esbuild are only used to
 generate it.
 
-### Refreshing the fixtures
-
-The fixtures come from api-core and are never written by hand. With api-core's dev
-container running (`docker compose -f docker-compose.dev.yml up -d`):
+The PHP side needs only docker (the host needs no PHP):
 
 ```sh
-pnpm sync-fixtures                          # api-core in ../api-core
-API_CORE=/path/to/api-core pnpm sync-fixtures
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app -e COMPOSER_HOME=/tmp/composer composer:2 install
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/app" -w /app php:8.3.35-cli vendor/bin/phpunit
 ```
 
-The script only reads api-core (uncommitted changes included): it copies the cases, the
-schema, the v1 map and the meta-schema (into `meta/`), and runs in the container the
-node conversion, `scripts/resolve-empty.php`, `scripts/compile-schema.php`,
-`scripts/php-round.php`, `scripts/php-strings.php` and `scripts/validate-cases.php`,
-which write to the container's `/tmp` or to stdout. A fixture is replaced only if the
-command succeeds and returns JSON. Then `pnpm test` tells whether the engine still
-answers the same as api-core.
+### Refreshing the fixtures
+
+```sh
+pnpm sync-fixtures   # bash scripts/sync-fixtures.sh
+```
+
+It runs the PHP scripts in docker, in `php:8.3.35-cli` (the PHP the fixtures record;
+`PHP_IMAGE` overrides it), installing `vendor/` with `composer:2` if it is missing, and
+rewrites every fixture the PHP engine answers from the inputs above. A fixture is
+replaced only if its command succeeds and returns JSON. Run it after changing `php/src`
+or an input, review the diff, and then `pnpm test` tells whether the TypeScript engine
+still answers the same. It does not depend on api-core.
 
 ## Distribution
 
 Published publicly on npmjs as `@orderingco/ordering-theme-engine` (the `orderingco` npm
-organization). The repo is `Finitless-com/ordering-theme-engine` on GitHub, MIT
-licensed.
+organization) and on Packagist as `orderingco/ordering-theme-engine`. The repo is
+`Finitless-com/ordering-theme-engine` on GitHub, MIT licensed. One version number covers
+both: a change in what either resolves or validates changes both.
+
+The npm package ships `dist/` and `meta/` (`files` in `package.json`). The Composer dist
+is a git archive of the tag, without what `.gitattributes` marks `export-ignore`: it
+ships `composer.json`, `php/src`, `meta/`, `docs/`, the README and the license.
 
 ### Releasing a version
 
 1. Bump `version` in `package.json` (semver: a change in what it resolves is a minor,
-   one that breaks the public API is a major) and merge to `master`.
+   one that breaks the public API is a major) and merge to `master`. `composer.json` has
+   no `version`: Composer takes it from the tag.
 2. Create the tag `v<version>` on that commit and push it (`git tag v0.3.0 && git push
    origin v0.3.0`).
 3. `.github/workflows/publish.yml` checks that the tag matches `package.json`, runs
    typecheck and tests, builds and runs `npm publish --provenance` (provenance requires
    a public repo). It authenticates with npm trusted publishing (OIDC). A published
    version is never replaced: if it already exists, the workflow fails.
+4. Packagist publishes the same tag on its own (the package's GitHub hook); there is no
+   PHP publish step.
 
 The trusted publisher is set on npmjs (the package → *Settings → Trusted Publisher →
 GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
 environment, publish directly allowed). The repo keeps no npm token.
 
-`.github/workflows/ci.yml` runs typecheck, tests and build on every PR and every push to
-`master`.
+`.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
+and build of the TypeScript engine; `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
+the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
 
 ### Migrating from GitHub Packages
 

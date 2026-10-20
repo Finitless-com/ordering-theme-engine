@@ -27,7 +27,7 @@ themes of the sites of that product type.
 `store_app`, `driver_app`, `kiosk_app`, `call_center` and `dashboard`.
 
 - **If your product is one of them, there is nothing to do in api-core.** Use that value.
-- **If it is a new type**, that is the only change in api-core: a PR that adds a case to
+- **If it is a new type**, api-core needs a PR that adds a case to
   `App\Enums\BuilderProductTypeEnum` (`app/Enums/BuilderProductTypeEnum.php`), with a
   value `^[a-z0-9_]+$` of up to 40 characters. That PR decides whether it is an app
   (`appValues()`, compiled from a Builder base) or a website (`webValues()`), and, if it
@@ -35,9 +35,11 @@ themes of the sites of that product type.
   Builder, not to the theme. Until that PR is deployed, api-core rejects the schema with
   `product_type.invalid`.
 
-  This package has its own copy of the list (`PRODUCT_TYPES`), so a new type also needs
-  a package version that includes it; otherwise, `validate()` answers
-  `product_type.invalid` locally even if api-core already accepts it.
+  The engine has its own copy of the list (`PRODUCT_TYPES` in TypeScript,
+  `ThemeSchemas::PRODUCT_TYPES` in PHP), and api-core validates schemas with the PHP
+  engine, so a new type also needs an engine version that adds it to both and an
+  api-core that depends on it. Until then `validate()` answers `product_type.invalid`,
+  locally and in api-core.
 
 You also need, for each api-core environment you publish to (local, staging,
 production), its **publish key** (`THEME_PUBLISH_KEY` in that api-core). Whoever runs
