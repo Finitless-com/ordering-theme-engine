@@ -2213,6 +2213,42 @@
             }
         },
         {
+            "name": "migrate-own-colors",
+            "description": "Migrations read the schema's own colors, not the catalog: from a catalog color the schema does not name (as one it dropped) passes, to one fails.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "tokens.color.danger_text",
+                                "to": "tokens.color.danger"
+                            },
+                            {
+                                "from": "components.button.base.old_gap",
+                                "to": "tokens.color.success_text"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "migrate.1",
+                        "code": "migrate.1.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
             "name": "pages",
             "description": "Pages: a field they do not have, a footer that is no bool, a section hidden that cannot be, a section twice, sections of another type, an empty page.",
             "schema": {
@@ -2519,6 +2555,32 @@
                         "code": "v1.site.name.duplicate"
                     }
                 ],
+                "changes": null
+            }
+        },
+        {
+            "name": "v1-own-colors",
+            "description": "The version 1 map names a catalog color the schema does not name: it is left out, so its key does not collide with the primary's.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "tokens.color.danger_text"
+                        ],
+                        "my_products.components.theme_settings.components.style.primary_btn_color"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
                 "changes": null
             }
         },

@@ -306,6 +306,12 @@ $case('migrate-invalid', "Migrations from a key the schema has, to one it lacks,
         [ 'from' => 'visibility.old_footer', 'to' => 'visibility.footer' ],
     ]),
 ]);
+$case('migrate-own-colors', "Migrations read the schema's own colors, not the catalog: from a catalog color the schema does not name (as one it dropped) passes, to one fails.", [
+    set([ '$extensions', 'co.ordering.migrate' ], [
+        [ 'from' => 'tokens.color.danger_text', 'to' => 'tokens.color.danger' ],
+        [ 'from' => 'components.button.base.old_gap', 'to' => 'tokens.color.success_text' ],
+    ]),
+]);
 
 $home = $original['pages']['home']['sections']['$value'];
 $hidden_hero = $home;
@@ -331,6 +337,9 @@ $case('v1', 'The version 1 map: paths that are not strings, an empty list, two c
     set([ 'v1', 'tokens.color.border' ], [ 'a.b', 'a.b' ]),
     set([ 'v1', 'components.nonexistent.base.x' ], 'a.b.c'),
     set('site.name', 'my_products.components.website_theme.components.type'),
+]);
+$case('v1-own-colors', "The version 1 map names a catalog color the schema does not name: it is left out, so its key does not collide with the primary's.", [], null, [
+    set([ 'v1', 'tokens.color.danger_text' ], 'my_products.components.theme_settings.components.style.primary_btn_color'),
 ]);
 $case('out-of-range', "Defaults outside their control's min and max, and nothing else.", [
     set('components.button.base.icon_gap.$value', 100),

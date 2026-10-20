@@ -1,6 +1,6 @@
 import { COLORS, FONT_ROLES } from './format.js'
 import { pageDefaults } from './pages.js'
-import { clone, count, entries, get, has, isArray, isList, type Json, type JsonMap } from './php.js'
+import { clone, count, dig, entries, get, has, isArray, isList, type Json, type JsonMap } from './php.js'
 import type { TupleSchema } from './types.js'
 
 /**
@@ -136,8 +136,11 @@ export function kindAt(schema: TupleSchema, path: string): string | null {
     if (segments.length !== 3) {
       return null
     }
-    if (segments[1] === 'color' && (COLORS as readonly string[]).includes(segments[2]!)) {
-      return 'color'
+    if (segments[1] === 'color') {
+      // The schema's own colors, as its themes are validated; the catalog's when it names none.
+      const own = dig(schema, 'tokens', 'color')
+      const colors: readonly string[] = isArray(own) && count(own) > 0 ? entries(own).map(([name]) => name) : COLORS
+      return colors.includes(segments[2]!) ? 'color' : null
     }
     if (segments[1] === 'font' && (FONT_ROLES as readonly string[]).includes(segments[2]!)) {
       return 'font'

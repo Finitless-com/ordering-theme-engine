@@ -599,8 +599,11 @@ class ThemeSchemas
             if (count($segments) !== 3) {
                 return null;
             }
-            if ($segments[1] === 'color' && in_array($segments[2], ThemeFormat::COLORS, true)) {
-                return 'color';
+            if ($segments[1] === 'color') {
+                // The schema's own colors, as its themes are validated; the catalog's when it names none.
+                $colors = is_array($schema['tokens']['color'] ?? null) && $schema['tokens']['color'] !== [] ? array_keys($schema['tokens']['color']) : ThemeFormat::COLORS;
+
+                return in_array($segments[2], $colors, true) ? 'color' : null;
             }
             if ($segments[1] === 'font' && in_array($segments[2], ThemeFormat::FONT_ROLES, true)) {
                 return 'font';

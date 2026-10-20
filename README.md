@@ -300,7 +300,7 @@ What the PHP engine answers for them:
   `ThemeSchemaPublisher::validate()` answers. The test applies the same operations and
   compares the whole answer, errors in order. The cases cover every rule: the original
   as is (out of range and without semver), format, product type, compiler, each
-  `check()` failure, `outOfRange()`, semver, version order (equal, lower, two-part, an
+  `check()` failure, the schema's own colors in migrations and the v1 map, `outOfRange()`, semver, version order (equal, lower, two-part, an
   earlier pre-release) and `diff()` (a patch that changes a default or only editor texts
   and metadata, a minor that adds, removing with and without `$deprecated`,
   `$deprecated: "0"`, migrating, changing the type, changing the scale, removing an

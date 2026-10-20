@@ -659,4 +659,22 @@ class ThemeSchemasTest extends TestCase
         self::assertNull($garbage['components']['a']['b']);
         self::assertSame([ 'a' => 'b' ], ThemeDerivations::matrices([ 'a' => 'b' ], [], [], [ 'a' => [ 'roles' => ThemeDerivations::ROLES ] ]));
     }
+
+    /**
+     * Prior behavior: a token color had a kind when the catalog had it, so a
+     * color the schema dropped still crossed from version 1 and migrations
+     * could not move it.
+     */
+    public function testATokenColorIsOneOfTheSchemasOwn(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        self::assertSame('color', ThemeSchemas::kindAt($schema, 'tokens.color.primary'));
+        self::assertArrayNotHasKey('danger_text', $schema['tokens']['color']);
+        self::assertNull(ThemeSchemas::kindAt($schema, 'tokens.color.danger_text'));
+
+        // A schema that names no colors has the catalog's.
+        $schema['tokens']['color'] = [];
+        self::assertSame('color', ThemeSchemas::kindAt($schema, 'tokens.color.danger_text'));
+        self::assertNull(ThemeSchemas::kindAt($schema, 'tokens.color.brand'));
+    }
 }
