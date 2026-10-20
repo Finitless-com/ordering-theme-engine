@@ -992,6 +992,15 @@
             "type": "string"
           }
         },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "The pages (keys of the schema's pages) this group belongs to: the editor shows it inside each of those pages, under its sections, instead of in its own section. Only for groups of the visibility section."
+        },
         "control": {
           "enum": [
             "color",
