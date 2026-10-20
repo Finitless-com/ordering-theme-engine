@@ -77,6 +77,10 @@ beforeAll(() => {
   write('next.json', apply(base, [['set', ['version'], '26.1.0']]))
   write('v1-map.json', map)
   write('broken.json', '{ not json')
+  // Passes as JSON, but a property's `$type` is no property type.
+  write('uncompiled.json', apply(base, [['set', ['components', 'input', 'base', 'bogus'], { $type: 'nope', $value: 1 }]]))
+  write('tuples.json', compile(base).schema)
+  write('siteless.json', apply(base, [['delete', ['site']]]))
 })
 
 afterAll(() => {
@@ -86,7 +90,9 @@ afterAll(() => {
 describe('ordering-theme', () => {
   it('prints its help, and refuses an unknown command', async () => {
     expect(await cli(['--help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: ordering-theme <command>') })
-    expect((await cli([])).code).toBe(2)
+    expect(await cli([])).toMatchObject({ code: 2, stdout: '', stderr: expect.stringContaining('Usage: ordering-theme <command>') })
+    expect(await cli(['help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: ordering-theme <command>') })
+    expect(await cli(['defaults', '--help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: ordering-theme <command>') })
     const unknown = await cli(['compile', 'valid.json'])
     expect(unknown.code).toBe(2)
     expect(unknown.stderr).toContain('unknown command compile')
@@ -169,6 +175,28 @@ describe('ordering-theme defaults', () => {
     expect(Object.keys(answer.site as JsonMap).length).toBeGreaterThan(0)
   })
 
+  it('leaves out an empty site with --site', async () => {
+    const answer = JSON.parse((await cli(['defaults', 'siteless.json', '--site'])).stdout) as JsonMap
+    expect(answer).not.toHaveProperty('site')
+  })
+
+  it('fails with the compiler\'s errors when the schema does not compile', async () => {
+    expect(await cli(['defaults', 'uncompiled.json', '--out', 'uncompiled.defaults.json'])).toEqual({
+      code: 1,
+      stdout: '',
+      stderr: 'components.input.base.bogus.type\nuncompiled.json: does not compile (1 error(s)), run ordering-theme validate uncompiled.json\n',
+    })
+    expect(() => readFileSync(join(directory, 'uncompiled.defaults.json'))).toThrow()
+  })
+
+  it('fails without a stack on a schema that is not in nodes', async () => {
+    expect(await cli(['defaults', 'tuples.json'])).toEqual({
+      code: 1,
+      stdout: '',
+      stderr: 'tuples.json: not a schema in nodes ($schema is not urn:ordering:theme-schema:1)\n',
+    })
+  })
+
   it('refuses --check without --out', async () => {
     const answer = await cli(['defaults', 'valid.json', '--check'])
     expect(answer.code).toBe(2)
@@ -229,7 +257,13 @@ describe('ordering-theme publish', () => {
     const flag = await cli(['publish', 'valid.json', '--required'], { THEME_PUBLISH_API: api })
     expect(flag.code).toBe(1)
     expect(flag.stderr).toBe('THEME_PUBLISH_KEY missing: valid.json 26.0.0 cannot be published\n')
-    expect((await cli(['publish', 'valid.json'], { THEME_PUBLISH_REQUIRED: '1' })).code).toBe(1)
+    for (const value of ['1', 'true', 'TRUE', 'True']) {
+      expect((await cli(['publish', 'valid.json'], { THEME_PUBLISH_REQUIRED: value })).code).toBe(1)
+    }
+    // Neither another value nor a CI's own flag requires it.
+    for (const env of [{ THEME_PUBLISH_REQUIRED: '0' }, { THEME_PUBLISH_REQUIRED: 'yes' }, { WORKERS_CI: '1' }] as Array<Record<string, string>>) {
+      expect((await cli(['publish', 'valid.json'], env)).code).toBe(0)
+    }
   })
 
   it('sends nothing when the schema is not valid here', async () => {

@@ -252,6 +252,27 @@ class ThemeSchemaNodesTest extends TestCase
     }
 
     /**
+     * siteDefaults() reads the tuples: the nodes, or tuples()'s whole
+     * answer, would give the raw node tree or nothing without a word.
+     */
+    public function testSiteDefaultsRefusesTheNodesAndWhatTuplesAnswers(): void
+    {
+        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $compiled = ThemeSchemaFixture::tuples($nodes);
+        self::assertSame([], $compiled['errors']);
+        self::assertNotSame([], ThemeSchemas::siteDefaults($compiled['schema']));
+
+        foreach ([ 'nodes' => $nodes, 'tuples()' => $compiled ] as $given => $schema) {
+            try {
+                ThemeSchemas::siteDefaults($schema);
+                self::fail("siteDefaults() took {$given}");
+            } catch (\TypeError $error) {
+                self::assertStringContainsString("pass tuples(\$nodes)['schema']", $error->getMessage());
+            }
+        }
+    }
+
+    /**
      * The colors' derivations, declared on each color, instead of a table
      * of the engine: a schema that declares them resolves as one that
      * does not.

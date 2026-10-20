@@ -1,3 +1,4 @@
+import { isNodes } from './compile.js'
 import { COLORS, FONT_ROLES } from './format.js'
 import { pageDefaults } from './pages.js'
 import { clone, count, dig, entries, get, has, isArray, isList, type Json, type JsonMap } from './php.js'
@@ -78,9 +79,18 @@ export function schemaDefaults(schema: TupleSchema): JsonMap {
 
 /**
  * The defaults of the site's settings (the `site` block), which are the
- * site's and not part of a theme (ThemeSchemas::siteDefaults()).
+ * site's and not part of a theme (ThemeSchemas::siteDefaults()). It reads
+ * the compiled schema, `compile(schema).schema`: given the nodes or what
+ * compile() answers (`{ schema, errors }`) it throws a TypeError instead of
+ * answering the raw node tree or `{}`.
  */
 export function siteDefaults(schema: TupleSchema): JsonMap {
+  if (isNodes(schema)) {
+    throw new TypeError('siteDefaults() reads a compiled schema, not one in nodes: pass compile(schema).schema.')
+  }
+  if (has(schema, 'schema') && has(schema, 'errors')) {
+    throw new TypeError("siteDefaults() reads a compiled schema, not compile()'s answer: pass compile(schema).schema.")
+  }
   return isArray(schema.site) ? nestedDefaults(schema.site) as JsonMap : {}
 }
 

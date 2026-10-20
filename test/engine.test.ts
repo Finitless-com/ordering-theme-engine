@@ -4,7 +4,7 @@ import { insets, matrices, shades } from '../src/derivations.js'
 import { applyMigrations } from '../src/migrations.js'
 import { applyOverall, follows } from '../src/overall.js'
 import { schemaDefaults } from '../src/schemas.js'
-import { check, compile, defaults, resolve, type JsonMap, type NodeSchema, type SchemaError, type V1Map } from '../src/index.js'
+import { check, compile, defaults, resolve, siteDefaults, type JsonMap, type NodeSchema, type SchemaError, type V1Map } from '../src/index.js'
 import { cases, differences, goldenSchema, json, schemaFor } from './fixtures.js'
 
 /** A copy of $schema without the rules it declares under `co.ordering`. */
@@ -115,6 +115,22 @@ describe('compile', () => {
     expect(errors).toEqual(golden.errors)
     expect(differences(schema, golden.schema)).toEqual([])
     expect([...schema.alpha as string[]].sort()).toEqual(Object.keys(golden.alpha).filter((path) => golden.alpha[path]).sort())
+  })
+})
+
+describe('siteDefaults', () => {
+  const nodes = json<NodeSchema>('schema-26.0.nodes.json')
+  const compiled = compile(nodes, json<V1Map>('v1-map.json'))
+
+  it('reads the compiled schema', () => {
+    expect(compiled.errors).toEqual([])
+    expect(Object.keys(siteDefaults(compiled.schema)).length).toBeGreaterThan(0)
+  })
+
+  // Either would give the raw node tree or {} without a word.
+  it('refuses the nodes and what compile() answers', () => {
+    expect(() => siteDefaults(nodes as unknown as JsonMap)).toThrow(new TypeError('siteDefaults() reads a compiled schema, not one in nodes: pass compile(schema).schema.'))
+    expect(() => siteDefaults(compiled as unknown as JsonMap)).toThrow(new TypeError("siteDefaults() reads a compiled schema, not compile()'s answer: pass compile(schema).schema."))
   })
 })
 

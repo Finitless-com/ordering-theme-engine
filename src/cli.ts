@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve as resolvePath } from 'node:path'
 import { parseArgs, type ParseArgsConfig } from 'node:util'
-import { compile } from './compile.js'
+import { compile, isNodes } from './compile.js'
 import { defaults } from './resolver.js'
 import { siteDefaults } from './schemas.js'
 import { validateFull } from './validate.js'
@@ -33,14 +33,16 @@ Commands:
                            theme that sets nothing), as JSON.
       --out <file>         Write it to <file> instead of printing it.
       --check              Exit 1 when <file> (--out) is not up to date.
-      --site               Add the defaults of the site's settings, under "site".
+      --site               Add the defaults of the site's settings, under "site"
+                           (left out when the schema has none).
 
   publish <schema.json>    Validate the schema, then publish it to api-core.
       --v1-map <file>      The version 1 map to publish with it (api-core keeps
                            the last one published when none is sent).
       --dry-run            api-core checks everything and saves nothing.
       --required           Fail when THEME_PUBLISH_API or THEME_PUBLISH_KEY is
-                           missing, instead of skipping (THEME_PUBLISH_REQUIRED=1).
+                           missing, instead of skipping (or THEME_PUBLISH_REQUIRED
+                           set to 1 or true).
 
 Environment (publish):
   THEME_PUBLISH_API        The API with its version, e.g. https://apiv4.ordering.co/v400
@@ -157,7 +159,18 @@ function defaultsCommand(args: string[], io: Io): number {
   if (values.check && out === undefined) {
     throw new UsageError('--check needs --out <file>, the file to compare')
   }
-  const output = serializeDefaults(themeDefaults(readJson(io, file) as NodeSchema, values.site === true))
+  const schema = readJson(io, file) as NodeSchema
+  if (!isNodes(schema)) {
+    io.stderr(`${file}: not a schema in nodes ($schema is not urn:ordering:theme-schema:1)\n`)
+    return 1
+  }
+  const compiled = compile(schema)
+  if (compiled.errors.length > 0) {
+    compiled.errors.forEach((error) => io.stderr(`${describeError(error)}\n`))
+    io.stderr(`${file}: does not compile (${compiled.errors.length} error(s)), run ordering-theme validate ${file}\n`)
+    return 1
+  }
+  const output = serializeDefaults(themeDefaults(schema, values.site === true))
   if (out === undefined) {
     io.stdout(output)
     return 0
@@ -239,12 +252,16 @@ export function themeDefaults(schema: NodeSchema, site = false): Record<string, 
 /** The defaults as the file a product versions: indented JSON with a final newline. */
 export const serializeDefaults = (values: unknown): string => `${JSON.stringify(values, null, 2)}\n`
 
-/** Where and how to publish, from the environment: `{ api, key, required }`. */
+/**
+ * Where and how to publish, from the environment: `{ api, key, required }`.
+ * `THEME_PUBLISH_REQUIRED` requires it when `1` or `true` (any case); no
+ * other variable does (a CI's own flag, such as WORKERS_CI, is not read).
+ */
 export function publishConfig(env: Record<string, string | undefined>): { api: string, key: string, required: boolean } {
   return {
     api: String(env.THEME_PUBLISH_API ?? '').trim().replace(/\/+$/, ''),
     key: String(env.THEME_PUBLISH_KEY ?? '').trim(),
-    required: env.THEME_PUBLISH_REQUIRED === '1',
+    required: /^(1|true)$/i.test(String(env.THEME_PUBLISH_REQUIRED ?? '').trim()),
   }
 }
 

@@ -756,23 +756,33 @@ class ThemeSchemas
     }
 
     /**
-     * The defaults of specs at any depth (a scope's changes).
-     *
-     * @param array<string, mixed> $node
-     * @return array<string, mixed>
-     */
-    /**
      * The defaults of the site's settings (the `site` block), which are the
-     * site's and not part of a theme (SiteSettings).
+     * site's and not part of a theme (SiteSettings). It reads a schema in
+     * tuples, `tuples($nodes)['schema']`: given the nodes or what tuples()
+     * answers (`['schema' => ..., 'errors' => ...]`) it throws a TypeError
+     * instead of answering the raw node tree or `[]`.
      *
      * @param array<string, mixed> $schema
      * @return array<string, mixed>
      */
     public static function siteDefaults(array $schema): array
     {
+        if (NodeCompiler::isNodes($schema)) {
+            throw new \TypeError("siteDefaults() reads a schema in tuples, not one in nodes: pass tuples(\$nodes)['schema'].");
+        }
+        if (array_key_exists('schema', $schema) && array_key_exists('errors', $schema)) {
+            throw new \TypeError("siteDefaults() reads a schema in tuples, not what tuples() answers: pass tuples(\$nodes)['schema'].");
+        }
+
         return is_array($schema['site'] ?? null) ? self::nestedDefaults($schema['site']) : [];
     }
 
+    /**
+     * The defaults of specs at any depth (a scope's changes, the site's settings).
+     *
+     * @param array<string, mixed> $node
+     * @return array<string, mixed>
+     */
     private static function nestedDefaults(array $node): array
     {
         foreach ($node as $key => $value) {
