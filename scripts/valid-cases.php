@@ -8,7 +8,7 @@
  * editor may make translucent (fixtures/schema-26.0.compiled.json); and for
  * site settings, what ThemeValidator::settings() answers and what
  * ThemeResolver::validSettings() keeps of them (a case may give some
- * settings `limits` of its own, over the schema's). JSON on stdout;
+ * settings `limits` and `site` specs of its own, over the schema's). JSON on stdout;
  * scripts/sync-fixtures.sh runs it in PHP 8.3, after compile-schema.php:
  *
  *   php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
@@ -122,7 +122,7 @@ $themes = [
     'mode-colors' => [ "A mode's colors are the schema's own, as `tokens.color`: a color of the catalog the schema does not name is unknown in a mode too.", <<<'JSON'
         { "modes": { "dark": { "color": { "primary": "#111111", "danger_text": "#B02A3E", "favorite": "#FF5A5F" } } }, "tokens": { "color": { "danger_text": "#B02A3E" } } }
         JSON ],
-    'out-of-range' => [ "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to; within them, at the limits, and an alias are kept.", <<<'JSON'
+    'out-of-range' => [ "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.", <<<'JSON'
         {
             "tokens": {
                 "size": { "sm": 90, "md": 20 },
@@ -135,6 +135,21 @@ $themes = [
                 "empty_state": { "base": { "padding_y": 120 } }
             },
             "platforms": { "mobile_web": { "components": { "empty_state": { "base": { "padding_x": 100, "padding_y": 90 } } } } }
+        }
+        JSON ],
+    'out-of-format' => [ "Numbers outside the format's range, where the editor sets no limits or within the ones it sets: an invalid number when saved, clamped to the format's range or the node's limits when read (a token of a scale, an opacity, a typography style's fields, a component's base, a group's scope, a platform's default); a layout's mode, an alias and a number that is no number of its kind (a radius) are not clamped.", <<<'JSON'
+        {
+            "tokens": {
+                "radius": { "md": 12000, "sm": -4 },
+                "opacity": { "disabled": 1.5 },
+                "layout": { "mode": "original", "page_gutter": 120 },
+                "typography": { "h3": { "size": 300, "line": 5, "weight": 600, "letter_spacing": -30 } }
+            },
+            "components": {
+                "card": { "base": { "padding": 10001, "radius": 6 } },
+                "auth_form": { "scope": { "button": { "base": { "icon_gap": 200, "radius": "{radius.sm}" } } } }
+            },
+            "platforms": { "mobile_web": { "components": { "empty_state": { "base": { "padding_x": -3, "min_height": 10000 } } } } }
         }
         JSON ],
     'image-formats' => [ "An image's extension is one of its formats (`jpeg` is `jpg`, in any case, the query aside): the favicon takes no SVG and a key without formats no ICO; a URL without the extension of a known format says nothing.", <<<'JSON'
@@ -157,7 +172,8 @@ $settings = [
         { "mode": "kiosk", "name": 12, "nope": true, "tracking_only": "yes", "third_party_code": "x", "smart_banner": { "apple_id": "123", "nope": "x" }, "franchise_id": -1, "business_slug": { "x": 1 } }
         JSON ],
     'settings-list' => [ 'A list is no settings.', '[ "x" ]' ],
-    'settings-out-of-range' => [ "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case).", '{ "franchise_id": 5000, "name": "Shop" }', [ 'site.franchise_id' => [ 'min' => 1, 'max' => 1000 ] ] ],
+    'settings-out-of-range' => [ "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case): an id is not clamped, it is left out.", '{ "franchise_id": 5000, "name": "Shop" }', [ 'site.franchise_id' => [ 'min' => 1, 'max' => 1000 ] ] ],
+    'settings-clamped' => [ "Numbers of the settings (`site.max_items`, a number from 1 to 50, and `site.layout.columns`, a number without limits, given for this case): refused when saved outside their limits or the format's range and clamped when read; one within them is kept.", '{ "max_items": 80, "layout": { "columns": 12000, "gap": 4 }, "name": "Shop" }', [ 'site.max_items' => [ 'min' => 1, 'max' => 50 ] ], [ 'max_items' => [ 'number', 10 ], 'layout' => [ 'columns' => [ 'number', 3 ], 'gap' => [ 'number', 8 ] ] ] ],
 ];
 
 $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR;
@@ -175,13 +191,16 @@ foreach ($themes as $name => [ $description, $json ]) {
 foreach ($settings as $name => $case) {
     [ $description, $json ] = $case;
     $limits = $case[2] ?? null;
+    $site = $case[3] ?? null;
     $over = $limits === null ? $schema : [ ...$schema, 'limits' => [ ...$schema['limits'], ...$limits ] ];
+    $over = $site === null ? $over : [ ...$over, 'site' => [ ...$over['site'], ...$site ] ];
     $settings_values = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     $cases[] = [
         'name' => $name,
         'description' => $description,
         'settings' => json_decode($json, false, 512, JSON_THROW_ON_ERROR),
         ...($limits === null ? [] : [ 'limits' => $limits ]),
+        ...($site === null ? [] : [ 'site' => $site ]),
         'errors' => ThemeValidator::settings($settings_values, $over),
         'valid' => is_array($settings_values) && !array_is_list($settings_values) ? ThemeResolver::validSettings($settings_values, $over) : ThemeResolver::validSettings([], $over),
     ];

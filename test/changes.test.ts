@@ -144,8 +144,9 @@ describe('a change of the schema', () => {
     )).toEqual({ visibility: { 'header.logo': false }, platforms: { mobile_web: { visibility: { 'header.logo': true } } } })
   })
 
-  // Prior behavior: the editor's limits and an image's formats were the editor's and the upload's only.
-  it('refuses a number out of its limits and an image of another format', () => {
+  // Prior behavior: the editor's limits and an image's formats were the editor's and the upload's
+  // only; then a stored number out of range was read as its default, losing the closest value.
+  it('refuses a number out of its limits and an image of another format, and reads the number clamped', () => {
     const schema = tuples()
     const values = {
       tokens: { size: { sm: 90 }, typography: { h1: { size: 30, line: 2.5, weight: 600 } } },
@@ -159,7 +160,8 @@ describe('a change of the schema', () => {
       'components.button.sizes.xs.height.out_of_range',
     ])
     const kept = valid(values, schema)
-    expect(kept.components).toEqual({ button: { sizes: { xs: { icon_size: '{icon.sm}' } } } })
+    expect(kept.tokens).toEqual({ size: { sm: 80 }, typography: { h1: { size: 30, line: 2, weight: 600 } } })
+    expect(kept.components).toEqual({ button: { sizes: { xs: { height: 32, icon_size: '{icon.sm}' } } } })
     expect(kept.images).toEqual({ logo: 'https://cdn.example.com/logo.svg' })
   })
 

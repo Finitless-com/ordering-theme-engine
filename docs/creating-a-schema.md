@@ -121,6 +121,8 @@ pnpm exec ordering-theme validate theme.schema.json --previous prev.json # and a
 pnpm exec ordering-theme validate theme.schema.json --v1-map v1-map.json --against "$THEME_PUBLISH_API"  # in CI: against what the API publishes
 pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json
 pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check  # in CI: is it up to date?
+pnpm exec ordering-theme rules theme.schema.json --out src/theme.rules.json          # what a served theme is checked with
+pnpm exec ordering-theme rules theme.schema.json --out src/theme.rules.json --check
 ```
 
 `validate` exits with code 1 if the schema does not pass, and lists each `{ path, code }`
@@ -290,14 +292,18 @@ const theme = resolve(schema, themeValues)   // a theme (what it stores: only wh
   time with that build's schema version.
 - **Preview.** `resolve(schema, values)` gives what api-core would serve for those
   values, with no latency.
+- **Checking what is served.** A client that does not bundle the schema checks the
+  theme it is served with `runtimeRules(schema)` (or `ordering-theme rules`): each
+  value's options, its range or its kind, from the same limits api-core binds a saved
+  theme with ([schema-format.md §12.4](schema-format.md#124-runtime-rules)).
 
 The result has `tokens`, `components`, `visibility`, `images`, `pages`, `modes` and
 `platforms`, with each alias of the components (and of `platforms.<platform>.components`)
 replaced by its value and each typography with its `family` (the font of its role).
 Tokens and `modes` hold literal values: neither a schema nor a theme may put an alias
 there. A platform's own values come separately, in `platforms.<platform>`, and the
-client applies them on top. By default empty maps come out as `[]`, as api-core serves
-them; with `{ emptyMaps: 'object' }` they come out as `{}`.
+client applies them on top. Every empty map comes out as `{}` and a page's sections as
+a list, as api-core serves them.
 
 `resolve()` assumes a theme valid for the schema: it applies the schema's migrations, as
 api-core does when serving it, but does not drop values that no longer fit. It does not

@@ -166,9 +166,11 @@ class ThemeSchemaChangesTest extends TestCase
     /**
      * Prior behavior: the editor's limits and an image's formats were only
      * the editor's and the upload's: a theme saved a number out of range or
-     * an image of a format its key does not take, and the clients got it.
+     * an image of a format its key does not take, and the clients got it;
+     * then a stored number out of range was read as its default, so a
+     * tightened limit lost the value instead of keeping the closest one.
      */
-    public function testANumberOutOfItsLimitsOrAnImageOfAnotherFormatIsRefused(): void
+    public function testANumberOutOfItsLimitsOrAnImageOfAnotherFormatIsRefusedAndTheNumberIsReadClamped(): void
     {
         $schema = ThemeSchemaFixture::webMarketplace();
         $values = [
@@ -184,8 +186,12 @@ class ThemeSchemaChangesTest extends TestCase
             'components.button.sizes.xs.height.out_of_range',
         ], ThemeValidator::codes(ThemeValidator::validate($values, $schema)));
         self::assertSame(
-            [ 'components' => [ 'button' => [ 'sizes' => [ 'xs' => [ 'icon_size' => '{icon.sm}' ] ] ] ], 'images' => [ 'logo' => 'https://cdn.example.com/logo.svg' ] ],
-            array_filter(ThemeResolver::valid($values, $schema), fn ($section) => $section !== [] && $section !== [ 'size' => [], 'typography' => [] ]),
+            [
+                'tokens' => [ 'size' => [ 'sm' => 80 ], 'typography' => [ 'h1' => [ 'size' => 30, 'line' => 2, 'weight' => 600 ] ] ],
+                'components' => [ 'button' => [ 'sizes' => [ 'xs' => [ 'height' => 32, 'icon_size' => '{icon.sm}' ] ] ] ],
+                'images' => [ 'logo' => 'https://cdn.example.com/logo.svg' ],
+            ],
+            array_filter(ThemeResolver::valid($values, $schema), fn ($section) => $section !== []),
         );
     }
 

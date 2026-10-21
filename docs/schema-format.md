@@ -618,14 +618,30 @@ cannot say is checked on publish too (§12.3).
   number a theme or a site's settings save outside them is `<path>.out_of_range` (an
   alias names a level and is not checked). The compiled schema carries them as
   `limits`, by path. The node that declares a property decides: a variant's or a
-  platform's own node, else its base's.
+  platform's own node, else its base's. Where they say nothing, the format's range
+  binds: 0 to 9999 for a number, 0 to 1 for an opacity, and for a typography style's
+  fields §3's (`size` 0 to 200, `line` 0.8 to 3, `letter_spacing` -20 to 20); a number
+  outside it is `<path>.invalid` when saved, and only that (a value its kind refuses
+  is not also out of range).
+- **Reading a number out of range.** A stored number outside its node's limits, or
+  outside the format's range where they say nothing (written before a limit was
+  tightened, by a conversion, or outside the editor), is **clamped** to the closest
+  limit when a theme or a site's settings are read (`valid()` / `validSettings()` and
+  everything built on them: a cut-down to an older client, an upgrade to a new base):
+  a tightened `max` 56 reads a stored 57 as 56, not as the default. It applies to the
+  numbers of `size`, `icon`, `space`, `motion`, `number` and `opacity` properties and
+  settings, to the tokens of the numeric groups (`layout.mode` aside) and to each field
+  of a typography style, a component's custom one included. An alias is never clamped,
+  nor is a number of another kind (an `id`, a literal `radius`): those are left out as
+  before. Saving still refuses what is out of range; reading does not write it back.
 - **Options:** `options` as `[{ value, label?, info?, drawing?, label_platform?,
   weights? }]`. `weights`, on an option of a `font` control, are the weights the font has.
 - **Fields of a compound value:** `fields`, `{ field: { label, info, control, min,
   max, step, unit, options } }`: the fields of a typography style or the axes of a slot.
   A typography style a theme saves has each numeric field within its node's `fields`
-  (`<path>.<field>.out_of_range`, at the style's path); a component's custom style, and
-  a token without `fields` of its own, take those of the `tokens.typography` group.
+  (`<path>.<field>.out_of_range`, at the style's path). Field by field, a token takes
+  its own `fields` and, for a field it does not limit, the `tokens.typography`
+  group's; a component's custom style takes the group's.
 - **Conditions:** `visible_if` (hides) and `disabled_if` (disables), as
   `{ path, op, value? }`, with `op` among `eq`, `neq`, `in`, `not_in`, `truthy` and
   `falsy`. The client evaluates them over the resolved values.
@@ -779,6 +795,48 @@ The rules, in the order they run:
   letter (`not_snake_case`). The rest of their shape is §8's.
 - **Visibility keys are booleans.** Each one's `$type`, its own or its block's, is
   `boolean` (`not_boolean`); its default is §6's.
+
+### 12.4 Runtime rules
+
+A client that does not bundle the schema (the web keeps it out of its bundle) checks the
+theme it is served with the rules `runtimeRules(schema)` derives from the compiled
+schema and its `limits` (`ordering-theme rules` writes them; TypeScript only: api-core
+validates with the compiled schema itself, `ThemeValidator`). The client clamps a number
+to its range and takes the default for a value its rule refuses.
+
+```json
+{
+  "platforms": ["mobile_web"],
+  "scopes": { "auth_form": ["button", "input"] },
+  "text": { "size": [10, 72], "line": [1, 2], "weight": ["o", 100, 200], "letter_spacing": [-2, 4], "transform": ["o", "none", "uppercase"] },
+  "values": { "tokens": { "size": { "sm": [24, 40] } }, "components": { "button": { "base": { "icon_gap": [0, 96] } } }, "site": { "name": ["x", 60] } },
+  "platform_values": { "mobile_web": { "components": { "product_section": { "base": { "columns": [1, 2] } } } } }
+}
+```
+
+- `text`: a typography style's fields, from the `tokens.typography` group's `fields`
+  (§12.1), the format's range where it says none (§3); `weight` and `transform` are the
+  format's options.
+- `values`: a rule per value, at its path. `[min, max]` a number; `["o", …]` one of those
+  values (an option, a layout, a font, a font role, a token's options, narrowed ones
+  included); `"c"` a color; `"r"` a color or a role (`{main}`…); `"b"` / `"s"` a border /
+  a shadow; `"t"` a typography style with the fields of `text`, `["t", fields]` with its
+  own where they differ; `"l"` a boolean whose default is null; `["x", max_length,
+  pattern?]` a `string`; `"i"` an `id`. A value without a rule is checked against its
+  default (a boolean, an `html`), and `visibility`, `images`, `pages` and `slots` by
+  their defaults' shape. A matrix component's variants are `{"*": <its appearances'
+  rules>}`.
+- `platform_values`: a platform's own rules for a component's base, only where they
+  differ from the base's.
+
+A number's range is its node's limits, the same ones api-core binds a saved theme with
+(§12.1), and the format's range where they say nothing. The client is served the theme
+resolved, each alias replaced by its level's value, so a property whose kind has a scale
+(`radius`, `size`, `icon`, `space`, `motion`, `opacity`) also takes in the values the
+scale's levels may have (each level's own limits, or its default when it has none): a
+`level` control's `min` and `max` bind the custom number api-core stores, not the levels
+it may resolve to. That widening is the rules' only: a saved theme is checked, and read,
+against the node's limits alone.
 
 ## 13. Versions and compatibility
 
@@ -1278,8 +1336,9 @@ A theme or a site's settings saved against a schema (`themeErrors()`,
 `<path>.<rule>` at the value's path: `unknown`, `invalid`, `alias`, `duplicate` (a
 page's section), `alpha` (§12.1), `out_of_range` (a number outside its editor's limits;
 `<path>.<field>.out_of_range` for a typography's field, §12.1) and `format` (an image of
-a format its key does not take, §7). `valid()` and `validSettings()` leave out what has
-one; a page's list of sections stays a list.
+a format its key does not take, §7). `valid()` and `validSettings()` first clamp each
+number to its range (§12.1), then leave out what still has one; a page's list of
+sections stays a list.
 
 The paths of compiler and rule errors are those of the compiled tuple: the same as the
 schema's, plus `.default`, `.options` or `.rules` at the end; those of the editor's rules,

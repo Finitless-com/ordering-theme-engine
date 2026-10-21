@@ -1,5 +1,6 @@
 import { compile, isNodes } from './compile.js'
-import { MODES, OWN_GROUPS, ROLES, SLOT_AXES, alias, isTranslucent, isTypography, tokenNames } from './format.js'
+import { MODES, OWN_GROUPS, ROLES, SLOT_AXES, alias, isTranslucent, tokenNames } from './format.js'
+import { clampValue, numberKind, rangeCodes, tokenNumberKind } from './limits.js'
 import { applyMigrations, withoutKey } from './migrations.js'
 import { defaultSections } from './pages.js'
 import { clone, count, dig, entries, get, has, identical, isArray, isEmpty, isList, phpString, values, type Json, type JsonMap } from './php.js'
@@ -41,7 +42,9 @@ function isStoredMap(value: Json): boolean {
  * What of a theme fits its schema (ThemeResolver::valid()): a value the
  * schema no longer has or that is not valid is left out, so its default
  * shows instead; what the schema renamed or moved (`co.ordering.migrate`)
- * is first taken where it went. A list is no theme: `{}`. Given the nodes,
+ * is first taken where it went, and a number outside its limits or its
+ * format's range takes the closest one within them (clampTheme()). A list
+ * is no theme: `{}`. Given the nodes,
  * it compiles them (without a version 1 map); the theme is not changed.
  */
 export function valid(values: ThemeValues | JsonMap | null | undefined, schema: NodeSchema | TupleSchema): JsonMap {
@@ -55,7 +58,8 @@ export function validTuples(theme: unknown, schema: TupleSchema): JsonMap {
     return {}
   }
   const migrate = get(schema, 'migrate')
-  let answer = applyMigrations(copy as JsonMap, isArray(migrate) ? migrate : [])
+  // What the schema renamed or moved is read where it went, each number within its range.
+  let answer = clampTheme(applyMigrations(copy as JsonMap, isArray(migrate) ? migrate : []), schema)
   const lists = new Set<string>()
   for (const problem of themeErrors(answer, schema)) {
     // A section left out of its page's list, which stays a list.
@@ -96,9 +100,9 @@ export function validTuples(theme: unknown, schema: TupleSchema): JsonMap {
 /**
  * What of a site's settings fits its schema (ThemeResolver::validSettings()),
  * as valid() a theme: what the schema renamed or moved within its base (its
- * migrations of `site.` paths) is first taken where it went, then each
- * setting settingsErrors() finds wrong is left out, so its default shows
- * instead. A list is no settings: `{}`. The settings are not changed.
+ * migrations of `site.` paths) is first taken where it went and each
+ * number is clamped within its range, then each setting settingsErrors()
+ * finds wrong is left out, so its default shows instead. A list is no settings: `{}`. The settings are not changed.
  */
 export function validSettings(settings: JsonMap | null | undefined, schema: NodeSchema | TupleSchema): JsonMap {
   return validSettingsTuples(settings ?? {}, tuplesOf(schema))
@@ -110,7 +114,8 @@ export function validSettingsTuples(settings: unknown, schema: TupleSchema): Jso
   const migrations = values(get(schema, 'migrate')).filter((migration) => isArray(migration)
     && typeof get(migration, 'from') === 'string' && (get(migration, 'from') as string).split('.')[0] === 'site')
   const document = applyMigrations({ site: isArray(copy) ? copy : {} }, migrations)
-  let own: Json = isArray(get(document, 'site')) ? get(document, 'site') : {}
+  const site = get(schema, 'site')
+  let own: Json = clampSettings(isArray(get(document, 'site')) ? get(document, 'site') : {}, isArray(site) ? site : {}, 'site', get(schema, 'limits'))
   for (const problem of settingsErrors(own, schema)) {
     if (problem.path === 'site') {
       return {}
@@ -271,7 +276,9 @@ export function themeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
   }
   refers(sections, '')
   errors.push(...translucentErrors(theme, schema))
-  errors.push(...rangeErrors(theme, schema))
+  // A value its kind already refuses is not also out of range.
+  const refused = new Set(errors.map((problem) => problem.path))
+  errors.push(...rangeErrors(theme, schema).filter((problem) => !refused.has(problem.path)))
 
   // Once each, though a value's own check may have said it too.
   const seen = new Set<string>()
@@ -306,7 +313,7 @@ function treeErrors(settings: Json, specs: Json, path: string, limits: Json): Sc
       if (rule !== null) {
         errors.push(error(at, rule))
       } else {
-        errors.push(...outOfRange(value, at, get(limits, at), null))
+        errors.push(...rangeCodes(value, at, limits, at).map((code) => ({ path: at, code })))
       }
     }
   }
@@ -616,10 +623,11 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
  * The numbers a theme sets outside the limits its schema's editor gives
  * them (`limits`; ThemeValidator::ranges()): a number below the node's `min`
  * or above its `max` is `<path>.out_of_range`, and a typography style's
- * field outside the node's `fields` (a token's own, else the
- * `tokens.typography` group's, which a component's custom style takes too)
- * is `<path>.<field>.out_of_range`, both at the value's path. The node that
- * declares a property decides, as for `alpha`. An alias is not checked.
+ * field outside its range (the node's own `fields`, else the
+ * `tokens.typography` group's, field by field; a component's custom style
+ * takes the group's) is `<path>.<field>.out_of_range`, both at the value's
+ * path. The node that declares a property decides, as for `alpha`. An
+ * alias is not checked.
  */
 function rangeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
   const limits = get(schema, 'limits')
@@ -627,9 +635,8 @@ function rangeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
     return []
   }
   const errors: SchemaError[] = []
-  const typography = dig(limits, 'tokens.typography', 'fields')
   const check = (value: Json, path: string, node: string): void => {
-    errors.push(...outOfRange(value, path, get(limits, node), typography))
+    errors.push(...rangeCodes(value, path, limits, node).map((code) => ({ path, code })))
   }
   for (const [group, names] of entries(get(theme, 'tokens'))) {
     for (const [name, value] of entries(isArray(names) ? names : {})) {
@@ -641,29 +648,60 @@ function rangeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
 }
 
 /**
- * What is out of range of a value against its node's limits (null: none),
- * ThemeValidator::outOfRange(): a number, or each numeric field of a
- * typography style, whose fields are the node's own or, when it has none,
- * $fields.
+ * A theme with each number within its node's limits and its format's range
+ * (ThemeValidator::clamp()): a token's, a component's (the node that
+ * declares it decides, as rangeErrors()) and a platform's, and each field
+ * of a typography style. An alias, or a value of another kind, is left as
+ * it is: themeErrors() says what is wrong with it.
  */
-function outOfRange(value: Json, path: string, limits: Json, fields: Json): SchemaError[] {
-  const outside = (number: Json, range: Json): boolean => typeof number === 'number' && isArray(range)
-    && ((typeof get(range, 'min') === 'number' && number < (get(range, 'min') as number))
-      || (typeof get(range, 'max') === 'number' && number > (get(range, 'max') as number)))
-  if (typeof value === 'number') {
-    return outside(value, limits) ? [error(path, 'out_of_range')] : []
-  }
-  if (!isTypography(value)) {
-    return []
-  }
-  const own = get(limits, 'fields')
-  const errors: SchemaError[] = []
-  for (const [field, range] of entries(isArray(own) ? own : (fields ?? {}))) {
-    if (outside(get(value, field), range)) {
-      errors.push({ path, code: `${path}.${field}.out_of_range` })
+export function clampTheme(theme: JsonMap, schema: TupleSchema): JsonMap {
+  const limits = get(schema, 'limits')
+  const tokens = get(theme, 'tokens')
+  for (const [group, names] of entries(isMapLike(tokens) ? tokens : {})) {
+    if (!isMapLike(names)) {
+      continue
+    }
+    for (const [name, value] of entries(names)) {
+      const kind = tokenNumberKind(group, name)
+      if (kind !== null) {
+        ;(names as Record<string, Json>)[name] = clampValue(value, kind, limits, `tokens.${group}.${name}`)
+      }
     }
   }
-  return errors
+  eachComponentValue(theme, (value, path, candidates) => {
+    const node = declaring(schema, candidates)
+    const kind = numberKind(phpString(specAt(schema, node)?.[0] ?? ''))
+    if (kind !== null) {
+      const segments = path.split('.')
+      const parent = dig(theme, ...segments.slice(0, -1))
+      ;(parent as Record<string, Json>)[segments[segments.length - 1]!] = clampValue(value, kind, limits, node)
+    }
+  })
+  return theme
+}
+
+/** A site's settings with each number within its limits and its format's range (ThemeValidator::clampSettings()). */
+function clampSettings(settings: Json, specs: Json, path: string, limits: Json): Json {
+  if (!isMapLike(settings)) {
+    return settings
+  }
+  for (const [key, value] of entries(settings)) {
+    const spec = get(specs, key)
+    if (!isArray(spec)) {
+      continue
+    }
+    const at = `${path}.${key}`
+    const kind = isList(spec) ? numberKind(phpString(get(spec, 0))) : null
+    ;(settings as Record<string, Json>)[key] = isList(spec)
+      ? (kind === null || kind === 'text' ? value : clampValue(value, kind, limits, at))
+      : clampSettings(value, spec, at, limits)
+  }
+  return settings
+}
+
+/** A map of a theme (an array that is not a non-empty list). */
+function isMapLike(value: Json): boolean {
+  return isArray(value) && !(Array.isArray(value) && value.length > 0)
 }
 
 /** The first of a value's candidate nodes the schema declares, or the first one (ThemeValidator::declaring()). */

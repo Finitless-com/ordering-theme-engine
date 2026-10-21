@@ -128,7 +128,9 @@ final class ThemeValidator
         };
         $refers(array_intersect_key($values, array_flip(self::SECTIONS)), '');
         array_push($errors, ...self::translucent($values, $schema));
-        array_push($errors, ...self::ranges($values, $schema));
+        // A value its kind already refuses is not also out of range.
+        $refused = array_flip(array_column($errors, 'path'));
+        array_push($errors, ...array_filter(self::ranges($values, $schema), fn ($error) => !isset($refused[$error['path']])));
 
         // Once each, though a value's own check may have said it too.
         return array_values(array_intersect_key($errors, array_unique(array_column($errors, 'code'))));
@@ -182,11 +184,13 @@ final class ThemeValidator
      * The numbers a theme sets outside the limits its schema's editor gives
      * them (`limits`, NodeCompiler): a number below the node's `min` or
      * above its `max` is `<path>.out_of_range`, and a typography style's
-     * field outside the node's `fields` (a token's own, else the
-     * `tokens.typography` group's, which a component's custom style takes
-     * too) is `<path>.<field>.out_of_range`, both at the value's path. The
-     * node that declares a property decides, as for `alpha`. An alias names
-     * a level: it is not checked.
+     * field outside its range (self::fieldRanges(): the node's own
+     * `fields`, else the `tokens.typography` group's, field by field; a
+     * component's custom style takes the group's) is
+     * `<path>.<field>.out_of_range`, both at the value's path. The node that
+     * declares a property decides, as for `alpha`. An alias names a level:
+     * it is not checked. A number outside the format's range is its kind's
+     * own check (`invalid`), not this one.
      *
      * @param array<string, mixed> $values
      * @param array<string, mixed> $schema
@@ -200,7 +204,7 @@ final class ThemeValidator
         }
         $errors = [];
         $check = function ($value, string $path, string $node) use ($limits, &$errors) {
-            array_push($errors, ...self::outOfRange($value, $path, $limits[$node] ?? null, $limits['tokens.typography']['fields'] ?? null));
+            array_push($errors, ...self::outOfRange($value, $path, $limits, $node));
         };
 
         foreach (is_array($values['tokens'] ?? null) ? $values['tokens'] : [] as $group => $names) {
@@ -216,32 +220,244 @@ final class ThemeValidator
     }
 
     /**
-     * What is out of range of a value against its node's limits (null:
-     * none): a number, or each numeric field of a typography style, whose
-     * fields are the node's own or, when it has none, $fields.
+     * What is out of range of a value against its node's limits: a number,
+     * or each numeric field of a typography style.
      *
-     * @param array<string, mixed>|null $limits
-     * @param array<string, mixed>|null $fields
+     * @param array<string, mixed> $limits the schema's, by path
      * @return array<int, array{path: string, code: string}>
      */
-    private static function outOfRange($value, string $path, ?array $limits, ?array $fields): array
+    private static function outOfRange($value, string $path, array $limits, string $node): array
     {
-        $outside = fn ($number, $range) => (is_int($number) || is_float($number)) && is_array($range)
-            && ((isset($range['min']) && $number < $range['min']) || (isset($range['max']) && $number > $range['max']));
         if (is_int($value) || is_float($value)) {
-            return $outside($value, $limits) ? [ self::error($path, 'out_of_range') ] : [];
+            return self::outside($value, self::nodeRange($limits, $node)) ? [ self::error($path, 'out_of_range') ] : [];
         }
         if (!ThemeFormat::isTypography($value)) {
             return [];
         }
         $errors = [];
-        foreach (is_array($limits['fields'] ?? null) ? $limits['fields'] : ($fields ?? []) as $field => $range) {
-            if ($outside($value[$field] ?? null, $range)) {
+        foreach (self::fieldRanges($limits, $node) as $field => $range) {
+            if (self::outside($value[$field] ?? null, $range)) {
                 $errors[] = [ 'path' => $path, 'code' => "{$path}.{$field}.out_of_range" ];
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * A theme with each number within its node's limits and its format's
+     * range: a token's, a component's (the node that declares it decides,
+     * as self::ranges()) and a platform's, and each field of a typography
+     * style. An alias, or a value of another kind, is left as it is:
+     * self::validate() says what is wrong with it. ThemeResolver::valid()
+     * reads a theme so, and a tightened limit keeps the closest value
+     * instead of the default.
+     *
+     * @param array<string, mixed> $values
+     * @param array<string, mixed> $schema compiled
+     * @return array<string, mixed>
+     */
+    public static function clamp(array $values, array $schema): array
+    {
+        $limits = is_array($schema['limits'] ?? null) ? $schema['limits'] : [];
+        foreach (is_array($values['tokens'] ?? null) && !self::isList($values['tokens']) ? $values['tokens'] : [] as $group => $names) {
+            if (!is_array($names) || self::isList($names)) {
+                continue;
+            }
+            foreach ($names as $name => $value) {
+                $kind = self::tokenNumberKind((string) $group, (string) $name);
+                if ($kind !== null) {
+                    $values['tokens'][$group][$name] = self::clampValue($value, $kind, $limits, "tokens.{$group}.{$name}");
+                }
+            }
+        }
+        $changes = [];
+        self::eachComponentValue($values, function ($value, string $path, array $candidates) use ($schema, $limits, &$changes) {
+            $node = self::declaring($schema, $candidates);
+            $kind = self::numberKind((string) (ThemeSchemas::specAt($schema, $node)[0] ?? ''));
+            if ($kind !== null) {
+                $changes[$path] = self::clampValue($value, $kind, $limits, $node);
+            }
+        });
+        foreach ($changes as $path => $value) {
+            $node = &$values;
+            foreach (explode('.', $path) as $segment) {
+                $node = &$node[$segment];
+            }
+            $node = $value;
+            unset($node);
+        }
+
+        return $values;
+    }
+
+    /**
+     * A site's settings with each number within its limits and its
+     * format's range, as self::clamp() a theme (ThemeResolver::validSettings()).
+     *
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $schema compiled
+     * @return array<string, mixed>
+     */
+    public static function clampSettings(array $settings, array $schema): array
+    {
+        return self::clampTree($settings, is_array($schema['site'] ?? null) ? $schema['site'] : [], 'site', is_array($schema['limits'] ?? null) ? $schema['limits'] : []);
+    }
+
+    /**
+     * @param array<string, mixed> $specs
+     * @param array<string, mixed> $limits
+     * @return mixed
+     */
+    private static function clampTree($values, array $specs, string $path, array $limits)
+    {
+        if (!is_array($values) || self::isList($values)) {
+            return $values;
+        }
+        foreach ($values as $key => $value) {
+            $spec = $specs[$key] ?? null;
+            if (!is_array($spec)) {
+                continue;
+            }
+            $at = "{$path}.{$key}";
+            if (!array_is_list($spec)) {
+                $values[$key] = self::clampTree($value, $spec, $at, $limits);
+                continue;
+            }
+            $kind = self::numberKind((string) ($spec[0] ?? ''));
+            if ($kind !== null && $kind !== 'text') {
+                $values[$key] = self::clampValue($value, $kind, $limits, $at);
+            }
+        }
+
+        return $values;
+    }
+
+    /** A non-empty list (an empty array is an empty map). */
+    private static function isList(array $value): bool
+    {
+        return $value !== [] && array_is_list($value);
+    }
+
+    /**
+     * A value of a numeric kind within its node's limits and the format's
+     * range: a number, or each numeric field of a map with a typography's
+     * fields. An alias, or a value of another kind, as it is.
+     *
+     * @param array<string, mixed> $limits
+     * @return mixed
+     */
+    public static function clampValue($value, string $kind, array $limits, string $node)
+    {
+        if ($kind !== 'text') {
+            return self::clampNumber($value, self::filled(self::nodeRange($limits, $node), $kind === 'opacity' ? ThemeFormat::OPACITY_RANGE : ThemeFormat::NUMBER_RANGE));
+        }
+        if (!is_array($value) || self::isList($value)) {
+            return $value;
+        }
+        $ranges = self::fieldRanges($limits, $node);
+        foreach (ThemeFormat::TYPOGRAPHY_RANGES as $field => $format) {
+            if (is_int($value[$field] ?? null) || is_float($value[$field] ?? null)) {
+                $value[$field] = self::clampNumber($value[$field], self::filled($ranges[$field] ?? [ 'min' => null, 'max' => null ], $format));
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * What a value of a kind is as a number: `number`, `opacity`, `text` (a
+     * typography style, by its fields) or null (not a number).
+     */
+    public static function numberKind(string $kind): ?string
+    {
+        if (in_array($kind, ThemeFormat::NUMBER_KINDS, true)) {
+            return 'number';
+        }
+
+        return $kind === 'opacity' || $kind === 'text' ? $kind : null;
+    }
+
+    /** self::numberKind() of the token `<group>.<name>`. */
+    public static function tokenNumberKind(string $group, string $name): ?string
+    {
+        if ($group === 'typography') {
+            return 'text';
+        }
+        if ($group === 'opacity') {
+            return 'opacity';
+        }
+
+        return in_array($group, ThemeFormat::NUMBER_GROUPS, true) && !($group === 'layout' && $name === 'mode') ? 'number' : null;
+    }
+
+    /**
+     * A node's `min` and `max` as `limits` gives them (null where they say nothing).
+     *
+     * @param array<string, mixed> $limits
+     * @return array{min: int|float|null, max: int|float|null}
+     */
+    public static function nodeRange(array $limits, string $node): array
+    {
+        $own = is_array($limits[$node] ?? null) ? $limits[$node] : [];
+        $bound = fn (string $key) => is_int($own[$key] ?? null) || is_float($own[$key] ?? null) ? $own[$key] : null;
+
+        return [ 'min' => $bound('min'), 'max' => $bound('max') ];
+    }
+
+    /**
+     * The range of each numeric field of a typography style at a node: the
+     * node's own `fields`, else those of the `tokens.typography` group, field
+     * by field.
+     *
+     * @param array<string, mixed> $limits
+     * @return array<string, array{min: int|float|null, max: int|float|null}>
+     */
+    public static function fieldRanges(array $limits, string $node): array
+    {
+        $answer = [];
+        foreach ([ $limits['tokens.typography']['fields'] ?? null, $limits[$node]['fields'] ?? null ] as $fields) {
+            foreach (is_array($fields) ? $fields : [] as $field => $range) {
+                $min = $range['min'] ?? null;
+                $max = $range['max'] ?? null;
+                $answer[$field] = [ 'min' => is_int($min) || is_float($min) ? $min : null, 'max' => is_int($max) || is_float($max) ? $max : null ];
+            }
+        }
+
+        return $answer;
+    }
+
+    /**
+     * @param array{min: int|float|null, max: int|float|null} $range
+     * @param array{min: int|float, max: int|float} $format
+     * @return array{min: int|float, max: int|float}
+     */
+    private static function filled(array $range, array $format): array
+    {
+        return [ 'min' => $range['min'] ?? $format['min'], 'max' => $range['max'] ?? $format['max'] ];
+    }
+
+    /** @param array{min: int|float|null, max: int|float|null} $range */
+    private static function outside($number, array $range): bool
+    {
+        return (is_int($number) || is_float($number))
+            && (($range['min'] !== null && $number < $range['min']) || ($range['max'] !== null && $number > $range['max']));
+    }
+
+    /**
+     * @param array{min: int|float|null, max: int|float|null} $range
+     * @return mixed
+     */
+    private static function clampNumber($value, array $range)
+    {
+        if (!is_int($value) && !is_float($value)) {
+            return $value;
+        }
+        if ($range['min'] !== null && $value < $range['min']) {
+            return $range['min'];
+        }
+
+        return $range['max'] !== null && $value > $range['max'] ? $range['max'] : $value;
     }
 
     /**
@@ -608,7 +824,7 @@ final class ThemeValidator
             } else if (($rule = self::value($spec[0], $value, $spec[2] ?? null, $spec[3] ?? null)) !== null) {
                 $errors[] = self::error($at, $rule);
             } else {
-                array_push($errors, ...self::outOfRange($value, $at, $limits[$at] ?? null, null));
+                array_push($errors, ...self::outOfRange($value, $at, $limits, $at));
             }
         }
 

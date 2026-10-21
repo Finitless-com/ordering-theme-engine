@@ -55,9 +55,22 @@ describe('resolve', () => {
     expect(((resolve(schema, {}).tokens as JsonMap).color as JsonMap).primary).not.toBe('#000000')
   })
 
-  it('writes an empty map as api-core does, or as an object when asked', () => {
-    expect(resolve(schema, {}).modes).toEqual([])
-    expect(resolve(schema, {}, { emptyMaps: 'object' }).modes).toEqual({})
+  // Prior behavior: empty maps came out as `[]` unless asked, while api-core serves `{}`.
+  it('writes every empty map as an object, as api-core serves it, and sections as lists', () => {
+    const resolved = resolve(schema, {}) as JsonMap
+    const lists: string[] = []
+    const walk = (value: unknown, path: string): void => {
+      if (Array.isArray(value)) {
+        lists.push(path)
+      }
+      if (typeof value === 'object' && value !== null) {
+        Object.entries(value).forEach(([key, child]) => walk(child, `${path}.${key}`))
+      }
+    }
+    walk(resolved, '')
+    expect(resolved.modes).toStrictEqual({})
+    expect(lists.filter((path) => !/^\.pages\.[a-z_]+\.sections$/.test(path))).toEqual([])
+    expect(lists.length).toBeGreaterThan(0)
   })
 
   it('reads a theme that is a list, or none, as the empty theme', () => {

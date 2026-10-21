@@ -152,6 +152,25 @@ final class ThemeFormat
 
     public const LINE_MAX = 3;
 
+    /** The format's range of a number (`size`, `space`, a token of a scale…). */
+    public const NUMBER_RANGE = [ 'min' => 0, 'max' => 9999 ];
+
+    /** The format's range of an opacity. */
+    public const OPACITY_RANGE = [ 'min' => 0, 'max' => 1 ];
+
+    /** The format's range of each numeric field of a typography style. */
+    public const TYPOGRAPHY_RANGES = [
+        'size' => [ 'min' => 0, 'max' => 200 ],
+        'line' => [ 'min' => self::LINE_MIN, 'max' => self::LINE_MAX ],
+        'letter_spacing' => [ 'min' => -20, 'max' => 20 ],
+    ];
+
+    /** The property kinds whose value is a number. */
+    public const NUMBER_KINDS = [ 'size', 'icon', 'space', 'motion', 'number' ];
+
+    /** The token groups whose values are numbers (`layout` but its `mode`). */
+    public const NUMBER_GROUPS = [ 'radius', 'size', 'icon', 'space', 'layout', 'motion', 'border', 'scrollbar' ];
+
     /**
      * The kinds a component property may have, and the token group an
      * alias in it may name. `radius` and `text` take only an alias: a level

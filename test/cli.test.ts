@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { run, serializeDefaults, type Io } from '../src/cli.js'
-import { compile, defaults, siteDefaults, type JsonMap, type NodeSchema } from '../src/index.js'
+import { compile, defaults, runtimeRules, serializeRules, siteDefaults, type JsonMap, type NodeSchema } from '../src/index.js'
 import { json } from './fixtures.js'
 
 /**
@@ -250,6 +250,28 @@ describe('ordering-theme defaults', () => {
     const answer = await cli(['defaults', 'valid.json', '--check'])
     expect(answer.code).toBe(2)
     expect(answer.stderr).toContain('--check needs --out')
+  })
+})
+
+describe('ordering-theme rules', () => {
+  const expected = serializeRules(runtimeRules(base))
+
+  it('prints, writes and checks the rules a client checks a served theme with', async () => {
+    expect(await cli(['rules', 'valid.json'])).toEqual({ code: 0, stdout: expected, stderr: '' })
+    expect(await cli(['rules', 'valid.json', '--out', 'theme.rules.json'])).toMatchObject({ code: 0, stdout: 'wrote theme.rules.json\n' })
+    expect(readFileSync(join(directory, 'theme.rules.json'), 'utf8')).toBe(expected)
+    expect(await cli(['rules', 'valid.json', '--out', 'theme.rules.json', '--check'])).toMatchObject({ code: 0, stdout: 'theme.rules.json is up to date\n' })
+
+    write('theme.rules.json', '{}\n')
+    const stale = await cli(['rules', 'valid.json', '--out', 'theme.rules.json', '--check'])
+    expect(stale.code).toBe(1)
+    expect(stale.stderr).toBe('theme.rules.json is out of date: run ordering-theme rules valid.json --out theme.rules.json\n')
+  })
+
+  it('fails as defaults does on a schema that does not compile or is not in nodes', async () => {
+    expect((await cli(['rules', 'uncompiled.json'])).code).toBe(1)
+    expect((await cli(['rules', 'tuples.json'])).stderr).toContain('not a schema in nodes')
+    expect((await cli(['rules', 'valid.json', '--site'])).code).toBe(2)
   })
 })
 

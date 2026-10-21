@@ -10,8 +10,8 @@ The v2 theme engine, in two implementations that answer the same:
   the Ordering.co API will serve or answer without copying the rules: local defaults, zero-latency
   preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
   `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
-  ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and
-  publishes it.
+  ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and the
+  rules a client checks a served theme with, and publishes it.
 
 Both live here and are checked against each other in one CI
 ([parity](#parity-between-php-and-typescript)).
@@ -60,14 +60,20 @@ alone.
 
 ### Public API
 
-- `resolve(schema, values, options?)`: the theme over its schema's defaults
+- `resolve(schema, values)`: the theme over its schema's defaults
   (`ThemeResolver::resolve()`): the aliases of `components` and of
   `platforms.<platform>.components` replaced by their tokens' values, and each
   `tokens.typography` style with the `family` of its font role. `tokens` and `modes`
   stay as they are: their values are literals, and neither a schema nor a theme may put
   an alias there. Throws a `TypeError` if the schema is not in nodes.
-- `defaults(schema, options?)`: the empty theme resolved, what a site whose theme
+- `defaults(schema)`: the empty theme resolved, what a site whose theme
   changes nothing serves.
+- `runtimeRules(schema)` and `serializeRules(rules)`: the rules a client checks a theme
+  it is served with without bundling the schema (each value's options, its range or
+  its kind), and the file a product versions with them; `ordering-theme rules` writes
+  it. TypeScript only: api-core validates with the compiled schema itself
+  (`ThemeValidator`). The format is documented in `src/rules.ts` and in
+  [schema-format.md §12.4](docs/schema-format.md#124-runtime-rules).
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads
   (`NodeCompiler`), with its errors: `{ schema, errors }`. `resolve` uses it and caches
   the result per object.
@@ -124,20 +130,18 @@ alone.
   `::settings()`: each problem `{ path, code }`, in the API's order.
 - The format's meta-schema, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), the same file the PHP engine reads.
-- Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
+- Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`,
   `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`…
 
-`options.emptyMaps`: PHP does not distinguish an empty map from an empty list and serves
-both as `[]`. By default the output does the same, so its JSON matches the API's; with
-`'object'` they come out as `{}`. It is all or nothing: it applies to every empty map of
-the answer (`modes`, and `platforms` or `images` when the schema has none…), with no
-choice per key.
+Every map comes out as an object, an empty one too (`{}`), as api-core serves it (its
+`ThemeMaps`): `modes`, and `platforms` or `images` when the schema has none. A page's
+`sections` are a list, an empty one too.
 
 `modes` is what the theme sets per mode, `{ <mode>: { color: { <name>: <color> } } }`:
 the colors a client uses instead of `tokens.color.<name>` in that mode, as the theme
 stores them (the engine neither derives nor resolves them). The only mode is `dark`
 (`ThemeFormat::MODES`). A schema declares no modes, so `defaults()` always gives it
-empty: `[]` by default, `{}` with `emptyMaps: 'object'`.
+empty: `{}`.
 
 ## PHP
 
@@ -218,6 +222,7 @@ What a product's repo runs on its schema. With the package installed,
 ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous last.json] [--previous-base last-of-26.json] [--development]
 ordering-theme validate theme.schema.json [--v1-map v1-map.json] --against "$THEME_PUBLISH_API" [--development]
 ordering-theme defaults theme.schema.json [--out src/theme.defaults.json] [--check] [--site]
+ordering-theme rules    theme.schema.json [--out src/theme.rules.json] [--check]
 ordering-theme publish  theme.schema.json [--v1-map v1-map.json] [--previous-base last-of-26.json] [--dry-run] [--required]
 ordering-theme --help      # -h
 ordering-theme --version   # -v
@@ -247,7 +252,12 @@ ordering-theme --version   # -v
   commits the file. `--site` adds the site settings' defaults (`siteDefaults()`) under
   `site`, and leaves `site` out when the schema has none. A schema that is not in nodes,
   or that does not compile (its compiler errors are printed), exits 1 and writes
-  nothing; it does not run the rest of `validate`.
+  nothing; it does not run the rest of `validate`. Every empty map is written `{}` and
+  a page's sections a list, as api-core serves them.
+- `rules`: `runtimeRules()` written by `serializeRules()`, one rule per line, the maps
+  that hold them indented, with a trailing newline: what a product checks a theme it is
+  served with, at runtime, without bundling the schema. `--out` and `--check` work as
+  for `defaults`, and so do the schemas it refuses.
 - `publish`: validates the schema locally and, if it passes, sends it to the Ordering.co API:
   `POST {THEME_PUBLISH_API}/system/theme_schemas` with `{ schema, v1_map?, dry_run? }`
   and the key in `X-Theme-Publish-Key-X`. Product type and version come from the schema
@@ -282,8 +292,8 @@ on stdout and exit 0; `--version` or `-v` as the command prints the version.
 Exit codes:
 
 - 0: done (valid, written, up to date, published or skipped);
-- 1: the schema fails (`validate`, `publish`'s local check, a `defaults` schema not in
-  nodes or that does not compile), `--check` finds the file out of date, the Ordering.co
+- 1: the schema fails (`validate`, `publish`'s local check, a `defaults` or `rules`
+  schema not in nodes or that does not compile), `--check` finds the file out of date, the Ordering.co
   API rejects or cannot be reached, a `--required` publish lacks its environment, or a
   file cannot be read or is not JSON;
 - 2: a usage error, with the reason on stderr: no command (the usage is printed on
@@ -293,7 +303,8 @@ Exit codes:
 In CI, for example:
 
 ```sh
-ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check
+ordering-theme defaults theme.schema.json --out src/theme.defaults.json --site --check
+ordering-theme rules theme.schema.json --out src/theme.rules.json --check
 ordering-theme validate theme.schema.json --v1-map v1-map.json --against "$THEME_PUBLISH_API"   # on the PR
 ordering-theme publish theme.schema.json --v1-map v1-map.json --dry-run   # on the PR
 ordering-theme publish theme.schema.json --v1-map v1-map.json --required  # on deploy
@@ -468,8 +479,10 @@ What the PHP engine answers for them:
 - `fixtures/valid.json`: what `ThemeValidator::validate()` and `ThemeResolver::valid()`
   answer for themes that break every rule of each section (unknown, invalid, alias,
   alpha, duplicate, out_of_range, format; a page's list that stays a list, a mode's
-  colors), and `ThemeValidator::settings()` and `ThemeResolver::validSettings()` for
-  site settings, over the compiled current schema (`scripts/valid-cases.php`);
+  colors, numbers clamped to their limits and to the format's range on reading), and
+  `ThemeValidator::settings()` and `ThemeResolver::validSettings()` for site settings
+  (a case may add `limits` and `site` specs of its own), over the compiled current
+  schema (`scripts/valid-cases.php`);
   `themeErrors()`, `valid()`, `settingsErrors()` and `validSettings()` must answer the
   same;
 - `fixtures/upgrade.json`: four versions made from the current schema (26.4, 26.5,

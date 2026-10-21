@@ -35,11 +35,20 @@ Breaking for api-core and the CLI's users (nothing is launched, so nothing old i
   a section's `hideable` and `group`.
 - **Behavior change:** a theme (`ThemeValidator::validate()`, `themeErrors()`) refuses a
   number outside its editor's `min`/`max` (`<path>.out_of_range`) and a typography's
-  field outside its `fields` (`<path>.<field>.out_of_range`: a token's own, else the
-  `tokens.typography` group's, which a component's custom style takes too), and an image
-  whose URL ends in the extension of a format its key does not take
+  field outside its `fields` (`<path>.<field>.out_of_range`: field by field a token's
+  own, else the `tokens.typography` group's, which a component's custom style takes),
+  and an image whose URL ends in the extension of a format its key does not take
   (`images.<key>.format`); a site's settings (`ThemeValidator::settings()`,
-  `settingsErrors()`) their numbers out of range. `valid()` leaves them out on reading.
+  `settingsErrors()`) their numbers out of range. A number its kind already refuses
+  (outside the format's range: `invalid`) is not also `out_of_range`.
+- **Behavior change:** reading a theme or a site's settings (`valid()`,
+  `validSettings()`, so `cutDown()` and the upgrades too) clamps each stored number to
+  its node's limits, or to the format's range where they say nothing (0–9999, opacity
+  0–1, a typography's fields §3's), instead of leaving it out: a tightened `max` keeps
+  the closest value, not the default. Numbers of `size`, `icon`, `space`, `motion`,
+  `number` and `opacity` properties and settings, of the numeric token groups and of
+  every typography's fields; never an alias, an `id` or a literal `radius`
+  (**API**: `ThemeValidator::clamp()`, `::clampSettings()`, `::clampValue()`).
 - **Behavior change:** a mode's colors (`modes.<mode>.color.<name>`) are the schema's
   own, as `tokens.color`: one it does not name is `.unknown`, and `valid()` and
   `cutDown()` leave it out.
@@ -49,6 +58,14 @@ Breaking for api-core and the CLI's users (nothing is launched, so nothing old i
   `v1_map.pages.<page>.<section>.unknown`, `v1_map.site.<setting>.unknown`
   (`schema.invalid`; `ThemeSchemaPublisher::v1MapErrors()`, `v1MapErrors()`). The
   compiler still leaves such paths out of the tuples.
+- **API:** `resolve()` and `defaults()` write every empty map as `{}`, as api-core serves
+  it (`modes` included); a page's sections stay lists. The `emptyMaps` option and the
+  `ResolveOptions` type are gone: `resolve(schema, values)`, `defaults(schema)`.
+  `ordering-theme defaults` writes the same.
+- **API:** `runtimeRules(schema)` and `serializeRules(rules)`, and the CLI's `rules
+  <schema> [--out <file>] [--check]`: the rules a client checks a theme it is served
+  with without bundling the schema (schema-format.md §12.4), from the compiled schema
+  and the same limits api-core binds a saved theme with. TypeScript only.
 - **CLI:** `validate --previous` answers `unchanged` for the same version with the same
   content and `schema.version_exists` for another, as the API does; warnings print on
   stderr as `warning: <code>`.

@@ -5,6 +5,7 @@ import { compile, isNodes } from './compile.js'
 import { canonical } from './diff.js'
 import { versionCompare } from './php.js'
 import { defaults } from './resolver.js'
+import { runtimeRules, serializeRules } from './rules.js'
 import { siteDefaults } from './schemas.js'
 import { validateFull } from './validate.js'
 import type { Changes, Json, NodeSchema, SchemaError, V1Map, ValidationResult } from './types.js'
@@ -18,6 +19,8 @@ import type { Changes, Json, NodeSchema, SchemaError, V1Map, ValidationResult } 
  *   (`--against`);
  * - `defaults`: the empty theme resolved, the file a product paints with
  *   when no theme arrives, written or checked;
+ * - `rules`: runtimeRules(), what a product checks a theme it is served
+ *   with without bundling the schema, written or checked;
  * - `publish`: the schema to api-core's `POST {api}/system/theme_schemas`,
  *   after validating it here.
  *
@@ -49,6 +52,12 @@ Commands:
       --check              Exit 1 when <file> (--out) is not up to date.
       --site               Add the defaults of the site's settings, under "site"
                            (left out when the schema has none).
+
+  rules <schema.json>      The rules a client checks a served theme with, without
+                           the schema: each value's options, range or kind, as
+                           JSON with one rule per line.
+      --out <file>         Write them to <file> instead of printing them.
+      --check              Exit 1 when <file> (--out) is not up to date.
 
   publish <schema.json>    Validate the schema, then publish it to the API.
       --v1-map <file>      The version 1 map to publish with it (the API keeps
@@ -109,6 +118,8 @@ export async function run(args: string[], io: Io = processIo()): Promise<number>
         return await validateCommand(rest, io)
       case 'defaults':
         return defaultsCommand(rest, io)
+      case 'rules':
+        return rulesCommand(rest, io)
       case 'publish':
         return await publishCommand(rest, io)
       case undefined:
@@ -306,10 +317,28 @@ function full(version: string): string {
 }
 
 function defaultsCommand(args: string[], io: Io): number {
+  return generatedCommand('defaults', args, io, { site: { type: 'boolean' } }, (schema, values) => serializeDefaults(themeDefaults(schema, values.site === true)))
+}
+
+function rulesCommand(args: string[], io: Io): number {
+  return generatedCommand('rules', args, io, {}, (schema) => serializeRules(runtimeRules(schema)))
+}
+
+/**
+ * A file a product generates from its schema (`defaults`, `rules`):
+ * printed, written to `--out`, or compared with it (`--check`).
+ */
+function generatedCommand(
+  command: string,
+  args: string[],
+  io: Io,
+  options: ParseArgsConfig['options'],
+  generate: (schema: NodeSchema, values: Record<string, unknown>) => string,
+): number {
   const { values, file } = parse(args, {
     out: { type: 'string' },
     check: { type: 'boolean' },
-    site: { type: 'boolean' },
+    ...options,
   })
   if (values.help) {
     io.stdout(HELP)
@@ -330,7 +359,7 @@ function defaultsCommand(args: string[], io: Io): number {
     io.stderr(`${file}: does not compile (${compiled.errors.length} error(s)), run ordering-theme validate ${file}\n`)
     return 1
   }
-  const output = serializeDefaults(themeDefaults(schema, values.site === true))
+  const output = generate(schema, values)
   if (out === undefined) {
     io.stdout(output)
     return 0
@@ -344,7 +373,7 @@ function defaultsCommand(args: string[], io: Io): number {
       // A missing file is out of date.
     }
     if (current !== output) {
-      io.stderr(`${out} is out of date: run ordering-theme defaults ${file} --out ${out}${values.site ? ' --site' : ''}\n`)
+      io.stderr(`${out} is out of date: run ordering-theme ${command} ${file} --out ${out}${values.site ? ' --site' : ''}\n`)
       return 1
     }
     io.stdout(`${out} is up to date\n`)

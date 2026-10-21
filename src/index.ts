@@ -11,6 +11,7 @@ export { validate, validateFull, outOfRange, v1MapErrors } from './validate.js'
 export { validateShape, type ShapeError } from './shape.js'
 export { valid, validSettings, themeErrors, settingsErrors } from './valid.js'
 export { checkUpgrade, cutDown, cutDownSettings, upgrade, upgradeChain, upgradeSettings, upgradeSettingsChain, type Rewrite } from './upgrade.js'
+export { runtimeRules, serializeRules } from './rules.js'
 export { check } from './check.js'
 export { checkEditor } from './editor.js'
 export { diff } from './diff.js'
@@ -20,7 +21,6 @@ export type {
   Json,
   JsonMap,
   NodeSchema,
-  ResolveOptions,
   ResolvedTheme,
   SchemaError,
   ThemeValues,

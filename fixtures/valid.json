@@ -196,10 +196,16 @@
                             "size": 30,
                             "line": 1.2,
                             "weight": 700
+                        },
+                        "h2": {
+                            "size": 30,
+                            "line": 2,
+                            "weight": 700
                         }
                     },
                     "radius": {
-                        "md": 8
+                        "md": 8,
+                        "lg": 0
                     },
                     "shadow_style": {
                         "style": "soft",
@@ -921,7 +927,7 @@
         },
         {
             "name": "out-of-range",
-            "description": "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to; within them, at the limits, and an alias are kept.",
+            "description": "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.",
             "values": {
                 "tokens": {
                     "size": {
@@ -1019,12 +1025,18 @@
             "valid": {
                 "tokens": {
                     "size": {
+                        "sm": 80,
                         "md": 20
                     },
                     "space": {
                         "md": 96
                     },
                     "typography": {
+                        "h1": {
+                            "size": 96,
+                            "line": 2,
+                            "weight": 600
+                        },
                         "h2": {
                             "size": 24,
                             "line": 1.2,
@@ -1037,7 +1049,9 @@
                         "variants": {
                             "default": {
                                 "states": {
-                                    "disabled": []
+                                    "disabled": {
+                                        "opacity": 0.1
+                                    }
                                 }
                             }
                         }
@@ -1048,12 +1062,15 @@
                         },
                         "sizes": {
                             "xs": {
+                                "height": 32,
                                 "icon_size": 16
                             }
                         }
                     },
                     "empty_state": {
-                        "base": []
+                        "base": {
+                            "padding_y": 96
+                        }
                     }
                 },
                 "platforms": {
@@ -1061,7 +1078,159 @@
                         "components": {
                             "empty_state": {
                                 "base": {
+                                    "padding_x": 96,
                                     "padding_y": 90
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "out-of-format",
+            "description": "Numbers outside the format's range, where the editor sets no limits or within the ones it sets: an invalid number when saved, clamped to the format's range or the node's limits when read (a token of a scale, an opacity, a typography style's fields, a component's base, a group's scope, a platform's default); a layout's mode, an alias and a number that is no number of its kind (a radius) are not clamped.",
+            "values": {
+                "tokens": {
+                    "radius": {
+                        "md": 12000,
+                        "sm": -4
+                    },
+                    "opacity": {
+                        "disabled": 1.5
+                    },
+                    "layout": {
+                        "mode": "original",
+                        "page_gutter": 120
+                    },
+                    "typography": {
+                        "h3": {
+                            "size": 300,
+                            "line": 5,
+                            "weight": 600,
+                            "letter_spacing": -30
+                        }
+                    }
+                },
+                "components": {
+                    "card": {
+                        "base": {
+                            "padding": 10001,
+                            "radius": 6
+                        }
+                    },
+                    "auth_form": {
+                        "scope": {
+                            "button": {
+                                "base": {
+                                    "icon_gap": 200,
+                                    "radius": "{radius.sm}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "components": {
+                            "empty_state": {
+                                "base": {
+                                    "padding_x": -3,
+                                    "min_height": 10000
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "tokens.radius.md",
+                    "code": "tokens.radius.md.invalid"
+                },
+                {
+                    "path": "tokens.radius.sm",
+                    "code": "tokens.radius.sm.invalid"
+                },
+                {
+                    "path": "tokens.opacity.disabled",
+                    "code": "tokens.opacity.disabled.invalid"
+                },
+                {
+                    "path": "tokens.typography.h3",
+                    "code": "tokens.typography.h3.invalid"
+                },
+                {
+                    "path": "components.card.base.padding",
+                    "code": "components.card.base.padding.invalid"
+                },
+                {
+                    "path": "components.card.base.radius",
+                    "code": "components.card.base.radius.invalid"
+                },
+                {
+                    "path": "platforms.mobile_web.components.empty_state.base.padding_x",
+                    "code": "platforms.mobile_web.components.empty_state.base.padding_x.invalid"
+                },
+                {
+                    "path": "platforms.mobile_web.components.empty_state.base.min_height",
+                    "code": "platforms.mobile_web.components.empty_state.base.min_height.invalid"
+                },
+                {
+                    "path": "tokens.layout.page_gutter",
+                    "code": "tokens.layout.page_gutter.out_of_range"
+                },
+                {
+                    "path": "components.auth_form.scope.button.base.icon_gap",
+                    "code": "components.auth_form.scope.button.base.icon_gap.out_of_range"
+                }
+            ],
+            "valid": {
+                "tokens": {
+                    "radius": {
+                        "md": 9999,
+                        "sm": 0
+                    },
+                    "opacity": {
+                        "disabled": 1
+                    },
+                    "layout": {
+                        "mode": "original",
+                        "page_gutter": 80
+                    },
+                    "typography": {
+                        "h3": {
+                            "size": 96,
+                            "line": 2,
+                            "weight": 600,
+                            "letter_spacing": -20
+                        }
+                    }
+                },
+                "components": {
+                    "card": {
+                        "base": {
+                            "padding": 96
+                        }
+                    },
+                    "auth_form": {
+                        "scope": {
+                            "button": {
+                                "base": {
+                                    "icon_gap": 96,
+                                    "radius": "{radius.sm}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "components": {
+                            "empty_state": {
+                                "base": {
+                                    "padding_x": 0,
+                                    "min_height": 9999
                                 }
                             }
                         }
@@ -1196,7 +1365,7 @@
         },
         {
             "name": "settings-out-of-range",
-            "description": "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case).",
+            "description": "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case): an id is not clamped, it is left out.",
             "settings": {
                 "franchise_id": 5000,
                 "name": "Shop"
@@ -1214,6 +1383,58 @@
                 }
             ],
             "valid": {
+                "name": "Shop"
+            }
+        },
+        {
+            "name": "settings-clamped",
+            "description": "Numbers of the settings (`site.max_items`, a number from 1 to 50, and `site.layout.columns`, a number without limits, given for this case): refused when saved outside their limits or the format's range and clamped when read; one within them is kept.",
+            "settings": {
+                "max_items": 80,
+                "layout": {
+                    "columns": 12000,
+                    "gap": 4
+                },
+                "name": "Shop"
+            },
+            "limits": {
+                "site.max_items": {
+                    "min": 1,
+                    "max": 50
+                }
+            },
+            "site": {
+                "max_items": [
+                    "number",
+                    10
+                ],
+                "layout": {
+                    "columns": [
+                        "number",
+                        3
+                    ],
+                    "gap": [
+                        "number",
+                        8
+                    ]
+                }
+            },
+            "errors": [
+                {
+                    "path": "site.max_items",
+                    "code": "site.max_items.out_of_range"
+                },
+                {
+                    "path": "site.layout.columns",
+                    "code": "site.layout.columns.invalid"
+                }
+            ],
+            "valid": {
+                "max_items": 50,
+                "layout": {
+                    "columns": 9999,
+                    "gap": 4
+                },
                 "name": "Shop"
             }
         }

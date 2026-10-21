@@ -255,8 +255,10 @@ class ThemeResolver
      * What of a stored theme fits its schema: a value the schema no longer
      * has or that is not valid (written outside the editor, or before the
      * schema changed) is left out, so its default shows instead; what the
-     * schema renamed or moved is first taken where it went (ThemeMigrations).
-     * Without a schema, only what has the shape of a theme.
+     * schema renamed or moved is first taken where it went (ThemeMigrations),
+     * and a number outside its limits or its format's range takes the
+     * closest one within them (ThemeValidator::clamp()). Without a schema,
+     * only what has the shape of a theme.
      *
      * @param array<string, mixed> $values
      * @param array<string, mixed>|null $schema
@@ -272,7 +274,8 @@ class ThemeResolver
         }
 
         // What the schema renamed or moved is read where it went.
-        $values = ThemeMigrations::apply($values, is_array($schema['migrate'] ?? null) ? $schema['migrate'] : []);
+        // What the schema renamed or moved is read where it went, each number within its range.
+        $values = ThemeValidator::clamp(ThemeMigrations::apply($values, is_array($schema['migrate'] ?? null) ? $schema['migrate'] : []), $schema);
         $lists = [];
         foreach (ThemeValidator::validate($values, $schema) as $error) {
             // A section left out of its page's list, which stays a list.
@@ -310,7 +313,8 @@ class ThemeResolver
     /**
      * What of a site's settings fits its schema, as self::valid() a theme:
      * what the schema renamed or moved within its base (its migrations of
-     * `site.` paths) is first taken where it went, then each setting
+     * `site.` paths) is first taken where it went and each number is
+     * clamped within its range (ThemeValidator::clampSettings()), then each setting
      * ThemeValidator::settings() finds wrong is left out, so its default
      * shows instead. A list is no settings: none.
      *
@@ -323,7 +327,7 @@ class ThemeResolver
         $migrations = array_values(array_filter(is_array($schema['migrate'] ?? null) ? $schema['migrate'] : [], fn ($migration) => is_array($migration)
             && is_string($migration['from'] ?? null) && explode('.', $migration['from'])[0] === 'site'));
         $document = ThemeMigrations::apply([ 'site' => $settings ], $migrations);
-        $settings = is_array($document['site'] ?? null) ? $document['site'] : [];
+        $settings = ThemeValidator::clampSettings(is_array($document['site'] ?? null) ? $document['site'] : [], $schema);
         foreach (ThemeValidator::settings($settings, $schema) as $error) {
             if ($error['path'] === 'site') {
                 return [];

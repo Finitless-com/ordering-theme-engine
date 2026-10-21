@@ -15,6 +15,7 @@ interface ValidCase {
   values?: Json
   settings?: Json
   limits?: JsonMap
+  site?: JsonMap
   errors: SchemaError[]
   valid?: Json
 }
@@ -40,7 +41,8 @@ describe("valid() answers what api-core's valid() answers", () => {
   })
 
   it.each(settings.map((golden) => [golden.name, golden] as const))('%s', (_name, golden) => {
-    const over = golden.limits === undefined ? schema : { ...schema, limits: { ...(schema.limits as JsonMap), ...golden.limits } }
+    const limited = golden.limits === undefined ? schema : { ...schema, limits: { ...(schema.limits as JsonMap), ...golden.limits } }
+    const over = golden.site === undefined ? limited : { ...limited, site: { ...(limited.site as JsonMap), ...golden.site } }
     expect(settingsErrors(golden.settings!, over)).toEqual(golden.errors)
     const before = JSON.stringify(golden.settings)
     const settings = Array.isArray(golden.settings) ? {} : golden.settings as JsonMap

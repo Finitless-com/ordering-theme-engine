@@ -8,7 +8,7 @@ import { resolvePageSections } from './pages.js'
 import { clone, dig, entries, get, has, isArray, isEmpty, isList, isMap, type Json, type JsonMap } from './php.js'
 import { kindAt, schemaDefaults } from './schemas.js'
 import { applyShadows } from './shadows.js'
-import type { NodeSchema, ResolveOptions, ResolvedTheme, ThemeValues, TupleSchema } from './types.js'
+import type { NodeSchema, ResolvedTheme, ThemeValues, TupleSchema } from './types.js'
 
 /** Each node schema compiled once. */
 const compiled = new WeakMap<object, TupleSchema>()
@@ -45,15 +45,17 @@ function tuples(schema: NodeSchema): TupleSchema {
  * when it serves it, drops what no longer fits the schema
  * (ThemeResolver::valid()), which this does not do; it does move what the
  * schema migrates first, as valid() does.
+ *
+ * Every map is an object, an empty one too (`{}`), as api-core serves it
+ * (its ThemeMaps); a page's sections are a list, an empty one too.
  */
-export function resolve(schema: NodeSchema, theme: ThemeValues | null | undefined, options: ResolveOptions = {}): ResolvedTheme {
-  const resolved = resolveTuples(tuples(schema), theme ?? {})
-  return (options.emptyMaps === 'object' ? resolved : emptyAsArray(resolved)) as ResolvedTheme
+export function resolve(schema: NodeSchema, theme: ThemeValues | null | undefined): ResolvedTheme {
+  return resolveTuples(tuples(schema), theme ?? {}) as ResolvedTheme
 }
 
 /** The empty theme resolved: what a site whose theme sets nothing serves. */
-export function defaults(schema: NodeSchema, options: ResolveOptions = {}): ResolvedTheme {
-  return resolve(schema, {}, options)
+export function defaults(schema: NodeSchema): ResolvedTheme {
+  return resolve(schema, {})
 }
 
 /** ThemeResolver::resolve() over a compiled schema. */
@@ -353,23 +355,4 @@ function resolveIn(node: Json, tokens: JsonMap): Json {
     }
   }
   return answer as Json
-}
-
-/** Every empty map as `[]`, as PHP's json_encode() writes it. */
-function emptyAsArray(value: Json): Json {
-  if (Array.isArray(value)) {
-    return value.map(emptyAsArray)
-  }
-  if (!isMap(value)) {
-    return value
-  }
-  const keys = Object.keys(value)
-  if (keys.length === 0) {
-    return []
-  }
-  const answer: JsonMap = {}
-  for (const key of keys) {
-    answer[key] = emptyAsArray(value[key]!)
-  }
-  return answer
 }

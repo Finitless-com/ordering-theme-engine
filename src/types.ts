@@ -142,12 +142,3 @@ export interface ResolvedTheme {
   platforms: Collection
   [key: string]: Json
 }
-
-export interface ResolveOptions {
-  /**
-   * How an empty map comes out. `array` (the default) as api-core serves it
-   * (`[]`, PHP cannot tell them apart), so the JSON is the API's; `object`
-   * as `{}`.
-   */
-  emptyMaps?: 'array' | 'object'
-}
