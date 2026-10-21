@@ -138,6 +138,18 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
   if (alpha.length > 0) {
     tuples.alpha = alpha
   }
+  // The editor's numeric limits, by path (a group's too: the custom
+  // typography's fields): a theme's number outside them is refused
+  // (themeErrors()).
+  const limits: JsonMap = {}
+  for (const block of ['tokens', 'components', 'site']) {
+    if (isArray(schema[block])) {
+      limitsUnder(schema[block], block, limits)
+    }
+  }
+  if (Object.keys(limits).length > 0) {
+    tuples.limits = limits
+  }
   // The options a schema keeps of a token it narrows (NARROWABLE).
   if (Object.keys(tokenOptions).length > 0) {
     tuples.token_options = tokenOptions
@@ -375,6 +387,56 @@ function tuple(node: Json, path: string, fail: Fail): Json {
     answer.push(rules)
   }
   return answer
+}
+
+/**
+ * The numeric limits an editor block sets on a value (NodeFormat::limits()):
+ * its `min` and `max`, and those of each of its `fields` (a typography's
+ * size, line height…), only the numbers. Empty when it sets none.
+ */
+export function editorLimits(editor: Json): JsonMap {
+  if (!isArray(editor)) {
+    return {}
+  }
+  const range = (spec: Json): JsonMap => {
+    const answer: JsonMap = {}
+    for (const key of ['min', 'max']) {
+      const limit = get(spec, key)
+      if (isArray(spec) && typeof limit === 'number') {
+        answer[key] = limit
+      }
+    }
+    return answer
+  }
+  const limits = range(editor)
+  const fields: JsonMap = {}
+  const declared = get(editor, 'fields')
+  for (const [field, spec] of entries(isArray(declared) ? declared : {})) {
+    const own = range(spec)
+    if (Object.keys(own).length > 0) {
+      fields[field] = own
+    }
+  }
+  if (Object.keys(fields).length > 0) {
+    limits.fields = fields
+  }
+  return limits
+}
+
+/** The limits the editor sets on $tree and on every node and group under it, by path, added to $limits. */
+function limitsUnder(tree: Json, path: string, limits: JsonMap): void {
+  const own = editorLimits(dig(tree, '$extensions', EDITOR))
+  if (Object.keys(own).length > 0) {
+    limits[path] = own
+  }
+  if (isNode(tree)) {
+    return
+  }
+  for (const [key, child] of Object.entries(children(tree))) {
+    if (isArray(child)) {
+      limitsUnder(child, `${path}.${key}`, limits)
+    }
+  }
 }
 
 /** The paths of the nodes under $tree whose editor marks them `alpha`, added to $paths. */

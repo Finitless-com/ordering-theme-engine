@@ -18,7 +18,7 @@ const KEY = /^[a-z0-9_]+(\.[a-z0-9_]+){0,7}\n?$/
 const SCHEMA_VERSION = /^\d{1,4}(\.\d{1,4}){0,2}\n?$/
 const SECTIONS = [
   'product_type', 'version', 'format', 'tokens', 'components', 'inherits', 'visibility', 'images', 'pages', 'platforms',
-  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'upgrade', 'alpha', 'token_options',
+  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'upgrade', 'alpha', 'limits', 'token_options',
 ]
 
 /** PHP's in_array($value, $list, true) for a list of strings. */

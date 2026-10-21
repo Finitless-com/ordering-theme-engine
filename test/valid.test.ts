@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { settingsErrors, themeErrors, valid, type Json, type JsonMap, type SchemaError } from '../src/index.js'
+import { settingsErrors, themeErrors, valid, validSettings, type Json, type JsonMap, type SchemaError } from '../src/index.js'
 import { differences, json } from './fixtures.js'
 
 /**
@@ -7,13 +7,14 @@ import { differences, json } from './fixtures.js'
  * for each theme, and ThemeValidator::settings() for each site's settings,
  * over the product's current schema as NodeCompiler compiles it
  * (scripts/valid-cases.php): the same errors in the same order, and the
- * same theme kept.
+ * same theme kept; and ThemeResolver::validSettings() the same settings.
  */
 interface ValidCase {
   name: string
   description: string
   values?: Json
   settings?: Json
+  limits?: JsonMap
   errors: SchemaError[]
   valid?: Json
 }
@@ -28,7 +29,7 @@ describe("valid() answers what api-core's valid() answers", () => {
     expect(themes.length).toBeGreaterThanOrEqual(8)
     expect(settings.length).toBeGreaterThanOrEqual(3)
     const rules = new Set(fixture.cases.flatMap((golden) => golden.errors.map((error) => error.code.split('.').pop())))
-    expect([...rules].sort()).toEqual(['alias', 'alpha', 'duplicate', 'invalid', 'unknown'])
+    expect([...rules].sort()).toEqual(['alias', 'alpha', 'duplicate', 'format', 'invalid', 'out_of_range', 'unknown'])
   })
 
   it.each(themes.map((golden) => [golden.name, golden] as const))('%s', (_name, golden) => {
@@ -39,6 +40,11 @@ describe("valid() answers what api-core's valid() answers", () => {
   })
 
   it.each(settings.map((golden) => [golden.name, golden] as const))('%s', (_name, golden) => {
-    expect(settingsErrors(golden.settings!, schema)).toEqual(golden.errors)
+    const over = golden.limits === undefined ? schema : { ...schema, limits: { ...(schema.limits as JsonMap), ...golden.limits } }
+    expect(settingsErrors(golden.settings!, over)).toEqual(golden.errors)
+    const before = JSON.stringify(golden.settings)
+    const settings = Array.isArray(golden.settings) ? {} : golden.settings as JsonMap
+    expect(differences(validSettings(settings, over), golden.valid)).toEqual([])
+    expect(JSON.stringify(golden.settings)).toBe(before)
   })
 })

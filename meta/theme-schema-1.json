@@ -74,7 +74,8 @@
                     "additionalProperties": {
                       "type": [
                         "string",
-                        "integer"
+                        "integer",
+                        "boolean"
                       ]
                     }
                   }

@@ -616,12 +616,12 @@
                 },
                 "pages": {
                     "home": {
-                        "sections": {
-                            "1": {
+                        "sections": [
+                            {
                                 "key": "content",
                                 "visible": false
                             }
-                        }
+                        ]
                     },
                     "business_listing": [],
                     "orders": []
@@ -787,6 +787,321 @@
             }
         },
         {
+            "name": "section-lists",
+            "description": "Sections left out of a page's list, not the last ones, also on a platform: the list kept is still a list.",
+            "values": {
+                "pages": {
+                    "home": {
+                        "sections": [
+                            {
+                                "key": "nope",
+                                "visible": false
+                            },
+                            {
+                                "key": "hero",
+                                "visible": false
+                            },
+                            {
+                                "key": "content",
+                                "visible": false
+                            },
+                            {
+                                "key": "promo_banners",
+                                "visible": true
+                            }
+                        ]
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "pages": {
+                            "home": {
+                                "sections": [
+                                    {
+                                        "key": "nope",
+                                        "visible": true
+                                    },
+                                    {
+                                        "key": "content",
+                                        "visible": true
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "pages.home.sections.0",
+                    "code": "pages.home.sections.0.unknown"
+                },
+                {
+                    "path": "pages.home.sections.1",
+                    "code": "pages.home.sections.1.invalid"
+                },
+                {
+                    "path": "platforms.mobile_web.pages.home.sections.0",
+                    "code": "platforms.mobile_web.pages.home.sections.0.unknown"
+                }
+            ],
+            "valid": {
+                "pages": {
+                    "home": {
+                        "sections": [
+                            {
+                                "key": "content",
+                                "visible": false
+                            },
+                            {
+                                "key": "promo_banners",
+                                "visible": true
+                            }
+                        ]
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "pages": {
+                            "home": {
+                                "sections": [
+                                    {
+                                        "key": "content",
+                                        "visible": true
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "mode-colors",
+            "description": "A mode's colors are the schema's own, as `tokens.color`: a color of the catalog the schema does not name is unknown in a mode too.",
+            "values": {
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "primary": "#111111",
+                            "danger_text": "#B02A3E",
+                            "favorite": "#FF5A5F"
+                        }
+                    }
+                },
+                "tokens": {
+                    "color": {
+                        "danger_text": "#B02A3E"
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "modes.dark.color.danger_text",
+                    "code": "modes.dark.color.danger_text.unknown"
+                },
+                {
+                    "path": "tokens.color.danger_text",
+                    "code": "tokens.color.danger_text.unknown"
+                }
+            ],
+            "valid": {
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "primary": "#111111",
+                            "favorite": "#FF5A5F"
+                        }
+                    }
+                },
+                "tokens": {
+                    "color": []
+                }
+            }
+        },
+        {
+            "name": "out-of-range",
+            "description": "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to; within them, at the limits, and an alias are kept.",
+            "values": {
+                "tokens": {
+                    "size": {
+                        "sm": 90,
+                        "md": 20
+                    },
+                    "space": {
+                        "md": 96
+                    },
+                    "typography": {
+                        "h1": {
+                            "size": 120,
+                            "line": 2.5,
+                            "weight": 600
+                        },
+                        "h2": {
+                            "size": 24,
+                            "line": 1.2,
+                            "weight": 600
+                        }
+                    }
+                },
+                "components": {
+                    "choice": {
+                        "variants": {
+                            "default": {
+                                "states": {
+                                    "disabled": {
+                                        "opacity": 0.05
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "button": {
+                        "base": {
+                            "icon_gap": "{space.lg}"
+                        },
+                        "sizes": {
+                            "xs": {
+                                "height": 40,
+                                "icon_size": 16
+                            }
+                        }
+                    },
+                    "empty_state": {
+                        "base": {
+                            "padding_y": 120
+                        }
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "components": {
+                            "empty_state": {
+                                "base": {
+                                    "padding_x": 100,
+                                    "padding_y": 90
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "tokens.size.sm",
+                    "code": "tokens.size.sm.out_of_range"
+                },
+                {
+                    "path": "tokens.typography.h1",
+                    "code": "tokens.typography.h1.size.out_of_range"
+                },
+                {
+                    "path": "tokens.typography.h1",
+                    "code": "tokens.typography.h1.line.out_of_range"
+                },
+                {
+                    "path": "components.choice.variants.default.states.disabled.opacity",
+                    "code": "components.choice.variants.default.states.disabled.opacity.out_of_range"
+                },
+                {
+                    "path": "components.button.sizes.xs.height",
+                    "code": "components.button.sizes.xs.height.out_of_range"
+                },
+                {
+                    "path": "components.empty_state.base.padding_y",
+                    "code": "components.empty_state.base.padding_y.out_of_range"
+                },
+                {
+                    "path": "platforms.mobile_web.components.empty_state.base.padding_x",
+                    "code": "platforms.mobile_web.components.empty_state.base.padding_x.out_of_range"
+                }
+            ],
+            "valid": {
+                "tokens": {
+                    "size": {
+                        "md": 20
+                    },
+                    "space": {
+                        "md": 96
+                    },
+                    "typography": {
+                        "h2": {
+                            "size": 24,
+                            "line": 1.2,
+                            "weight": 600
+                        }
+                    }
+                },
+                "components": {
+                    "choice": {
+                        "variants": {
+                            "default": {
+                                "states": {
+                                    "disabled": []
+                                }
+                            }
+                        }
+                    },
+                    "button": {
+                        "base": {
+                            "icon_gap": "{space.lg}"
+                        },
+                        "sizes": {
+                            "xs": {
+                                "icon_size": 16
+                            }
+                        }
+                    },
+                    "empty_state": {
+                        "base": []
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "components": {
+                            "empty_state": {
+                                "base": {
+                                    "padding_y": 90
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "image-formats",
+            "description": "An image's extension is one of its formats (`jpeg` is `jpg`, in any case, the query aside): the favicon takes no SVG and a key without formats no ICO; a URL without the extension of a known format says nothing.",
+            "values": {
+                "images": {
+                    "logo": "https://cdn.example.com/a/logo.SVG?w=2",
+                    "logo_mobile": "https://cdn.example.com/logo.jpeg",
+                    "logo_inverse": "https://cdn.example.com/image/upload/abc",
+                    "favicon": "https://cdn.example.com/favicon.svg",
+                    "home_hero": "https://cdn.example.com/hero.ico",
+                    "app_icon": "https://cdn.example.com/icon.v2/file"
+                }
+            },
+            "errors": [
+                {
+                    "path": "images.favicon",
+                    "code": "images.favicon.format"
+                },
+                {
+                    "path": "images.home_hero",
+                    "code": "images.home_hero.format"
+                }
+            ],
+            "valid": {
+                "images": {
+                    "logo": "https://cdn.example.com/a/logo.SVG?w=2",
+                    "logo_mobile": "https://cdn.example.com/logo.jpeg",
+                    "logo_inverse": "https://cdn.example.com/image/upload/abc",
+                    "app_icon": "https://cdn.example.com/icon.v2/file"
+                }
+            }
+        },
+        {
             "name": "settings-valid",
             "description": "Valid settings.",
             "settings": {
@@ -797,7 +1112,15 @@
                 },
                 "franchise_id": 12
             },
-            "errors": []
+            "errors": [],
+            "valid": {
+                "mode": "single_store",
+                "name": "Shop",
+                "third_party_code": {
+                    "head": "<script></script>"
+                },
+                "franchise_id": 12
+            }
         },
         {
             "name": "settings-invalid",
@@ -850,7 +1173,12 @@
                     "path": "site.business_slug",
                     "code": "site.business_slug.invalid"
                 }
-            ]
+            ],
+            "valid": {
+                "smart_banner": {
+                    "apple_id": "123"
+                }
+            }
         },
         {
             "name": "settings-list",
@@ -863,7 +1191,31 @@
                     "path": "site",
                     "code": "site.invalid"
                 }
-            ]
+            ],
+            "valid": []
+        },
+        {
+            "name": "settings-out-of-range",
+            "description": "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case).",
+            "settings": {
+                "franchise_id": 5000,
+                "name": "Shop"
+            },
+            "limits": {
+                "site.franchise_id": {
+                    "min": 1,
+                    "max": 1000
+                }
+            },
+            "errors": [
+                {
+                    "path": "site.franchise_id",
+                    "code": "site.franchise_id.out_of_range"
+                }
+            ],
+            "valid": {
+                "name": "Shop"
+            }
         }
     ]
 }

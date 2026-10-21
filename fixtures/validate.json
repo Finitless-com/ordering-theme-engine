@@ -4507,270 +4507,6 @@
             true
         ],
         [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "display",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "h1",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "h2",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "h3",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "h4",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "body_lg",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "body",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "body_sm",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "label",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "caption",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "overline",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
-            "set",
-            [
-                "tokens",
-                "typography",
-                "button",
-                "$extensions",
-                "co.ordering.editor",
-                "fields",
-                "line"
-            ],
-            {
-                "unit": "x",
-                "min": 0.8,
-                "max": 3,
-                "step": 0.05,
-                "label": {
-                    "key": "BUILDER_THEME_LINE_HEIGHT",
-                    "default": "Line height"
-                }
-            }
-        ],
-        [
             "delete",
             [
                 "components",
@@ -6564,7 +6300,7 @@
     "cases": [
         {
             "name": "original",
-            "description": "The product's schema as it ships: two defaults above their control's max (signup_page's padding, 120 and 130 over 96) and a version that is not semver.",
+            "description": "The product's schema as it ships: two defaults above their control's max (signup_page's padding, 120 and 130 over 96), a version that is not semver, and a version 1 map that names five layouts the schema no longer has.",
             "schema": {
                 "from": "original",
                 "ops": []
@@ -9401,54 +9137,6 @@
                         "code": "components.steps.base.text.custom_required"
                     },
                     {
-                        "path": "tokens.typography.display.fields.line",
-                        "code": "tokens.typography.display.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.h1.fields.line",
-                        "code": "tokens.typography.h1.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.h2.fields.line",
-                        "code": "tokens.typography.h2.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.h3.fields.line",
-                        "code": "tokens.typography.h3.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.h4.fields.line",
-                        "code": "tokens.typography.h4.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.body_lg.fields.line",
-                        "code": "tokens.typography.body_lg.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.body.fields.line",
-                        "code": "tokens.typography.body.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.body_sm.fields.line",
-                        "code": "tokens.typography.body_sm.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.label.fields.line",
-                        "code": "tokens.typography.label.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.caption.fields.line",
-                        "code": "tokens.typography.caption.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.overline.fields.line",
-                        "code": "tokens.typography.overline.fields.line.default_out_of_range"
-                    },
-                    {
-                        "path": "tokens.typography.button.fields.line",
-                        "code": "tokens.typography.button.fields.line.default_out_of_range"
-                    },
-                    {
                         "path": "components.menu.base.max_width",
                         "code": "components.menu.base.max_width.limits_required"
                     },
@@ -9921,102 +9609,6 @@
                         "code": "components.steps.sizes.md.size.limits_required"
                     },
                     {
-                        "path": "tokens.typography.display.fields.line",
-                        "code": "tokens.typography.display.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.display.fields.line",
-                        "code": "tokens.typography.display.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.h1.fields.line",
-                        "code": "tokens.typography.h1.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.h1.fields.line",
-                        "code": "tokens.typography.h1.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.h2.fields.line",
-                        "code": "tokens.typography.h2.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.h2.fields.line",
-                        "code": "tokens.typography.h2.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.h3.fields.line",
-                        "code": "tokens.typography.h3.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.h3.fields.line",
-                        "code": "tokens.typography.h3.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.h4.fields.line",
-                        "code": "tokens.typography.h4.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.h4.fields.line",
-                        "code": "tokens.typography.h4.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.body_lg.fields.line",
-                        "code": "tokens.typography.body_lg.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.body_lg.fields.line",
-                        "code": "tokens.typography.body_lg.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.body.fields.line",
-                        "code": "tokens.typography.body.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.body.fields.line",
-                        "code": "tokens.typography.body.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.body_sm.fields.line",
-                        "code": "tokens.typography.body_sm.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.body_sm.fields.line",
-                        "code": "tokens.typography.body_sm.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.label.fields.line",
-                        "code": "tokens.typography.label.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.label.fields.line",
-                        "code": "tokens.typography.label.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.caption.fields.line",
-                        "code": "tokens.typography.caption.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.caption.fields.line",
-                        "code": "tokens.typography.caption.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.overline.fields.line",
-                        "code": "tokens.typography.overline.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.overline.fields.line",
-                        "code": "tokens.typography.overline.fields.line.limits_not_ratio"
-                    },
-                    {
-                        "path": "tokens.typography.button.fields.line",
-                        "code": "tokens.typography.button.fields.line.unit_not_x"
-                    },
-                    {
-                        "path": "tokens.typography.button.fields.line",
-                        "code": "tokens.typography.button.fields.line.limits_not_ratio"
-                    },
-                    {
                         "path": "pages.home.sections",
                         "code": "pages.home.sections.section_groups_required"
                     },
@@ -10077,11 +9669,33 @@
                         "code": "components.signup_page.base.padding_x.default_out_of_range"
                     },
                     {
+                        "path": "v1_map.v1.components.header.base.layout",
+                        "code": "v1_map.v1.components.header.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.business_header.base.layout",
+                        "code": "v1_map.v1.components.business_header.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.product_search.base.layout",
+                        "code": "v1_map.v1.components.product_search.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.product_card.base.layout",
+                        "code": "v1_map.v1.components.product_card.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.signup_page.variants.business.layout",
+                        "code": "v1_map.v1.components.signup_page.variants.business.layout.unknown"
+                    },
+                    {
                         "path": "version",
                         "code": "version.semver"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10094,12 +9708,69 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
             "name": "valid-v1-map",
-            "description": "The base with the product's version 1 map: valid.",
+            "description": "The base with the product's version 1 map, without the layouts the schema no longer has: valid.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "v1-map-stale",
+            "description": "The base with the product's version 1 map as api-core keeps it: the layouts the schema no longer has are `v1_map.v1.<path>.unknown`.",
             "schema": {
                 "from": "base",
                 "ops": []
@@ -10109,9 +9780,167 @@
                 "ops": []
             },
             "expected": {
-                "code": null,
-                "errors": [],
-                "changes": null
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "v1_map.v1.components.header.base.layout",
+                        "code": "v1_map.v1.components.header.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.business_header.base.layout",
+                        "code": "v1_map.v1.components.business_header.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.product_search.base.layout",
+                        "code": "v1_map.v1.components.product_search.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.product_card.base.layout",
+                        "code": "v1_map.v1.components.product_card.base.layout.unknown"
+                    },
+                    {
+                        "path": "v1_map.v1.components.signup_page.variants.business.layout",
+                        "code": "v1_map.v1.components.signup_page.variants.business.layout.unknown"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "v1-map-unknown",
+            "description": "A version 1 map that names, besides, a visibility key, an image, a page, a section of a page and a setting the schema does not have, and a version 2 path of a section the `v1` block does not take.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "v1Map": {
+                "from": "product",
+                "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.nope"
+                        ],
+                        "header.components.nope.hidden"
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "nope"
+                        ],
+                        null
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "nowhere"
+                        ],
+                        {
+                            "hero": {
+                                "v1": "nowhere.hidden"
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "nope"
+                        ],
+                        {
+                            "v1": "home.nope.hidden"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "nope"
+                        ],
+                        "my_products.components.website_theme.components.nope"
+                    ],
+                    [
+                        "set",
+                        [
+                            "v1",
+                            "visibility.footer"
+                        ],
+                        "footer.hidden"
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "v1_map.v1.visibility.footer",
+                        "code": "v1_map.v1.visibility.footer.unknown"
+                    },
+                    {
+                        "path": "v1_map.visibility.header.nope",
+                        "code": "v1_map.visibility.header.nope.unknown"
+                    },
+                    {
+                        "path": "v1_map.images.nope",
+                        "code": "v1_map.images.nope.unknown"
+                    },
+                    {
+                        "path": "v1_map.pages.home.nope",
+                        "code": "v1_map.pages.home.nope.unknown"
+                    },
+                    {
+                        "path": "v1_map.pages.nowhere",
+                        "code": "v1_map.pages.nowhere.unknown"
+                    },
+                    {
+                        "path": "v1_map.site.nope",
+                        "code": "v1_map.site.nope.unknown"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10137,7 +9966,9 @@
                         "code": "schema.format"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10163,7 +9994,9 @@
                         "code": "version.semver"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10189,7 +10022,9 @@
                         "code": "product_type.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10256,7 +10091,9 @@
                         "code": "version.semver"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10312,7 +10149,9 @@
                         "code": "tokens.color.text.type"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10342,7 +10181,9 @@
                         "code": "components.button.base.radius.type"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10426,7 +10267,9 @@
                         "code": "components.wallet_balance.base.points_icon_color.default.alias"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10506,7 +10349,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10566,7 +10411,9 @@
                         "code": "tokens.extra.unknown"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10637,7 +10484,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10671,7 +10520,9 @@
                         "code": "token_options.focus_ring.offset.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10723,7 +10574,9 @@
                         "code": "tokens.focus_ring.color.type"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10788,7 +10641,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10843,7 +10698,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -10931,7 +10788,9 @@
                         "code": "site.description.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11054,7 +10913,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11151,7 +11012,9 @@
                         "code": "site.smart_banner.android_id.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11248,7 +11111,9 @@
                         "code": "site.smart_banner.android_id.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11345,7 +11210,9 @@
                         "code": "site.smart_banner.android_id.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11442,7 +11309,9 @@
                         "code": "site.smart_banner.android_id.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11539,7 +11408,9 @@
                         "code": "site.smart_banner.android_id.rules.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11683,7 +11554,9 @@
                         "code": "site.smart_banner.android_id.default.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11743,11 +11616,17 @@
                         "code": "tokens.typography.h1.fields.line.default_out_of_range"
                     },
                     {
+                        "path": "tokens.typography.body.fields.line",
+                        "code": "tokens.typography.body.fields.line.default_out_of_range"
+                    },
+                    {
                         "path": "tokens.typography.caption.fields.line",
                         "code": "tokens.typography.caption.fields.line.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11823,7 +11702,9 @@
                         "code": "tokens.space.md.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11900,7 +11781,9 @@
                         "code": "components.button.base.speed.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -11989,7 +11872,9 @@
                         "code": "components.card.base.tint.options.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12063,7 +11948,9 @@
                         "code": "site.empty_group.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12098,7 +11985,9 @@
                         "code": "components.button.extras.unknown"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12173,7 +12062,9 @@
                         "code": "components.modal.platforms.desktop.unknown"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12299,7 +12190,9 @@
                         "code": "components.auth_form.scope.auth_form.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12429,7 +12322,9 @@
                         "code": "components.cart.slots.store.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12489,7 +12384,9 @@
                         "code": "inherits.wallet_balance.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12584,7 +12481,9 @@
                         "code": "images.app_icon.hints.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12597,6 +12496,41 @@
             "v1Map": {
                 "from": "product",
                 "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ],
                     [
                         "set",
                         [
@@ -12629,7 +12563,9 @@
                         "code": "images.logo.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12678,7 +12614,9 @@
                         "code": "follows.components.card.base.shadow.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12753,7 +12691,9 @@
                         "code": "derive.focus.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12837,7 +12777,9 @@
                         "code": "component_derive.card.variants.default.states.hover.shadow.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12891,7 +12833,9 @@
                         "code": "matrix.link.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12926,7 +12870,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -12982,7 +12928,9 @@
                         "code": "migrate.3.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13033,7 +12981,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13129,7 +13079,9 @@
                         "code": "migrate.8.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13165,7 +13117,9 @@
                         "code": "migrate.1.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13221,7 +13175,9 @@
                         "code": "migrate.4.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13367,7 +13323,9 @@
                         "code": "pages.orders.sections.section_groups_not_sections"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13380,6 +13338,41 @@
             "v1Map": {
                 "from": "product",
                 "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ],
                     [
                         "set",
                         [
@@ -13445,12 +13438,14 @@
                         "code": "pages.business_listing.sections.filters.v1.duplicate"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
             "name": "v1",
-            "description": "The version 1 map: paths that are not strings, an empty list, two controls on one key (in two entries, in one list, a site setting), and a path the schema lacks (left out).",
+            "description": "The version 1 map: paths that are not strings, an empty list, two controls on one key (in two entries, in one list, a site setting), and a version 2 path the schema lacks.",
             "schema": {
                 "from": "base",
                 "ops": []
@@ -13458,6 +13453,41 @@
             "v1Map": {
                 "from": "product",
                 "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ],
                     [
                         "set",
                         [
@@ -13533,14 +13563,20 @@
                     {
                         "path": "v1.site.name",
                         "code": "v1.site.name.duplicate"
+                    },
+                    {
+                        "path": "v1_map.v1.components.nonexistent.base.x",
+                        "code": "v1_map.v1.components.nonexistent.base.x.unknown"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
             "name": "v1-own-colors",
-            "description": "The version 1 map names a catalog color the schema does not name: it is left out, so its key does not collide with the primary's.",
+            "description": "The version 1 map names a catalog color the schema does not name: refused, and left out of the tuples, so its key does not collide with the primary's.",
             "schema": {
                 "from": "base",
                 "ops": []
@@ -13548,6 +13584,41 @@
             "v1Map": {
                 "from": "product",
                 "ops": [
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.business_header.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_search.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.product_card.base.layout"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "v1",
+                            "components.signup_page.variants.business.layout"
+                        ]
+                    ],
                     [
                         "set",
                         [
@@ -13559,9 +13630,16 @@
                 ]
             },
             "expected": {
-                "code": null,
-                "errors": [],
-                "changes": null
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "v1_map.v1.tokens.color.danger_text",
+                        "code": "v1_map.v1.tokens.color.danger_text.unknown"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13606,7 +13684,9 @@
                         "code": "components.button.base.speed.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13640,7 +13720,9 @@
                         "code": "components.button.base.icon_gap.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13680,7 +13762,9 @@
                         "code": "version.semver"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13887,7 +13971,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -13964,7 +14050,9 @@
                         "code": "components.card.base.background.alpha_required"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14014,7 +14102,9 @@
                         "code": "visibility.platforms_not_visibility"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14139,7 +14229,9 @@
                         "code": "visibility.nope.not_visibility_key"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14247,7 +14339,9 @@
                         "code": "components.bottom_nav.$extensions.co.ordering.editor.groups.3.shown_by_visibility_group"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14378,7 +14472,9 @@
                         "code": "components.bottom_nav.base.glow.in_no_card"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14430,7 +14526,9 @@
                         "code": "tokens.size.sm.group_mismatch"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14512,7 +14610,9 @@
                         "code": "components.link.sizes.sm.text.custom_required"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14600,7 +14700,9 @@
                         "code": "components.button.base.speed.min_over_max"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14675,7 +14777,9 @@
                         "code": "tokens.typography.fields.size.max_not_widest"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14761,7 +14865,9 @@
                         "code": "components.bottom_nav.$extensions.co.ordering.editor.groups.1.ordered_not_node"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14881,7 +14987,9 @@
                         "code": "pages.orders.sections.section_groups_required"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -14973,7 +15081,9 @@
                         "code": "tokens.font.body.weights_not_font"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15058,7 +15168,9 @@
                         "code": "components.banner.slots.action.rules_not_string"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15149,7 +15261,9 @@
                         "code": "pages.home.sections._promo_banners.not_snake_case"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15177,12 +15291,14 @@
                         "code": "visibility.footer.not_boolean"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
             "name": "version-equal",
-            "description": "The same version as the previous one.",
+            "description": "The same version as the previous one, with the same content: unchanged, as api-core answers a deploy that publishes it again.",
             "schema": {
                 "from": "base",
                 "ops": []
@@ -15192,14 +15308,79 @@
                 "ops": []
             },
             "expected": {
-                "code": "schema.version_order",
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": null,
+                "unchanged": true
+            }
+        },
+        {
+            "name": "version-equal-reordered",
+            "description": "The same version with the same content, its keys in another order: unchanged.",
+            "schema": {
+                "from": "base",
+                "ops": []
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "delete",
+                        [
+                            "format"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "format"
+                        ],
+                        2
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": null,
+                "unchanged": true
+            }
+        },
+        {
+            "name": "version-exists",
+            "description": "The same version as the previous one, with another content.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "#123456"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.version_exists",
                 "errors": [
                     {
                         "path": "version",
-                        "code": "schema.version_order"
+                        "code": "schema.version_exists"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15237,7 +15418,9 @@
                         "code": "schema.version_order"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15270,12 +15453,18 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15308,12 +15497,18 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15371,6 +15566,7 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [
                         "components.button.base.glow"
@@ -15379,8 +15575,13 @@
                     "migrated": [],
                     "deprecated": [
                         "components.button.base.speed"
-                    ]
-                }
+                    ],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15420,7 +15621,9 @@
                         "code": "schema.patch_changes_values"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15456,9 +15659,22 @@
                             "icon_gap",
                             "$extensions",
                             "co.ordering.editor",
-                            "max"
+                            "step"
                         ],
-                        64
+                        4
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "unit"
+                        ],
+                        "px"
                     ],
                     [
                         "set",
@@ -15508,12 +15724,18 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15594,6 +15816,7 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [
                         "components.button.base.glow",
@@ -15601,8 +15824,15 @@
                     ],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [
+                        "tokens.color.primary"
+                    ],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15641,7 +15871,9 @@
                         "code": "components.button.base.animated.removed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15703,6 +15935,7 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [
@@ -15711,8 +15944,13 @@
                         "components.connection_status.slots.button"
                     ],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15763,7 +16001,9 @@
                         "code": "components.button.base.speed.removed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -15833,14 +16073,20 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
                     "deprecated": [
                         "components.button.base.speed"
-                    ]
-                }
+                    ],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -15897,14 +16143,20 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [
                         "components.button.base.old_gap"
                     ],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -16083,17 +16335,22 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [
                         "visibility.header.brand",
                         "images.brand_logo",
-                        "pages.shop.footer",
-                        "pages.shop.sections"
+                        "pages.shop.footer"
                     ],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -16242,14 +16499,22 @@
                 ]
             },
             "expected": {
-                "code": "schema.incompatible",
-                "errors": [
-                    {
-                        "path": "pages.shop.sections",
-                        "code": "pages.shop.sections.removed"
-                    }
-                ],
-                "changes": null
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [
+                        "pages.shop.footer"
+                    ],
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -16288,7 +16553,9 @@
                         "code": "site.business_slug.type_changed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -16370,7 +16637,9 @@
                         "code": "components.card.base.padding.scale_changed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -16415,7 +16684,9 @@
                         "code": "site.mode.option_removed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -16459,7 +16730,9 @@
                         "code": "schema.migration_removed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -16551,7 +16824,9 @@
                         "code": "schema.patch_changes_values"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -16659,6 +16934,7 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [
                         "components.button.base.glow"
@@ -16671,8 +16947,672 @@
                     ],
                     "deprecated": [
                         "components.button.base.speed"
+                    ],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-patch-limits",
+            "description": "A patch that changes what of the editor validates a value: a control's max, a typography field's min and a color's `alpha`.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "max"
+                        ],
+                        64
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "h1",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "fields",
+                            "size",
+                            "min"
+                        ],
+                        10
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
                     ]
-                }
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-alpha-removed",
+            "description": "A minor that takes `alpha` from a color that had it: its translucent values no longer fit (alpha_removed), while tightening a control's limits and a string's length is the minor's to do.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "max"
+                        ],
+                        64
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "max_length": 40
+                        }
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "components.card.base.background",
+                        "code": "components.card.base.background.alpha_removed"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-changes",
+            "description": "A valid minor that adds an option, changes defaults (a color's and a section's `visible`), tightens rules (a control's max, a string's length), adds `alpha` and changes a section's `hideable` and `group` and the order of a page's sections.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "mode",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "marketplace",
+                            "single_store",
+                            "franchise",
+                            "kiosk"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "#123456"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "max"
+                        ],
+                        64
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "name",
+                            "$extensions",
+                            "co.ordering"
+                        ],
+                        {
+                            "max_length": 40
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "sections",
+                            "$value"
+                        ],
+                        [
+                            {
+                                "key": "hero",
+                                "visible": true,
+                                "hideable": false,
+                                "group": null
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true,
+                                "hideable": false,
+                                "group": null
+                            },
+                            {
+                                "key": "content",
+                                "visible": false,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "custom_order_banner",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "promo_banners",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": [],
+                    "options_added": [
+                        "site.mode"
+                    ],
+                    "defaults_changed": [
+                        "tokens.color.primary",
+                        "pages.home.sections.content"
+                    ],
+                    "rules_changed": [
+                        "components.button.base.icon_gap",
+                        "components.card.base.background",
+                        "site.name"
+                    ],
+                    "sections_changed": [
+                        "pages.home.sections.login_account",
+                        "pages.home.sections"
+                    ]
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-sections",
+            "description": "A minor that removes a page's section (not deprecated), renames another with a migration and adds one: each section is a key.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "sections",
+                            "$value"
+                        ],
+                        [
+                            {
+                                "key": "hero",
+                                "visible": true,
+                                "hideable": false,
+                                "group": null
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true,
+                                "hideable": true,
+                                "group": null
+                            },
+                            {
+                                "key": "custom_order_banner",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "main_content",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "news",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            }
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "pages.home.sections.content",
+                                "to": "pages.home.sections.main_content"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "pages.home.sections.promo_banners",
+                        "code": "pages.home.sections.promo_banners.removed"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-sections-deprecated",
+            "description": "A minor that removes a section of a page whose sections were deprecated: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "sections",
+                            "$value"
+                        ],
+                        [
+                            {
+                                "key": "hero",
+                                "visible": true,
+                                "hideable": false,
+                                "group": null
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true,
+                                "hideable": true,
+                                "group": null
+                            },
+                            {
+                                "key": "custom_order_banner",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            },
+                            {
+                                "key": "content",
+                                "visible": true,
+                                "hideable": true,
+                                "group": "main"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "home",
+                            "sections",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": {
+                    "added": [],
+                    "removed": [
+                        "pages.home.sections.promo_banners"
+                    ],
+                    "migrated": [],
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-platform-migrated",
+            "description": "A minor that renames a property with a default of its own on a platform: the platform's default goes with it.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_y"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "platforms",
+                            "mobile_web",
+                            "padding_y"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_top"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": 56,
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                },
+                                "co.ordering.editor": {
+                                    "control": "level",
+                                    "min": 0,
+                                    "max": 96,
+                                    "unit": "px"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "empty_state",
+                            "platforms",
+                            "mobile_web",
+                            "padding_top"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.xxl}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                },
+                                "co.ordering.editor": {
+                                    "control": "level",
+                                    "min": 0,
+                                    "max": 96,
+                                    "unit": "px"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.empty_state.base.padding_y",
+                                "to": "components.empty_state.base.padding_top"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": {
+                    "added": [
+                        "components.empty_state.base.padding_top",
+                        "components.empty_state.platforms.mobile_web.padding_top"
+                    ],
+                    "removed": [],
+                    "migrated": [
+                        "components.empty_state.base.padding_y",
+                        "components.empty_state.platforms.mobile_web.padding_y"
+                    ],
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "diff-platform-deprecated",
+            "description": "A minor that removes a deprecated property and its platform's default: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_y"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "platforms",
+                            "mobile_web",
+                            "padding_y"
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_y",
+                            "$deprecated"
+                        ],
+                        true
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": {
+                    "added": [],
+                    "removed": [
+                        "components.empty_state.base.padding_y",
+                        "components.empty_state.platforms.mobile_web.padding_y"
+                    ],
+                    "migrated": [],
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -17016,7 +17956,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -17372,7 +18314,9 @@
             "expected": {
                 "code": null,
                 "errors": [],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -17661,7 +18605,9 @@
                         "code": "upgrade.required"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -18010,7 +18956,9 @@
                         "code": "upgrade.from.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -18359,7 +19307,9 @@
                         "code": "upgrade.from.invalid"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -18759,7 +19709,9 @@
                         "code": "upgrade.site.legacy_flag.unaccounted"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -18913,12 +19865,876 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "upgrade-platform-default",
+            "description": "A move of a property with a platform's default: the platform's default is accounted for with it.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_y"
+                        ]
+                    ],
+                    [
+                        "delete",
+                        [
+                            "components",
+                            "empty_state",
+                            "platforms",
+                            "mobile_web",
+                            "padding_y"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "empty_state",
+                            "base",
+                            "padding_top"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": 56,
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                },
+                                "co.ordering.editor": {
+                                    "control": "level",
+                                    "min": 0,
+                                    "max": 96,
+                                    "unit": "px"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "empty_state",
+                            "platforms",
+                            "mobile_web",
+                            "padding_top"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.xxl}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                },
+                                "co.ordering.editor": {
+                                    "control": "level",
+                                    "min": 0,
+                                    "max": 96,
+                                    "unit": "px"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                },
+                                {
+                                    "from": "components.empty_state.base.padding_y",
+                                    "to": "components.empty_state.base.padding_top"
+                                }
+                            ],
+                            "from": 26,
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
+            }
+        },
+        {
+            "name": "upgrade-map-boolean",
+            "description": "Maps of booleans: one turned around (valid), one whose keys are not `true` and `false`, and one to a boolean that is no boolean.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "show_prices"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "show_stock"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "editor",
+                            "sections",
+                            10,
+                            "groups",
+                            2,
+                            "paths"
+                        ],
+                        [
+                            "visibility.header.language_selector",
+                            "visibility.header.menu_toggle",
+                            "visibility.header.logo",
+                            "visibility.header.map",
+                            "visibility.header.cart",
+                            "visibility.header.login",
+                            "visibility.header.signup",
+                            "visibility.header.far_away",
+                            "visibility.show_prices",
+                            "visibility.show_stock"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                },
+                                {
+                                    "from": "visibility.hide_prices",
+                                    "to": "visibility.show_prices",
+                                    "map": {
+                                        "true": false,
+                                        "false": true
+                                    }
+                                },
+                                {
+                                    "from": "visibility.hide_stock",
+                                    "to": "visibility.show_stock",
+                                    "map": {
+                                        "1": false,
+                                        "0": true
+                                    }
+                                },
+                                {
+                                    "from": "visibility.old_banner",
+                                    "to": "visibility.footer",
+                                    "map": {
+                                        "true": "yes"
+                                    }
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "site.legacy_flag"
+                            ],
+                            "from": 26,
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "hide_prices"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "hide_stock"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "upgrade.moves.8.map",
+                        "code": "upgrade.moves.8.map.invalid"
+                    },
+                    {
+                        "path": "upgrade.moves.9.map",
+                        "code": "upgrade.moves.9.map.invalid"
+                    }
+                ],
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -19041,7 +20857,9 @@
                         "code": "schema.upgrade_removed"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -19068,7 +20886,9 @@
                         "code": "version.semver"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
@@ -19146,12 +20966,14 @@
                         "code": "components.button.base.speed.default_out_of_range"
                     }
                 ],
-                "changes": null
+                "warnings": [],
+                "changes": null,
+                "unchanged": false
             }
         },
         {
             "name": "development-version-equal",
-            "description": "In development, the same version as the previous one is no refusal: its changes are answered.",
+            "description": "In development too, the same version with the same content is unchanged.",
             "schema": {
                 "from": "base",
                 "ops": []
@@ -19164,12 +20986,60 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
+                "changes": null,
+                "unchanged": true
+            }
+        },
+        {
+            "name": "development-version-exists",
+            "description": "In development, the same version with another content is no refusal: production would answer schema.version_exists, a warning here.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "primary",
+                            "$value"
+                        ],
+                        "#123456"
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [
+                    {
+                        "path": "version",
+                        "code": "schema.version_exists"
+                    },
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [
+                        "tokens.color.primary"
+                    ],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -19203,12 +21073,23 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [
+                    {
+                        "path": "version",
+                        "code": "schema.version_order"
+                    }
+                ],
                 "changes": {
                     "added": [],
                     "removed": [],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -19243,14 +21124,25 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [
+                    {
+                        "path": "components.button.base.animated",
+                        "code": "components.button.base.animated.removed"
+                    }
+                ],
                 "changes": {
                     "added": [],
                     "removed": [
                         "components.button.base.animated"
                     ],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -19322,14 +21214,41 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [
+                    {
+                        "path": "components.button.base.animated",
+                        "code": "components.button.base.animated.removed"
+                    },
+                    {
+                        "path": "site.mode",
+                        "code": "site.mode.option_removed"
+                    },
+                    {
+                        "path": "site.business_slug",
+                        "code": "site.business_slug.type_changed"
+                    },
+                    {
+                        "path": "migrate",
+                        "code": "schema.migration_removed"
+                    },
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
                 "changes": {
                     "added": [],
                     "removed": [
                         "components.button.base.animated"
                     ],
                     "migrated": [],
-                    "deprecated": []
-                }
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         },
         {
@@ -19438,6 +21357,7 @@
             "expected": {
                 "code": null,
                 "errors": [],
+                "warnings": [],
                 "changes": {
                     "added": [
                         "components.button.base.glow"
@@ -19450,8 +21370,99 @@
                     ],
                     "deprecated": [
                         "components.button.base.speed"
+                    ],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [],
+                    "sections_changed": []
+                },
+                "unchanged": false
+            }
+        },
+        {
+            "name": "development-diff-patch-limits",
+            "description": "In development, what production refuses as incompatible is answered in warnings.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.0.1"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "icon_gap",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "max"
+                        ],
+                        64
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "h1",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "fields",
+                            "size",
+                            "min"
+                        ],
+                        10
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "background",
+                            "$extensions",
+                            "co.ordering.editor",
+                            "alpha"
+                        ],
+                        true
                     ]
-                }
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": []
+            },
+            "development": true,
+            "expected": {
+                "code": null,
+                "errors": [],
+                "warnings": [
+                    {
+                        "path": "version",
+                        "code": "schema.patch_changes_values"
+                    }
+                ],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": [],
+                    "options_added": [],
+                    "defaults_changed": [],
+                    "rules_changed": [
+                        "tokens.typography.h1",
+                        "components.button.base.icon_gap",
+                        "components.card.base.background"
+                    ],
+                    "sections_changed": []
+                },
+                "unchanged": false
             }
         }
     ]

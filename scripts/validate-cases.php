@@ -251,6 +251,17 @@ $base = [
 ];
 $base = [ ...$base, ...editor_fixes(apply($original, $base)) ];
 
+// The product's version 1 map names five layouts the schema no longer has:
+// publishing refuses them (v1MapErrors()), so the cases about something
+// else take them out first.
+$current_map = array_map(fn (string $path) => del([ 'v1', $path ]), [
+    'components.header.base.layout',
+    'components.business_header.base.layout',
+    'components.product_search.base.layout',
+    'components.product_card.base.layout',
+    'components.signup_page.variants.business.layout',
+]);
+
 $cases = [];
 /**
  * @param array<int, array> $ops over the base (or the original)
@@ -274,9 +285,19 @@ $case = function (string $name, string $description, array $ops, ?array $previou
 
 // --- The schema alone ------------------------------------------------------
 
-$case('original', "The product's schema as it ships: two defaults above their control's max (signup_page's padding, 120 and 130 over 96) and a version that is not semver.", [], null, [], 'original');
+$case('original', "The product's schema as it ships: two defaults above their control's max (signup_page's padding, 120 and 130 over 96), a version that is not semver, and a version 1 map that names five layouts the schema no longer has.", [], null, [], 'original');
 $case('valid', 'The base: valid, without a version 1 map.', []);
-$case('valid-v1-map', "The base with the product's version 1 map: valid.", [], null, []);
+$case('valid-v1-map', "The base with the product's version 1 map, without the layouts the schema no longer has: valid.", [], null, $current_map);
+$case('v1-map-stale', "The base with the product's version 1 map as api-core keeps it: the layouts the schema no longer has are `v1_map.v1.<path>.unknown`.", [], null, []);
+$case('v1-map-unknown', 'A version 1 map that names, besides, a visibility key, an image, a page, a section of a page and a setting the schema does not have, and a version 2 path of a section the `v1` block does not take.', [], null, [
+    ...$current_map,
+    set([ 'visibility', 'header.nope' ], 'header.components.nope.hidden'),
+    set([ 'images', 'nope' ], null),
+    set([ 'pages', 'nowhere' ], [ 'hero' => [ 'v1' => 'nowhere.hidden' ] ]),
+    set([ 'pages', 'home', 'nope' ], [ 'v1' => 'home.nope.hidden' ]),
+    set([ 'site', 'nope' ], 'my_products.components.website_theme.components.nope'),
+    set([ 'v1', 'visibility.footer' ], 'footer.hidden'),
+]);
 $case('format', 'A schema that is not in nodes stops at the format.', [ set('$schema', 'urn:ordering:theme-schema:0') ]);
 $case('semver', 'A version of the base that is not major.minor.patch.', [ version('26.1') ]);
 $case('product-type', 'A product type that is not one of the Builder\'s.', [ set('product_type', 'tv_app') ]);
@@ -461,6 +482,7 @@ $case('visibility-images', 'Visibility and image defaults that do not fit, image
     set([ 'images', 'app_icon', '$extensions', 'co.ordering', 'hints' ], [ 'max_kb' => 9000 ]),
 ]);
 $case('visibility-v1', 'Version 1 paths of visibility and images that are not a string or null.', [], null, [
+    ...$current_map,
     set('visibility.footer', 5),
     set('images.logo', [ 'a' ]),
 ]);
@@ -549,12 +571,14 @@ $case('pages', 'Pages: a field they do not have, a footer that is no bool, a sec
     set('pages.empty', [ '$description' => 'No footer, no sections.' ]),
 ]);
 $case('pages-v1', "Sections' version 1 paths: one that is visibility's, one that is no `.hidden` path, a `v1_default` that is no bool, one that another section has.", [], null, [
+    ...$current_map,
     set('pages.home.login_account.v1', 'footer.hidden'),
     set('pages.home.content', [ 'v1' => 'content' ]),
     set('pages.home.promo_banners', [ 'v1' => 'mobile_view_web.components.home.components.promo_banners.hidden', 'v1_default' => 'yes' ]),
     set('pages.business_listing.filters.v1', 'business_listing_view.components.search.hidden'),
 ]);
-$case('v1', 'The version 1 map: paths that are not strings, an empty list, two controls on one key (in two entries, in one list, a site setting), and a path the schema lacks (left out).', [], null, [
+$case('v1', 'The version 1 map: paths that are not strings, an empty list, two controls on one key (in two entries, in one list, a site setting), and a version 2 path the schema lacks.', [], null, [
+    ...$current_map,
     set([ 'v1', 'tokens.color.primary' ], 5),
     set([ 'v1', 'tokens.color.link' ], []),
     set([ 'v1', 'tokens.color.text' ], 'general.components.fonts.primary.name'),
@@ -562,7 +586,8 @@ $case('v1', 'The version 1 map: paths that are not strings, an empty list, two c
     set([ 'v1', 'components.nonexistent.base.x' ], 'a.b.c'),
     set('site.name', 'my_products.components.website_theme.components.type'),
 ]);
-$case('v1-own-colors', "The version 1 map names a catalog color the schema does not name: it is left out, so its key does not collide with the primary's.", [], null, [
+$case('v1-own-colors', "The version 1 map names a catalog color the schema does not name: refused, and left out of the tuples, so its key does not collide with the primary's.", [], null, [
+    ...$current_map,
     set([ 'v1', 'tokens.color.danger_text' ], 'my_products.components.theme_settings.components.style.primary_btn_color'),
 ]);
 $case('out-of-range', "Defaults outside their control's min and max, and nothing else.", [
@@ -699,7 +724,9 @@ $case('editor-visibility-type', 'A visibility key typed string: its default is s
 
 // --- Against the previous version ---------------------------------------------
 
-$case('version-equal', 'The same version as the previous one.', [], [ 'ops' => [] ]);
+$case('version-equal', 'The same version as the previous one, with the same content: unchanged, as api-core answers a deploy that publishes it again.', [], [ 'ops' => [] ]);
+$case('version-equal-reordered', 'The same version with the same content, its keys in another order: unchanged.', [], [ 'ops' => [ del('format'), set('format', $original['format']) ] ]);
+$case('version-exists', 'The same version as the previous one, with another content.', [ set('tokens.color.primary.$value', '#123456') ], [ 'ops' => [] ]);
 $case('version-lower', 'A version lower than the previous one of its base.', [ version('26.0.5') ], [ 'ops' => [ version('26.1.0') ] ]);
 $case('version-previous-short', 'A previous version of two parts (`26.0` is `26.0.0`): a patch over it.', [ version('26.0.1') ], [ 'ops' => [ version('26.0') ] ]);
 $case('version-previous-prerelease', "A previous pre-release: PHP's version_compare() puts 26.1.0 after 26.1.0-beta.", [ version('26.1.0') ], [ 'ops' => [ version('26.1.0-beta') ] ]);
@@ -716,7 +743,8 @@ $case('diff-patch-default', 'A patch that changes a default.', [
 $case('diff-patch-texts', 'A patch that changes only texts and editor metadata.', [
     version('26.0.1'),
     set('components.button.base.radius.$description', 'The rounding.'),
-    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'max' ], 64),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'step' ], 4),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'unit' ], 'px'),
     set([ 'components', 'button', '$extensions', 'co.ordering.editor', 'advanced' ], true),
     del('components.auth_form.scope.button.$extensions'),
     set([ 'editor', 'sections', 0, 'label', 'default' ], 'Colours'),
@@ -807,6 +835,64 @@ $case('diff-valid-changes', 'A valid minor with every kind of change: added, rem
     set('components.button.base.old_gap', node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
 ] ]);
 
+$case('diff-patch-limits', "A patch that changes what of the editor validates a value: a control's max, a typography field's min and a color's `alpha`.", [
+    version('26.0.1'),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'max' ], 64),
+    set([ 'tokens', 'typography', 'h1', '$extensions', 'co.ordering.editor', 'fields', 'size', 'min' ], 10),
+    set([ 'components', 'card', 'base', 'background', '$extensions', 'co.ordering.editor', 'alpha' ], true),
+], [ 'ops' => [] ]);
+$case('diff-alpha-removed', "A minor that takes `alpha` from a color that had it: its translucent values no longer fit (alpha_removed), while tightening a control's limits and a string's length is the minor's to do.", [
+    version('26.1.0'),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'max' ], 64),
+    set([ 'site', 'name', '$extensions', 'co.ordering' ], [ 'max_length' => 40 ]),
+], [ 'ops' => [ set([ 'components', 'card', 'base', 'background', '$extensions', 'co.ordering.editor', 'alpha' ], true) ] ]);
+$case('diff-changes', "A valid minor that adds an option, changes defaults (a color's and a section's `visible`), tightens rules (a control's max, a string's length), adds `alpha` and changes a section's `hideable` and `group` and the order of a page's sections.", [
+    version('26.1.0'),
+    set([ 'site', 'mode', '$extensions', 'co.ordering', 'options' ], [ 'marketplace', 'single_store', 'franchise', 'kiosk' ]),
+    set('tokens.color.primary.$value', '#123456'),
+    set([ 'components', 'button', 'base', 'icon_gap', '$extensions', 'co.ordering.editor', 'max' ], 64),
+    set([ 'site', 'name', '$extensions', 'co.ordering' ], [ 'max_length' => 40 ]),
+    set([ 'components', 'card', 'base', 'background', '$extensions', 'co.ordering.editor', 'alpha' ], true),
+    set('pages.home.sections.$value', [
+        [ 'key' => 'hero', 'visible' => true, 'hideable' => false, 'group' => null ],
+        [ 'key' => 'login_account', 'visible' => true, 'hideable' => false, 'group' => null ],
+        [ 'key' => 'content', 'visible' => false, 'hideable' => true, 'group' => 'main' ],
+        [ 'key' => 'custom_order_banner', 'visible' => true, 'hideable' => true, 'group' => 'main' ],
+        [ 'key' => 'promo_banners', 'visible' => true, 'hideable' => true, 'group' => 'main' ],
+    ]),
+], [ 'ops' => [] ]);
+$case('diff-sections', "A minor that removes a page's section (not deprecated), renames another with a migration and adds one: each section is a key.", [
+    version('26.1.0'),
+    set('pages.home.sections.$value', [
+        [ 'key' => 'hero', 'visible' => true, 'hideable' => false, 'group' => null ],
+        [ 'key' => 'login_account', 'visible' => true, 'hideable' => true, 'group' => null ],
+        [ 'key' => 'custom_order_banner', 'visible' => true, 'hideable' => true, 'group' => 'main' ],
+        [ 'key' => 'main_content', 'visible' => true, 'hideable' => true, 'group' => 'main' ],
+        [ 'key' => 'news', 'visible' => true, 'hideable' => true, 'group' => 'main' ],
+    ]),
+    set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'pages.home.sections.content', 'to' => 'pages.home.sections.main_content' ] ]),
+], [ 'ops' => [] ]);
+$case('diff-sections-deprecated', "A minor that removes a section of a page whose sections were deprecated: valid.", [
+    version('26.1.0'),
+    set('pages.home.sections.$value', array_slice($original['pages']['home']['sections']['$value'], 0, 4)),
+], [ 'ops' => [ set('pages.home.sections.$deprecated', true) ] ]);
+$empty_state_moved = [
+    del('components.empty_state.base.padding_y'),
+    del('components.empty_state.platforms.mobile_web.padding_y'),
+    set('components.empty_state.base.padding_top', $original['components']['empty_state']['base']['padding_y']),
+    set('components.empty_state.platforms.mobile_web.padding_top', $original['components']['empty_state']['platforms']['mobile_web']['padding_y']),
+];
+$case('diff-platform-migrated', "A minor that renames a property with a default of its own on a platform: the platform's default goes with it.", [
+    version('26.1.0'),
+    ...$empty_state_moved,
+    set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'components.empty_state.base.padding_y', 'to' => 'components.empty_state.base.padding_top' ] ]),
+], [ 'ops' => [] ]);
+$case('diff-platform-deprecated', "A minor that removes a deprecated property and its platform's default: valid.", [
+    version('26.1.0'),
+    del('components.empty_state.base.padding_y'),
+    del('components.empty_state.platforms.mobile_web.padding_y'),
+], [ 'ops' => [ set('components.empty_state.base.padding_y.$deprecated', true) ] ]);
+
 // --- Against the previous base (the upgrade block) -------------------------
 // The schema is the base as 27.0.0 with its block; the previous base, the
 // base as 26.4.0 with what the block takes from it: a property, a color, a
@@ -828,17 +914,18 @@ $previous_26 = [ 'ops' => [
     set('site.slug', node('string', '')),
     set('site.legacy_flag', node('boolean', false)),
 ] ];
+$moves = [
+    [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ],
+    [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'none' => 'none', 'hover' => 'hover', 'underlined' => 'always' ] ],
+    [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{space.lg}', '{size.md}' => '{space.md}' ] ],
+    [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
+    [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+    [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
+    [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
+];
 $block = fn (array $changes = []) => set([ '$extensions', 'co.ordering.upgrade' ], $changes + [
     'from' => 26,
-    'moves' => [
-        [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ],
-        [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'none' => 'none', 'hover' => 'hover', 'underlined' => 'always' ] ],
-        [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{space.lg}', '{size.md}' => '{space.md}' ] ],
-        [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
-        [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
-        [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
-        [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
-    ],
+    'moves' => $moves,
     'drop' => [ 'components.modal.base.padding', 'visibility.old_banner', 'site.legacy_flag' ],
     'rewrite' => [ 'id' => 'marketplace_website.27', 'paths' => [ 'tokens.typography.small' ] ],
 ]);
@@ -884,6 +971,30 @@ $case('upgrade-minor-adds', 'A minor of the new base that adds a move and a path
     version('27.1.0'),
     $block([ 'drop' => [ 'components.modal.base.padding', 'visibility.old_banner', 'site.legacy_flag', 'tokens.typography.small' ] ]),
 ], [ 'ops' => [ version('27.0.0'), $block() ] ]);
+$case('upgrade-platform-default', "A move of a property with a platform's default: the platform's default is accounted for with it.", [
+    version('27.0.0'),
+    ...$empty_state_moved,
+    $block([ 'moves' => [ ...$moves, [ 'from' => 'components.empty_state.base.padding_y', 'to' => 'components.empty_state.base.padding_top' ] ] ]),
+], null, null, 'base', $previous_26);
+$case('upgrade-map-boolean', "Maps of booleans: one turned around (valid), one whose keys are not `true` and `false`, and one to a boolean that is no boolean.", [
+    version('27.0.0'),
+    set([ 'visibility', 'show_prices' ], node(null, true)),
+    set([ 'visibility', 'show_stock' ], node(null, true)),
+    set([ 'editor', 'sections', 10, 'groups', 2, 'paths' ], [ ...$group(10, 2)['paths'], 'visibility.show_prices', 'visibility.show_stock' ]),
+    $block([
+        'moves' => [
+            ...$moves,
+            [ 'from' => 'visibility.hide_prices', 'to' => 'visibility.show_prices', 'map' => [ 'true' => false, 'false' => true ] ],
+            [ 'from' => 'visibility.hide_stock', 'to' => 'visibility.show_stock', 'map' => [ '1' => false, '0' => true ] ],
+            [ 'from' => 'visibility.old_banner', 'to' => 'visibility.footer', 'map' => [ 'true' => 'yes' ] ],
+        ],
+        'drop' => [ 'components.modal.base.padding', 'site.legacy_flag' ],
+    ]),
+], null, null, 'base', [ 'ops' => [
+    ...$previous_26['ops'],
+    set([ 'visibility', 'hide_prices' ], node(null, false)),
+    set([ 'visibility', 'hide_stock' ], node(null, false)),
+] ]);
 $case('upgrade-removed', "A minor of the new base that drops a move of its block, and one that changes its rewrite: schema.upgrade_removed.", [
     version('27.1.0'),
     $block([ 'moves' => [ [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ] ], 'rewrite' => [ 'id' => 'marketplace_website.27b', 'paths' => [] ] ]),
@@ -900,6 +1011,9 @@ $development = [
     'diff-removed' => 'In development, removing a key that was not deprecated is no refusal: it is reported as removed.',
     'diff-errors' => 'In development, every incompatibility at once is no refusal: the changes are answered.',
     'diff-valid-changes' => 'In development, a valid minor answers the same changes.',
+    'version-exists' => 'In development, the same version with another content is no refusal: production would answer schema.version_exists, a warning here.',
+    'version-equal' => 'In development too, the same version with the same content is unchanged.',
+    'diff-patch-limits' => 'In development, what production refuses as incompatible is answered in warnings.',
     'prop-defaults' => 'In development, the schema itself is still checked.',
     'semver' => 'In development, the version is still semver.',
 ];

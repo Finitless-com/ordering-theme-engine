@@ -19,8 +19,9 @@ import { asMap, entries, get, has, isArray, isEmpty, isInt, isList, phpString, v
  * the page, or to the end of another page's list.
  *
  * A move may also carry a `map` (a base's `co.ordering.upgrade`,
- * upgrade.ts): the value it moves is translated by it, and one it has no
- * entry for is dropped; with a map, `from` and `to` may be the same path.
+ * upgrade.ts): the value it moves is translated by it (a boolean by the keys
+ * `true` and `false`), and one it has no entry for is dropped; with a map,
+ * `from` and `to` may be the same path.
  *
  * $theme is changed in place: pass a copy.
  */
@@ -144,16 +145,29 @@ function move(theme: JsonMap, from: string[], to: string[], depth: number, map: 
   let value = getPath(theme, from)
   let answer = forget(theme, from) as JsonMap
   if (map !== null) {
-    // A string or an integer the map translates; anything else it drops.
-    if (!(typeof value === 'string' || isInt(value)) || !has(map, String(value))) {
+    // A string, an integer or a boolean the map translates; anything else it drops.
+    const key = mapKey(value)
+    if (key === null || !has(map, key)) {
       return answer
     }
-    value = get(map, String(value))
+    value = get(map, key)
   }
   if (!hasPath(answer, to)) {
     answer = put(answer, to, value) as JsonMap
   }
   return answer
+}
+
+/**
+ * The key a map gives a stored value (ThemeMigrations::mapKey()): a string or
+ * an integer as it is written, a boolean as `true` or `false`; null for
+ * anything else, which no map translates.
+ */
+export function mapKey(value: Json): string | null {
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false'
+  }
+  return typeof value === 'string' || isInt(value) ? String(value) : null
 }
 
 /**

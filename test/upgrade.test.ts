@@ -84,8 +84,8 @@ describe("the upgrade between bases answers what api-core's ThemeUpgrades answer
     const rewrite = golden.rewrite ? bolder : undefined
     const answer = golden.kind === 'upgrade' ? upgradeChain(values, chain, rewrite)
       : golden.kind === 'settings' ? upgradeSettingsChain(values, chain, rewrite)
-        : golden.kind === 'cutDown' ? cutDown(values, chain[0]!, chain[1]!)
-          : cutDownSettings(values, chain[0]!, chain[1]!)
+        : golden.kind === 'cutDown' ? cutDown(values, chain)
+          : cutDownSettings(values, chain)
     expect(differences(answer, golden.expected)).toEqual([])
     expect(JSON.stringify(values)).toBe(before)
   })

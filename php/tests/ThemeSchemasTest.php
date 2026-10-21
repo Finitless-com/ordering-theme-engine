@@ -24,7 +24,13 @@ class ThemeSchemasTest extends TestCase
         self::assertSame([], ThemeSchemas::check($schema));
 
         $defaults = ThemeSchemas::defaults($schema);
-        self::assertSame([], ThemeValidator::validate($defaults, $schema));
+        // The schema as it ships has two defaults above their control's max
+        // (which publishing refuses, `default_out_of_range`): saved by a
+        // theme, they are out of range too.
+        self::assertSame([
+            [ 'path' => 'components.signup_page.base.padding_y', 'code' => 'components.signup_page.base.padding_y.out_of_range' ],
+            [ 'path' => 'components.signup_page.base.padding_x', 'code' => 'components.signup_page.base.padding_x.out_of_range' ],
+        ], ThemeValidator::validate($defaults, $schema));
         self::assertSame('{radius.md}', $defaults['components']['button']['base']['radius']);
         self::assertSame('{color.primary}', $defaults['components']['button']['colors']['primary']['main']);
         self::assertSame('{ink}', $defaults['components']['button']['appearances']['outline']['color']);

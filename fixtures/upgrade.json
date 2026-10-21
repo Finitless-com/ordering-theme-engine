@@ -262,6 +262,49 @@
                 }
             ],
             [
+                "set",
+                [
+                    "site",
+                    "kiosk_only"
+                ],
+                {
+                    "$type": "boolean",
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "hide_prices"
+                ],
+                {
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "card",
+                    "base",
+                    "tone"
+                ],
+                {
+                    "$type": "option",
+                    "$value": "soft",
+                    "$extensions": {
+                        "co.ordering": {
+                            "options": [
+                                "soft",
+                                "loud",
+                                "neutral"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
                 "delete",
                 [
                     "site",
@@ -278,6 +321,491 @@
                     {
                         "from": "components.card.base.corner",
                         "to": "components.card.base.radius"
+                    }
+                ]
+            ]
+        ],
+        "26.5": [
+            [
+                "set",
+                [
+                    "version"
+                ],
+                "26.4.0"
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "button",
+                    "base",
+                    "old_gap"
+                ],
+                {
+                    "$type": "dimension",
+                    "$value": "{space.sm}",
+                    "$extensions": {
+                        "co.ordering": {
+                            "scale": "space"
+                        }
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "link",
+                    "base",
+                    "underline",
+                    "$extensions",
+                    "co.ordering",
+                    "options"
+                ],
+                [
+                    "none",
+                    "hover",
+                    "underlined"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "card",
+                    "base",
+                    "padding"
+                ],
+                {
+                    "$type": "dimension",
+                    "$value": "{size.lg}",
+                    "$extensions": {
+                        "co.ordering": {
+                            "scale": "size"
+                        }
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "modal",
+                    "base",
+                    "padding"
+                ],
+                {
+                    "$type": "dimension",
+                    "$value": "{space.lg}",
+                    "$extensions": {
+                        "co.ordering": {
+                            "scale": "space"
+                        }
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "tokens",
+                    "color",
+                    "brand"
+                ],
+                {
+                    "$value": "#E4002B"
+                }
+            ],
+            [
+                "set",
+                [
+                    "tokens",
+                    "typography",
+                    "small"
+                ],
+                {
+                    "$value": {
+                        "size": 11,
+                        "line": 1.4,
+                        "weight": 400
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "header.brand"
+                ],
+                {
+                    "$value": true
+                }
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "old_banner"
+                ],
+                {
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "pages",
+                    "shop"
+                ],
+                {
+                    "footer": {
+                        "$type": "boolean",
+                        "$value": null,
+                        "$extensions": {
+                            "co.ordering.editor": {
+                                "label": {
+                                    "key": "BUILDER_THEME_PAGE_FOOTER",
+                                    "default": "Footer"
+                                },
+                                "info": {
+                                    "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                    "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                },
+                                "control": "segmented",
+                                "order": 1,
+                                "platform": {
+                                    "info": {
+                                        "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                        "default": "Whether this page ends with the footer on phones."
+                                    }
+                                },
+                                "options": [
+                                    {
+                                        "value": null,
+                                        "label": {
+                                            "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                            "default": "As on the whole website (_state_)",
+                                            "params": {
+                                                "_state_": [
+                                                    {
+                                                        "key": "BUILDER_THEME_SHOWN",
+                                                        "default": "shown"
+                                                    },
+                                                    {
+                                                        "key": "BUILDER_THEME_HIDDEN",
+                                                        "default": "hidden"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "label_platform": {
+                                            "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                            "default": "As on all screens (_state_)",
+                                            "params": {
+                                                "_state_": [
+                                                    {
+                                                        "key": "BUILDER_THEME_SHOWN",
+                                                        "default": "shown"
+                                                    },
+                                                    {
+                                                        "key": "BUILDER_THEME_HIDDEN",
+                                                        "default": "hidden"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "value": true,
+                                        "label": {
+                                            "key": "BUILDER_THEME_SHOW",
+                                            "default": "Show"
+                                        }
+                                    },
+                                    {
+                                        "value": false,
+                                        "label": {
+                                            "key": "BUILDER_THEME_HIDE",
+                                            "default": "Hide"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "sections": {
+                        "$type": "sections",
+                        "$value": [],
+                        "$extensions": {
+                            "co.ordering.editor": {
+                                "label": {
+                                    "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                    "default": "Sections"
+                                },
+                                "info": {
+                                    "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                    "default": "This page has no sections to move or hide."
+                                },
+                                "control": "sortable_sections",
+                                "order": 2
+                            }
+                        }
+                    },
+                    "$extensions": {
+                        "co.ordering.editor": {
+                            "label": {
+                                "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                "default": "Carts of several stores"
+                            },
+                            "group": "order",
+                            "order": 3
+                        }
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "site",
+                    "slug"
+                ],
+                {
+                    "$type": "string",
+                    "$value": ""
+                }
+            ],
+            [
+                "set",
+                [
+                    "site",
+                    "legacy_flag"
+                ],
+                {
+                    "$type": "boolean",
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "site",
+                    "kiosk_only"
+                ],
+                {
+                    "$type": "boolean",
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "hide_prices"
+                ],
+                {
+                    "$value": false
+                }
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "card",
+                    "base",
+                    "tone"
+                ],
+                {
+                    "$type": "option",
+                    "$value": "soft",
+                    "$extensions": {
+                        "co.ordering": {
+                            "options": [
+                                "soft",
+                                "loud",
+                                "neutral"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "delete",
+                [
+                    "site",
+                    "description"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "$extensions",
+                    "co.ordering.migrate"
+                ],
+                [
+                    {
+                        "from": "components.card.base.corner",
+                        "to": "components.card.base.radius"
+                    }
+                ]
+            ],
+            [
+                "set",
+                [
+                    "version"
+                ],
+                "26.5.0"
+            ],
+            [
+                "delete",
+                [
+                    "components",
+                    "button",
+                    "base",
+                    "old_gap"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "button",
+                    "base",
+                    "spacer"
+                ],
+                {
+                    "$type": "dimension",
+                    "$value": "{space.sm}",
+                    "$extensions": {
+                        "co.ordering": {
+                            "scale": "space"
+                        }
+                    }
+                }
+            ],
+            [
+                "delete",
+                [
+                    "tokens",
+                    "color",
+                    "favorite"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "tokens",
+                    "color",
+                    "danger_text"
+                ],
+                {
+                    "$value": "#B02A3E"
+                }
+            ],
+            [
+                "delete",
+                [
+                    "visibility",
+                    "header.brand"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "header.badge"
+                ],
+                {
+                    "$value": true
+                }
+            ],
+            [
+                "set",
+                [
+                    "pages",
+                    "home",
+                    "sections",
+                    "$value"
+                ],
+                [
+                    {
+                        "key": "hero",
+                        "visible": true,
+                        "hideable": false,
+                        "group": null
+                    },
+                    {
+                        "key": "login_account",
+                        "visible": true,
+                        "hideable": true,
+                        "group": null
+                    },
+                    {
+                        "key": "custom_order_banner",
+                        "visible": true,
+                        "hideable": true,
+                        "group": "main"
+                    },
+                    {
+                        "key": "main_content",
+                        "visible": true,
+                        "hideable": true,
+                        "group": "main"
+                    },
+                    {
+                        "key": "promo_banners",
+                        "visible": true,
+                        "hideable": true,
+                        "group": "main"
+                    }
+                ]
+            ],
+            [
+                "delete",
+                [
+                    "site",
+                    "slug"
+                ]
+            ],
+            [
+                "set",
+                [
+                    "site",
+                    "shop_slug"
+                ],
+                {
+                    "$type": "string",
+                    "$value": ""
+                }
+            ],
+            [
+                "set",
+                [
+                    "$extensions",
+                    "co.ordering.migrate"
+                ],
+                [
+                    {
+                        "from": "components.card.base.corner",
+                        "to": "components.card.base.radius"
+                    },
+                    {
+                        "from": "components.button.base.old_gap",
+                        "to": "components.button.base.spacer"
+                    },
+                    {
+                        "from": "tokens.color.favorite",
+                        "to": "tokens.color.danger_text"
+                    },
+                    {
+                        "from": "visibility.header.brand",
+                        "to": "visibility.header.badge"
+                    },
+                    {
+                        "from": "pages.home.sections.content",
+                        "to": "pages.home.sections.main_content"
+                    },
+                    {
+                        "from": "site.slug",
+                        "to": "site.shop_slug"
                     }
                 ]
             ]
@@ -335,6 +863,31 @@
                         {
                             "from": "site.slug",
                             "to": "site.business_slug"
+                        },
+                        {
+                            "from": "visibility.hide_prices",
+                            "to": "visibility.show_prices",
+                            "map": {
+                                "true": false,
+                                "false": true
+                            }
+                        },
+                        {
+                            "from": "site.kiosk_only",
+                            "to": "site.kiosk_mode",
+                            "map": {
+                                "true": "on",
+                                "false": "off"
+                            }
+                        },
+                        {
+                            "from": "components.card.base.tone",
+                            "to": "components.card.base.tone",
+                            "map": {
+                                "soft": "soft",
+                                "loud": "loud",
+                                "neutral": "soft"
+                            }
                         }
                     ],
                     "drop": [
@@ -346,6 +899,56 @@
                         "paths": [
                             "tokens.typography.small"
                         ]
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "visibility",
+                    "show_prices"
+                ],
+                {
+                    "$value": true
+                }
+            ],
+            [
+                "set",
+                [
+                    "site",
+                    "kiosk_mode"
+                ],
+                {
+                    "$type": "option",
+                    "$value": "off",
+                    "$extensions": {
+                        "co.ordering": {
+                            "options": [
+                                "on",
+                                "off"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "set",
+                [
+                    "components",
+                    "card",
+                    "base",
+                    "tone"
+                ],
+                {
+                    "$type": "option",
+                    "$value": "soft",
+                    "$extensions": {
+                        "co.ordering": {
+                            "options": [
+                                "soft",
+                                "loud"
+                            ]
+                        }
                     }
                 }
             ]
@@ -1086,7 +1689,7 @@
         },
         {
             "name": "cut-down",
-            "description": "A theme of 27 for a client of 26: what has the same path and kind and fits 26 stays; an option 26 has not, a property whose scale or type differs (even a number both take) and a key 26 has not take 26's defaults.",
+            "description": "A theme of 27 for a client of 26: the block's one-to-one maps undone (`always` is `underlined` again, `{space.lg}` is `{size.lg}`, also on a platform where it is a number 26 cannot read); what has the same path and kind and fits 26 stays; a move into a key 26 already has (the gap, `header.logo`) is not undone; a property whose type differs and no move takes takes 26's default.",
             "kind": "cutDown",
             "bases": [
                 "27",
@@ -1149,12 +1752,15 @@
                             "icon_gap": "{space.md}"
                         }
                     },
-                    "link": {
-                        "base": []
-                    },
                     "card": {
                         "base": {
-                            "background": "{color.surface}"
+                            "background": "{color.surface}",
+                            "padding": "{size.lg}"
+                        }
+                    },
+                    "link": {
+                        "base": {
+                            "underline": "underlined"
                         }
                     }
                 },
@@ -1165,7 +1771,7 @@
         },
         {
             "name": "cut-down-28",
-            "description": "A theme of 28 for a client of 27: the gap 28 renamed is no key of 27.",
+            "description": "A theme of 28 for a client of 27: the gap 28 renamed is `icon_gap` again.",
             "kind": "cutDown",
             "bases": [
                 "28",
@@ -1186,7 +1792,8 @@
                 "components": {
                     "button": {
                         "base": {
-                            "radius": "{radius.sm}"
+                            "radius": "{radius.sm}",
+                            "icon_gap": "{space.md}"
                         }
                     }
                 }
@@ -1194,7 +1801,7 @@
         },
         {
             "name": "cut-down-settings",
-            "description": "Settings of 27 for a client of 26: a setting 26 has not (its description) is left out.",
+            "description": "Settings of 27 for a client of 26: a setting 26 has not (its description) is left out; the slug 27 moved into `business_slug`, which 26 has too, stays there.",
             "kind": "cutDownSettings",
             "bases": [
                 "27",
@@ -1209,6 +1816,333 @@
             "expected": {
                 "business_slug": "my-shop",
                 "mode": "single_store"
+            }
+        },
+        {
+            "name": "map-boolean",
+            "description": "A boolean turned around by a map (`true` and `false` as its keys), also a platform's override.",
+            "kind": "upgrade",
+            "bases": [
+                "26",
+                "27"
+            ],
+            "rewrite": false,
+            "values": {
+                "visibility": {
+                    "hide_prices": true
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "visibility": {
+                            "hide_prices": false
+                        }
+                    }
+                }
+            },
+            "expected": {
+                "visibility": {
+                    "show_prices": false
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "visibility": {
+                            "show_prices": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "map-many",
+            "description": "A map that merges two options: `neutral` is `soft`.",
+            "kind": "upgrade",
+            "bases": [
+                "26",
+                "27"
+            ],
+            "rewrite": false,
+            "values": {
+                "components": {
+                    "card": {
+                        "base": {
+                            "tone": "neutral"
+                        }
+                    }
+                }
+            },
+            "expected": {
+                "components": {
+                    "card": {
+                        "base": {
+                            "tone": "soft"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "settings-map-boolean",
+            "description": "A boolean setting that becomes an option by a map.",
+            "kind": "settings",
+            "bases": [
+                "26",
+                "27"
+            ],
+            "rewrite": false,
+            "values": {
+                "kiosk_only": true
+            },
+            "expected": {
+                "kiosk_mode": "on"
+            }
+        },
+        {
+            "name": "settings-migrate",
+            "description": "Settings saved with 26.4 read with 26.5, the same base: the setting 26.5 renamed takes its new name.",
+            "kind": "settings",
+            "bases": [
+                "26.5"
+            ],
+            "rewrite": false,
+            "values": {
+                "slug": "my-shop",
+                "name": "My shop"
+            },
+            "expected": {
+                "name": "My shop",
+                "shop_slug": "my-shop"
+            }
+        },
+        {
+            "name": "cut-down-renames",
+            "description": "A theme of 26.5 for a client of 26.4, the same base: every migration 26.4 does not have is undone, a property, a color (its value in dark mode and the aliases to it), a visibility key (and a platform's override) and a home section, in its place.",
+            "kind": "cutDown",
+            "bases": [
+                "26.5",
+                "26"
+            ],
+            "rewrite": false,
+            "values": {
+                "components": {
+                    "button": {
+                        "base": {
+                            "spacer": "{space.lg}"
+                        }
+                    },
+                    "card": {
+                        "base": {
+                            "background": "{color.danger_text}"
+                        }
+                    }
+                },
+                "tokens": {
+                    "color": {
+                        "danger_text": "#B02A3E"
+                    }
+                },
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "danger_text": "#FF8899"
+                        }
+                    }
+                },
+                "visibility": {
+                    "header.badge": false
+                },
+                "pages": {
+                    "home": {
+                        "sections": [
+                            {
+                                "key": "promo_banners",
+                                "visible": true
+                            },
+                            {
+                                "key": "main_content",
+                                "visible": false
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true
+                            }
+                        ]
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "visibility": {
+                            "header.badge": true
+                        },
+                        "components": {
+                            "button": {
+                                "base": {
+                                    "spacer": "{space.xs}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "expected": {
+                "components": {
+                    "card": {
+                        "base": {
+                            "background": "{color.favorite}"
+                        }
+                    },
+                    "button": {
+                        "base": {
+                            "old_gap": "{space.lg}"
+                        }
+                    }
+                },
+                "pages": {
+                    "home": {
+                        "sections": [
+                            {
+                                "key": "promo_banners",
+                                "visible": true
+                            },
+                            {
+                                "key": "content",
+                                "visible": false
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true
+                            }
+                        ]
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "visibility": {
+                            "header.brand": true
+                        },
+                        "components": {
+                            "button": {
+                                "base": {
+                                    "old_gap": "{space.xs}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "visibility": {
+                    "header.brand": false
+                },
+                "tokens": {
+                    "color": {
+                        "favorite": "#B02A3E"
+                    }
+                },
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "favorite": "#FF8899"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "cut-down-chain",
+            "description": "A theme of 28 for a client of 26: 28's rename undone, then 27's map; the gap is `icon_gap` in both 27 and 26.",
+            "kind": "cutDown",
+            "bases": [
+                "28",
+                "27",
+                "26"
+            ],
+            "rewrite": false,
+            "values": {
+                "components": {
+                    "button": {
+                        "base": {
+                            "icon_space": "{space.md}"
+                        }
+                    },
+                    "link": {
+                        "base": {
+                            "underline": "always"
+                        }
+                    }
+                }
+            },
+            "expected": {
+                "components": {
+                    "button": {
+                        "base": {
+                            "icon_gap": "{space.md}"
+                        }
+                    },
+                    "link": {
+                        "base": {
+                            "underline": "underlined"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "cut-down-map-boolean",
+            "description": "A theme of 27 for a client of 26: the boolean the block turned around, turned back, and the map that merged two options, which cannot be undone: 26's default.",
+            "kind": "cutDown",
+            "bases": [
+                "27",
+                "26"
+            ],
+            "rewrite": false,
+            "values": {
+                "visibility": {
+                    "show_prices": false
+                },
+                "components": {
+                    "card": {
+                        "base": {
+                            "tone": "loud"
+                        }
+                    }
+                }
+            },
+            "expected": {
+                "visibility": {
+                    "hide_prices": true
+                }
+            }
+        },
+        {
+            "name": "cut-down-settings-renames",
+            "description": "Settings of 26.5 for a client of 26.4: the setting 26.5 renamed takes its old name.",
+            "kind": "cutDownSettings",
+            "bases": [
+                "26.5",
+                "26"
+            ],
+            "rewrite": false,
+            "values": {
+                "shop_slug": "my-shop",
+                "name": "My shop"
+            },
+            "expected": {
+                "name": "My shop",
+                "slug": "my-shop"
+            }
+        },
+        {
+            "name": "cut-down-settings-map-boolean",
+            "description": "Settings of 27 for a client of 26: the option a boolean became is the boolean again.",
+            "kind": "cutDownSettings",
+            "bases": [
+                "27",
+                "26"
+            ],
+            "rewrite": false,
+            "values": {
+                "kiosk_mode": "off"
+            },
+            "expected": {
+                "kiosk_only": false
             }
         }
     ]

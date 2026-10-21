@@ -273,7 +273,12 @@ class ThemeResolver
 
         // What the schema renamed or moved is read where it went.
         $values = ThemeMigrations::apply($values, is_array($schema['migrate'] ?? null) ? $schema['migrate'] : []);
+        $lists = [];
         foreach (ThemeValidator::validate($values, $schema) as $error) {
+            // A section left out of its page's list, which stays a list.
+            if (preg_match('/^((?:platforms\.[a-z0-9_]+\.)?pages\.[a-z0-9_]+\.sections)\.\d+$/', $error['path'], $match) === 1) {
+                $lists[$match[1]] = true;
+            }
             [ $section, $rest ] = array_pad(explode('.', $error['path'], 2), 2, null);
             if (in_array($section, [ 'visibility', 'images' ], true) && $rest !== null) {
                 // Their keys hold dots of their own.
@@ -286,8 +291,47 @@ class ThemeResolver
             }
             self::forget($values, $error['path']);
         }
+        foreach (array_keys($lists) as $path) {
+            $node = &$values;
+            foreach (explode('.', $path) as $segment) {
+                if (!is_array($node[$segment] ?? null)) {
+                    unset($node);
+                    continue 2;
+                }
+                $node = &$node[$segment];
+            }
+            $node = array_values($node);
+            unset($node);
+        }
 
         return $values;
+    }
+
+    /**
+     * What of a site's settings fits its schema, as self::valid() a theme:
+     * what the schema renamed or moved within its base (its migrations of
+     * `site.` paths) is first taken where it went, then each setting
+     * ThemeValidator::settings() finds wrong is left out, so its default
+     * shows instead. A list is no settings: none.
+     *
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $schema compiled
+     * @return array<string, mixed>
+     */
+    public static function validSettings(array $settings, array $schema): array
+    {
+        $migrations = array_values(array_filter(is_array($schema['migrate'] ?? null) ? $schema['migrate'] : [], fn ($migration) => is_array($migration)
+            && is_string($migration['from'] ?? null) && explode('.', $migration['from'])[0] === 'site'));
+        $document = ThemeMigrations::apply([ 'site' => $settings ], $migrations);
+        $settings = is_array($document['site'] ?? null) ? $document['site'] : [];
+        foreach (ThemeValidator::settings($settings, $schema) as $error) {
+            if ($error['path'] === 'site') {
+                return [];
+            }
+            self::forget($settings, implode('.', array_slice(explode('.', $error['path']), 1)));
+        }
+
+        return $settings;
     }
 
     /**

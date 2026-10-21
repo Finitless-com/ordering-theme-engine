@@ -123,6 +123,28 @@ final class NodeConverter
             $nodes['site'] = self::tree($schema['site']);
         }
 
+        // What the engine reads of the editor's metadata: the colors it may
+        // make translucent, and the numeric limits.
+        $editor = [];
+        foreach (is_array($schema['alpha'] ?? null) ? $schema['alpha'] : [] as $path) {
+            $editor[] = [ (string) $path, [ 'alpha' => true ] ];
+        }
+        foreach (is_array($schema['limits'] ?? null) ? $schema['limits'] : [] as $path => $limits) {
+            $editor[] = [ (string) $path, is_array($limits) ? $limits : [] ];
+        }
+        foreach ($editor as [ $path, $metadata ]) {
+            $node = &$nodes;
+            foreach (explode('.', $path) as $segment) {
+                if (!is_array($node[$segment] ?? null)) {
+                    unset($node);
+                    continue 2;
+                }
+                $node = &$node[$segment];
+            }
+            $node['$extensions'][NodeFormat::EDITOR] = array_merge($node['$extensions'][NodeFormat::EDITOR] ?? [], $metadata);
+            unset($node);
+        }
+
         return [ 'schema' => $nodes, 'v1' => $paths || $kept === null ? $v1 : $kept ];
     }
 

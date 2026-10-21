@@ -2,16 +2,20 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve as resolvePath } from 'node:path'
 import { parseArgs, type ParseArgsConfig } from 'node:util'
 import { compile, isNodes } from './compile.js'
+import { canonical } from './diff.js'
+import { versionCompare } from './php.js'
 import { defaults } from './resolver.js'
 import { siteDefaults } from './schemas.js'
 import { validateFull } from './validate.js'
-import type { Changes, Json, NodeSchema, SchemaError, V1Map } from './types.js'
+import type { Changes, Json, NodeSchema, SchemaError, V1Map, ValidationResult } from './types.js'
 
 /**
  * The `ordering-theme` command (bin.ts runs it): what a product's
  * repository runs on its theme schema, so that none copies its own scripts.
  *
- * - `validate`: validateFull(), the meta-schema and what api-core checks;
+ * - `validate`: validateFull(), the meta-schema and what api-core checks,
+ *   against the previous versions given as files or read from the API
+ *   (`--against`);
  * - `defaults`: the empty theme resolved, the file a product paints with
  *   when no theme arrives, written or checked;
  * - `publish`: the schema to api-core's `POST {api}/system/theme_schemas`,
@@ -31,6 +35,13 @@ Commands:
       --previous-base <file>
                            The last version published of the previous base:
                            also checks the schema's upgrade block against it.
+      --against <api>      Read both from the API instead, as publishing does:
+                           GET {api}/system/theme_schemas/{product_type} and
+                           each version it needs, with THEME_PUBLISH_KEY. The
+                           same version with the same content is unchanged.
+      --development        Check as an API in development mode: what production
+                           refuses for the version and for compatibility is
+                           printed as warnings.
 
   defaults <schema.json>   The empty theme resolved (what the API serves for a
                            theme that sets nothing), as JSON.
@@ -51,7 +62,7 @@ Commands:
                            missing, instead of skipping (or THEME_PUBLISH_REQUIRED
                            set to 1 or true).
 
-Environment (publish):
+Environment (publish, validate --against):
   THEME_PUBLISH_API        The API with its version, e.g. https://apiv4.ordering.co/v400
   THEME_PUBLISH_KEY        The environment's theme publish key.
 
@@ -73,7 +84,7 @@ export interface Io {
 
 /** What api-core answered a publish: `ok` for `created`, `replaced`, `unchanged` and `valid`. */
 export type PublishAnswer =
-  | { ok: true, http: number, status: string, version: string | null, changes: Changes | null, errors: [] }
+  | { ok: true, http: number, status: string, version: string | null, changes: Changes | null, warnings: SchemaError[], errors: [] }
   | { ok: false, http: number | null, codes: string[], errors: Array<SchemaError | string> }
 
 class UsageError extends Error {}
@@ -95,7 +106,7 @@ export async function run(args: string[], io: Io = processIo()): Promise<number>
   try {
     switch (command) {
       case 'validate':
-        return validateCommand(rest, io)
+        return await validateCommand(rest, io)
       case 'defaults':
         return defaultsCommand(rest, io)
       case 'publish':
@@ -128,30 +139,170 @@ export async function run(args: string[], io: Io = processIo()): Promise<number>
   }
 }
 
-function validateCommand(args: string[], io: Io): number {
+async function validateCommand(args: string[], io: Io): Promise<number> {
   const { values, file } = parse(args, {
     'v1-map': { type: 'string' },
     previous: { type: 'string' },
     'previous-base': { type: 'string' },
+    against: { type: 'string' },
+    development: { type: 'boolean' },
   })
   if (values.help) {
     io.stdout(HELP)
     return 0
   }
   const schema = readJson(io, file) as NodeSchema
-  const result = validateFull(schema, {
-    v1Map: optionalJson(io, values['v1-map']) as V1Map | null,
-    previous: optionalJson(io, values.previous) as NodeSchema | null,
-    previousBase: optionalJson(io, values['previous-base']) as NodeSchema | null,
-  })
-  if (result.code !== null) {
-    result.errors.forEach((error) => io.stderr(`${describeError(error)}\n`))
-    io.stderr(`${file}: ${result.code} (${result.errors.length} error(s))\n`)
+  const v1Map = optionalJson(io, values['v1-map']) as V1Map | null
+  const development = values.development === true
+  if (values.against === undefined) {
+    const result = validateFull(schema, {
+      v1Map,
+      previous: optionalJson(io, values.previous) as NodeSchema | null,
+      previousBase: optionalJson(io, values['previous-base']) as NodeSchema | null,
+      development,
+    })
+    return report(io, file, schema, result)
+  }
+
+  if (values.previous !== undefined || values['previous-base'] !== undefined) {
+    throw new UsageError('--against reads the previous versions from the API: not with --previous or --previous-base')
+  }
+  const api = String(values.against).trim().replace(/\/+$/, '')
+  if (api === '') {
+    throw new UsageError('--against needs the API, e.g. --against "$THEME_PUBLISH_API"')
+  }
+  const { key } = publishConfig(io.env)
+  if (key === '') {
+    io.stderr(`THEME_PUBLISH_KEY missing: ${file} cannot be compared with what ${api} publishes\n`)
     return 1
   }
-  io.stdout(`${file} ${versionOf(schema)} is valid\n`)
+  // The schema alone first, as the API checks it before it looks at the registry.
+  const alone = validateFull(schema, { v1Map })
+  if (alone.code !== null) {
+    return report(io, file, schema, alone)
+  }
+  const registry = await readRegistry({ api, key, schema, fetchImpl: io.fetch })
+  if ('error' in registry) {
+    io.stderr(`${file}: cannot read the versions published on ${api} (${registry.error})\n`)
+    return 1
+  }
+  // The API takes the same content again as done, whatever else it would say.
+  if (registry.same !== null && canonical(schema as unknown as Json) === canonical(registry.same.schema as unknown as Json)
+    && (v1Map === null || canonical(v1Map) === canonical(registry.same.v1Map))) {
+    io.stdout(`${file} ${versionOf(schema)} is unchanged on ${api}\n`)
+    return 0
+  }
+  const result = validateFull(schema, {
+    v1Map,
+    // Production refuses the same version with another content; development compares with the latest.
+    previous: (registry.same !== null && !development ? registry.same.schema : registry.latest?.schema) ?? null,
+    previousBase: registry.previousBase?.schema ?? null,
+    development,
+  })
+  const against = [registry.latest && `previous ${registry.latest.version}`, registry.previousBase && `previous base ${registry.previousBase.version}`].filter(Boolean)
+  return report(io, file, schema, result, ` against ${api}${against.length > 0 ? ` (${against.join(', ')})` : ''}`)
+}
+
+/** What validate prints of a result, and its exit code. */
+function report(io: Io, file: string, schema: NodeSchema, result: ValidationResult, against = ''): number {
+  if (result.code !== null) {
+    result.errors.forEach((error) => io.stderr(`${describeError(error)}\n`))
+    io.stderr(`${file}: ${result.code} (${result.errors.length} error(s))${against}\n`)
+    return 1
+  }
+  if (result.unchanged) {
+    io.stdout(`${file} ${versionOf(schema)} is unchanged: the same content as the version published\n`)
+    return 0
+  }
+  io.stdout(`${file} ${versionOf(schema)} is valid${against}\n`)
   describeChanges(result.changes).forEach((line) => io.stdout(`${line}\n`))
+  describeWarnings(result.warnings).forEach((line) => io.stderr(`${line}\n`))
   return 0
+}
+
+/** A version the API publishes: the schema and its version 1 map. */
+interface Published {
+  version: string
+  schema: NodeSchema
+  v1Map: Json
+}
+
+/**
+ * What the API has published of the schema's product type that publishing
+ * the schema is checked against (api-core's ThemeSchemaPublisher::publish()):
+ * the same version, the latest of its base and the latest of the closest
+ * earlier base, each read with `GET {api}/system/theme_schemas/{product_type}`
+ * and `…/{version}` and the environment's key. Never rejects: a failure is
+ * `{ error }`.
+ */
+export async function readRegistry({ api, key, schema, fetchImpl = fetch }: {
+  api: string
+  key: string
+  schema: NodeSchema
+  fetchImpl?: typeof fetch
+}): Promise<{ same: Published | null, latest: Published | null, previousBase: Published | null } | { error: string }> {
+  const read = async (path: string): Promise<{ ok: true, result: unknown } | { ok: false, error: string }> => {
+    let response: Response
+    try {
+      response = await fetchImpl(`${api}/system/theme_schemas/${path}`, { headers: { Accept: 'application/json', 'X-Theme-Publish-Key-X': key } })
+    } catch (error) {
+      return { ok: false, error: String((error as Error)?.message ?? error) }
+    }
+    let body: Record<string, any> | null = null
+    try {
+      body = await response.json() as Record<string, any>
+    } catch {
+      // Not JSON: answered by its status.
+    }
+    return response.ok && body !== null && !body.error ? { ok: true, result: body.result } : { ok: false, error: `HTTP ${response.status}` }
+  }
+  const productType = String(schema.product_type)
+  const listed = await read(encodeURIComponent(productType))
+  if (!listed.ok) {
+    return { error: listed.error }
+  }
+  const versions = (Array.isArray(listed.result) ? listed.result : [])
+    .map((entry) => String((entry as { version?: unknown } | null)?.version ?? ''))
+    .filter((version) => /^\d{1,4}(\.\d{1,4}){0,2}$/.test(version))
+    .sort((a, b) => versionCompare(full(a), full(b)))
+  const version = String(schema.version)
+  const base = Number(version.split('.')[0])
+  const baseOf = (other: string): number => Number(other.split('.')[0])
+  const latestOf = (wanted: number): string | null => versions.filter((other) => baseOf(other) === wanted).pop() ?? null
+  const earlier = versions.filter((other) => baseOf(other) < base).map(baseOf).pop()
+
+  const fetched = new Map<string, Published | { error: string }>()
+  const get = async (wanted: string | null | undefined): Promise<Published | null | { error: string }> => {
+    if (wanted === null || wanted === undefined) {
+      return null
+    }
+    if (!fetched.has(wanted)) {
+      const answer = await read(`${encodeURIComponent(productType)}/${encodeURIComponent(wanted)}`)
+      const result = answer.ok ? answer.result as { schema?: unknown, v1_map?: unknown } | null : null
+      fetched.set(wanted, answer.ok && typeof result?.schema === 'object' && result.schema !== null
+        ? { version: wanted, schema: result.schema as NodeSchema, v1Map: (result.v1_map ?? null) as Json }
+        : { error: answer.ok ? `no schema in the answer for ${wanted}` : answer.error })
+    }
+    return fetched.get(wanted)!
+  }
+  const same = await get(versions.find((other) => versionCompare(full(other), full(version)) === 0))
+  const latest = await get(latestOf(base))
+  const previousBase = await get(earlier === undefined ? null : latestOf(earlier))
+  for (const answer of [same, latest, previousBase]) {
+    if (answer !== null && 'error' in answer) {
+      return answer
+    }
+  }
+  return { same: same as Published | null, latest: latest as Published | null, previousBase: previousBase as Published | null }
+}
+
+/** `26.0` compares as `26.0.0`. */
+function full(version: string): string {
+  const parts = version.split('.')
+  while (parts.length < 3) {
+    parts.push('0')
+  }
+  return parts.join('.')
 }
 
 function defaultsCommand(args: string[], io: Io): number {
@@ -246,6 +397,7 @@ async function publishCommand(args: string[], io: Io): Promise<number> {
   }
   io.stdout(`${file} ${answer.version ?? version}: ${answer.status}${dryRun ? ' (dry run)' : ''} on ${api}\n`)
   describeChanges(answer.changes).forEach((line) => io.stdout(`${line}\n`))
+  describeWarnings(answer.warnings).forEach((line) => io.stderr(`${line}\n`))
   return 0
 }
 
@@ -311,7 +463,7 @@ export async function publishSchema({ api, key, schema, v1Map = null, dryRun = f
   }
   const result = body?.result
   if (response.ok && body !== null && !body.error && typeof result?.status === 'string') {
-    return { ok: true, http: response.status, status: result.status, version: result.version ?? null, changes: result.changes ?? null, errors: [] }
+    return { ok: true, http: response.status, status: result.status, version: result.version ?? null, changes: result.changes ?? null, warnings: Array.isArray(result.warnings) ? result.warnings : [], errors: [] }
   }
   const codes: string[] = body?.error_codes ?? result?.error_codes ?? []
   const errors: SchemaError[] = body?.errors ?? result?.errors ?? []
@@ -332,6 +484,11 @@ function describeError(error: SchemaError | string): string {
   const code = error.code.startsWith(error.path) ? error.code : `${error.path}: ${error.code}`
   const message = (error as { message?: unknown }).message
   return typeof message === 'string' ? `${code} (${message})` : code
+}
+
+/** What production would refuse, in development: one `warning: <code>` per line. */
+function describeWarnings(warnings: SchemaError[] | null | undefined): string[] {
+  return (warnings ?? []).map((warning) => `warning: ${describeError(warning)}`)
 }
 
 /** `  added: a, b`, one line per kind of change that has any. */

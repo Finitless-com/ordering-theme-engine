@@ -64,7 +64,7 @@ describe("validate() answers what api-core's validate() answers", () => {
 
   it('has the cases of every stage', () => {
     const codes = new Set(fixture.cases.map((golden) => golden.expected.code))
-    expect([...codes].sort()).toEqual([null, 'schema.format', 'schema.incompatible', 'schema.invalid', 'schema.version_order'].sort())
+    expect([...codes].sort()).toEqual([null, 'schema.format', 'schema.incompatible', 'schema.invalid', 'schema.version_exists', 'schema.version_order'].sort())
     expect(fixture.cases.length).toBeGreaterThanOrEqual(50)
   })
 

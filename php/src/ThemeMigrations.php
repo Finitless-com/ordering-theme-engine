@@ -21,8 +21,9 @@ namespace Ordering\ThemeEngine;
  * the page, or to the end of another page's list.
  *
  * A move may also carry a `map` (a base's `co.ordering.upgrade`,
- * ThemeUpgrades): the value it moves is translated by it, and one it has no
- * entry for is dropped; with a map, `from` and `to` may be the same path.
+ * ThemeUpgrades): the value it moves is translated by it (a boolean by the
+ * keys `true` and `false`), and one it has no entry for is dropped; with a
+ * map, `from` and `to` may be the same path.
  */
 final class ThemeMigrations
 {
@@ -272,17 +273,35 @@ final class ThemeMigrations
         $value = self::get($values, $from);
         self::forget($values, $from);
         if ($map !== null) {
-            // A string or an integer the map translates; anything else it drops.
-            if (!(is_string($value) || is_int($value)) || !array_key_exists($value, $map)) {
+            // A string, an integer or a boolean the map translates; anything else it drops.
+            $key = self::mapKey($value);
+            if ($key === null || !array_key_exists($key, $map)) {
                 return $values;
             }
-            $value = $map[$value];
+            $value = $map[$key];
         }
         if (!self::has($values, $to)) {
             self::set($values, $to, $value);
         }
 
         return $values;
+    }
+
+    /**
+     * The key a map gives a stored value: a string or an integer as it is, a
+     * boolean as `true` or `false`; null for anything else, which no map
+     * translates.
+     *
+     * @param mixed $value
+     * @return string|int|null
+     */
+    public static function mapKey($value)
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return is_string($value) || is_int($value) ? $value : null;
     }
 
     /**

@@ -7,8 +7,11 @@ namespace Ordering\ThemeEngine;
  * type (ThemeSchemas). A theme may set any part: what it leaves out takes
  * the schema's default. Each problem is `{path, code}`, the code being the
  * path and the rule (`tokens.color.primary.invalid`): `unknown` (not in the
- * schema), `invalid` (wrong type, format or option) or `alias` (an alias to
- * a token that does not exist or is of another kind).
+ * schema), `invalid` (wrong type, format or option), `alias` (an alias to
+ * a token that does not exist or is of another kind), `alpha` (a translucent
+ * color where the schema keeps it opaque), `out_of_range` (a number outside
+ * its editor's limits) or `format` (an image of a format its key does not
+ * take).
  */
 final class ThemeValidator
 {
@@ -78,6 +81,12 @@ final class ThemeValidator
                                 continue;
                             }
                             array_push($errors, ...self::tokens([ 'color' => $colors ], "modes.{$mode}"));
+                            // Of the schema's own colors only, as `tokens.color`.
+                            foreach (array_keys($colors) as $name) {
+                                if (in_array($name, ThemeFormat::tokenNames('color'), true) && !array_key_exists($name, $schema['tokens']['color'] ?? [])) {
+                                    $errors[] = self::error("modes.{$mode}.color.{$name}", 'unknown');
+                                }
+                            }
                         }
                     }
                     break;
@@ -119,6 +128,7 @@ final class ThemeValidator
         };
         $refers(array_intersect_key($values, array_flip(self::SECTIONS)), '');
         array_push($errors, ...self::translucent($values, $schema));
+        array_push($errors, ...self::ranges($values, $schema));
 
         // Once each, though a value's own check may have said it too.
         return array_values(array_intersect_key($errors, array_unique(array_column($errors, 'code'))));
@@ -141,10 +151,181 @@ final class ThemeValidator
                 $errors[] = self::error("{$path}.{$key}", 'unknown');
             } else if (($rule = self::value($kind, $item)) !== null) {
                 $errors[] = self::error("{$path}.{$key}", $rule);
+            } else if ($kind === 'image' && !self::inFormats($item, ThemeImage::formats($schema, (string) $key) ?? ThemeImage::DEFAULT_FORMATS)) {
+                $errors[] = self::error("{$path}.{$key}", 'format');
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * Whether an image URL is of one of its key's formats, by the extension
+     * of its path (`jpeg` is `jpg`). One without the extension of a format
+     * the engine knows, or none at all, says nothing of its format: only an
+     * upload tells it.
+     *
+     * @param array<int, string> $formats
+     */
+    private static function inFormats(string $url, array $formats): bool
+    {
+        if ($url === '') {
+            return true;
+        }
+        $extension = strtolower(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+        $extension = $extension === 'jpeg' ? 'jpg' : $extension;
+
+        return !in_array($extension, ThemeImage::FORMATS, true) || in_array($extension, $formats, true);
+    }
+
+    /**
+     * The numbers a theme sets outside the limits its schema's editor gives
+     * them (`limits`, NodeCompiler): a number below the node's `min` or
+     * above its `max` is `<path>.out_of_range`, and a typography style's
+     * field outside the node's `fields` (a token's own, else the
+     * `tokens.typography` group's, which a component's custom style takes
+     * too) is `<path>.<field>.out_of_range`, both at the value's path. The
+     * node that declares a property decides, as for `alpha`. An alias names
+     * a level: it is not checked.
+     *
+     * @param array<string, mixed> $values
+     * @param array<string, mixed> $schema
+     * @return array<int, array{path: string, code: string}>
+     */
+    private static function ranges(array $values, array $schema): array
+    {
+        $limits = is_array($schema['limits'] ?? null) ? $schema['limits'] : [];
+        if ($limits === []) {
+            return [];
+        }
+        $errors = [];
+        $check = function ($value, string $path, string $node) use ($limits, &$errors) {
+            array_push($errors, ...self::outOfRange($value, $path, $limits[$node] ?? null, $limits['tokens.typography']['fields'] ?? null));
+        };
+
+        foreach (is_array($values['tokens'] ?? null) ? $values['tokens'] : [] as $group => $names) {
+            foreach (is_array($names) ? $names : [] as $name => $value) {
+                $check($value, "tokens.{$group}.{$name}", "tokens.{$group}.{$name}");
+            }
+        }
+        self::eachComponentValue($values, function ($value, string $path, array $candidates) use ($schema, $check) {
+            $check($value, $path, self::declaring($schema, $candidates));
+        });
+
+        return $errors;
+    }
+
+    /**
+     * What is out of range of a value against its node's limits (null:
+     * none): a number, or each numeric field of a typography style, whose
+     * fields are the node's own or, when it has none, $fields.
+     *
+     * @param array<string, mixed>|null $limits
+     * @param array<string, mixed>|null $fields
+     * @return array<int, array{path: string, code: string}>
+     */
+    private static function outOfRange($value, string $path, ?array $limits, ?array $fields): array
+    {
+        $outside = fn ($number, $range) => (is_int($number) || is_float($number)) && is_array($range)
+            && ((isset($range['min']) && $number < $range['min']) || (isset($range['max']) && $number > $range['max']));
+        if (is_int($value) || is_float($value)) {
+            return $outside($value, $limits) ? [ self::error($path, 'out_of_range') ] : [];
+        }
+        if (!ThemeFormat::isTypography($value)) {
+            return [];
+        }
+        $errors = [];
+        foreach (is_array($limits['fields'] ?? null) ? $limits['fields'] : ($fields ?? []) as $field => $range) {
+            if ($outside($value[$field] ?? null, $range)) {
+                $errors[] = [ 'path' => $path, 'code' => "{$path}.{$field}.out_of_range" ];
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * The first of a value's candidate nodes the schema declares (the
+     * variant's own property, else its base's…), or the first one.
+     *
+     * @param array<string, mixed> $schema
+     * @param array<int, string> $candidates
+     */
+    private static function declaring(array $schema, array $candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            if (ThemeSchemas::specAt($schema, $candidate) !== null) {
+                return $candidate;
+            }
+        }
+
+        return $candidates[0];
+    }
+
+    /**
+     * Each value a theme sets on its components and on each platform's
+     * override of them, with its path and the schema nodes that may declare
+     * it, in order (a variant's own property, then its base's; a group's
+     * scope, then the scoped component's; a platform's default, then the
+     * base's): $visit($value, $path, $candidates). Slots choose, they set
+     * nothing.
+     *
+     * @param array<string, mixed> $values
+     */
+    private static function eachComponentValue(array $values, callable $visit): void
+    {
+        $component = function (array $sections, string $path, callable $at) use ($visit, &$component) {
+            foreach ($sections as $section => $props) {
+                if (!is_array($props) || $section === 'slots') {
+                    continue;
+                }
+                if ($section === 'scope') {
+                    foreach ($props as $scoped => $changes) {
+                        if (is_array($changes)) {
+                            $component($changes, "{$path}.scope.{$scoped}", fn (string $rest) => [ ...$at("scope.{$scoped}.{$rest}"), "components.{$scoped}.{$rest}" ]);
+                        }
+                    }
+                    continue;
+                }
+                if ($section === 'base') {
+                    foreach ($props as $prop => $value) {
+                        $visit($value, "{$path}.base.{$prop}", $at("base.{$prop}"));
+                    }
+                    continue;
+                }
+                foreach ($props as $name => $variant) {
+                    if (!is_array($variant)) {
+                        continue;
+                    }
+                    foreach ($variant as $prop => $value) {
+                        if ($prop === 'states' && is_array($value)) {
+                            foreach ($value as $state => $state_props) {
+                                foreach (is_array($state_props) ? $state_props : [] as $state_prop => $state_value) {
+                                    $visit($state_value, "{$path}.{$section}.{$name}.states.{$state}.{$state_prop}", [ ...$at("{$section}.{$name}.states.{$state}.{$state_prop}"), ...$at("{$section}.{$name}.{$state_prop}"), ...$at("base.{$state_prop}") ]);
+                                }
+                            }
+                            continue;
+                        }
+                        $visit($value, "{$path}.{$section}.{$name}.{$prop}", $section === 'colors' ? $at("colors.{$name}.{$prop}") : [ ...$at("{$section}.{$name}.{$prop}"), ...$at("base.{$prop}") ]);
+                    }
+                }
+            }
+        };
+
+        foreach (is_array($values['components'] ?? null) ? $values['components'] : [] as $name => $sections) {
+            if (is_array($sections)) {
+                $component($sections, "components.{$name}", fn (string $rest) => [ "components.{$name}.{$rest}" ]);
+            }
+        }
+        foreach (is_array($values['platforms'] ?? null) ? $values['platforms'] : [] as $platform => $override) {
+            foreach (is_array($override['components'] ?? null) ? $override['components'] : [] as $name => $sections) {
+                if (is_array($sections)) {
+                    $component($sections, "platforms.{$platform}.components.{$name}", fn (string $rest) => str_starts_with($rest, 'base.')
+                        ? [ "components.{$name}.platforms.{$platform}." . substr($rest, 5), "components.{$name}.{$rest}" ]
+                        : [ "components.{$name}.{$rest}" ]);
+                }
+            }
+        }
     }
 
     /**
@@ -171,13 +352,7 @@ final class ThemeValidator
         $errors = [];
 
         $check = function ($value, string $path, array $candidates) use ($alpha, $colors, $schema, &$errors, &$check) {
-            $node = $candidates[0];
-            foreach ($candidates as $candidate) {
-                if (ThemeSchemas::specAt($schema, $candidate) !== null) {
-                    $node = $candidate;
-                    break;
-                }
-            }
+            $node = self::declaring($schema, $candidates);
             $spec = ThemeSchemas::specAt($schema, $node);
             if ($spec !== null && !in_array($spec[0], [ 'color', 'role', 'border' ], true)) {
                 return;
@@ -197,46 +372,6 @@ final class ThemeValidator
             }
         };
 
-        // A component's values, by the nodes that may declare each: $at
-        // gives, for a path under the component, its candidates.
-        $component = function (array $sections, string $path, callable $at) use ($check, &$component) {
-            foreach ($sections as $section => $props) {
-                if (!is_array($props) || $section === 'slots') {
-                    continue;
-                }
-                if ($section === 'scope') {
-                    foreach ($props as $scoped => $changes) {
-                        if (is_array($changes)) {
-                            $component($changes, "{$path}.scope.{$scoped}", fn (string $rest) => [ ...$at("scope.{$scoped}.{$rest}"), "components.{$scoped}.{$rest}" ]);
-                        }
-                    }
-                    continue;
-                }
-                if ($section === 'base') {
-                    foreach ($props as $prop => $value) {
-                        $check($value, "{$path}.base.{$prop}", $at("base.{$prop}"));
-                    }
-                    continue;
-                }
-                foreach ($props as $name => $variant) {
-                    if (!is_array($variant)) {
-                        continue;
-                    }
-                    foreach ($variant as $prop => $value) {
-                        if ($prop === 'states' && is_array($value)) {
-                            foreach ($value as $state => $state_props) {
-                                foreach (is_array($state_props) ? $state_props : [] as $state_prop => $state_value) {
-                                    $check($state_value, "{$path}.{$section}.{$name}.states.{$state}.{$state_prop}", [ ...$at("{$section}.{$name}.states.{$state}.{$state_prop}"), ...$at("{$section}.{$name}.{$state_prop}"), ...$at("base.{$state_prop}") ]);
-                                }
-                            }
-                            continue;
-                        }
-                        $check($value, "{$path}.{$section}.{$name}.{$prop}", $section === 'colors' ? $at("colors.{$name}.{$prop}") : [ ...$at("{$section}.{$name}.{$prop}"), ...$at("base.{$prop}") ]);
-                    }
-                }
-            }
-        };
-
         foreach (is_array($values['tokens']['color'] ?? null) ? $values['tokens']['color'] : [] as $name => $value) {
             $check($value, "tokens.color.{$name}", [ "tokens.color.{$name}" ]);
         }
@@ -245,20 +380,7 @@ final class ThemeValidator
                 $check($value, "modes.{$mode}.color.{$name}", [ "tokens.color.{$name}" ]);
             }
         }
-        foreach (is_array($values['components'] ?? null) ? $values['components'] : [] as $name => $sections) {
-            if (is_array($sections)) {
-                $component($sections, "components.{$name}", fn (string $rest) => [ "components.{$name}.{$rest}" ]);
-            }
-        }
-        foreach (is_array($values['platforms'] ?? null) ? $values['platforms'] : [] as $platform => $override) {
-            foreach (is_array($override['components'] ?? null) ? $override['components'] : [] as $name => $sections) {
-                if (is_array($sections)) {
-                    $component($sections, "platforms.{$platform}.components.{$name}", fn (string $rest) => str_starts_with($rest, 'base.')
-                        ? [ "components.{$name}.platforms.{$platform}." . substr($rest, 5), "components.{$name}.{$rest}" ]
-                        : [ "components.{$name}.{$rest}" ]);
-                }
-            }
-        }
+        self::eachComponentValue($values, $check);
 
         return $errors;
     }
@@ -461,17 +583,19 @@ final class ThemeValidator
             return [ self::error('site', 'invalid') ];
         }
 
-        return self::tree($settings, is_array($schema['site'] ?? null) ? $schema['site'] : [], 'site');
+        return self::tree($settings, is_array($schema['site'] ?? null) ? $schema['site'] : [], 'site', is_array($schema['limits'] ?? null) ? $schema['limits'] : []);
     }
 
     /**
-     * A block of settings in groups (`site`), against the schema's.
+     * A block of settings in groups (`site`), against the schema's, each
+     * number within its editor's limits.
      *
      * @param array<string, mixed> $values
      * @param array<string, mixed> $specs
+     * @param array<string, mixed> $limits the schema's, by path
      * @return array<int, array{path: string, code: string}>
      */
-    private static function tree(array $values, array $specs, string $path): array
+    private static function tree(array $values, array $specs, string $path, array $limits): array
     {
         $errors = [];
         foreach ($values as $key => $value) {
@@ -480,9 +604,11 @@ final class ThemeValidator
             if (!is_array($spec)) {
                 $errors[] = self::error($at, 'unknown');
             } else if (!array_is_list($spec)) {
-                array_push($errors, ...(is_array($value) && ($value === [] || !array_is_list($value)) ? self::tree($value, $spec, $at) : [ self::error($at, 'invalid') ]));
+                array_push($errors, ...(is_array($value) && ($value === [] || !array_is_list($value)) ? self::tree($value, $spec, $at, $limits) : [ self::error($at, 'invalid') ]));
             } else if (($rule = self::value($spec[0], $value, $spec[2] ?? null, $spec[3] ?? null)) !== null) {
                 $errors[] = self::error($at, $rule);
+            } else {
+                array_push($errors, ...self::outOfRange($value, $at, $limits[$at] ?? null, null));
             }
         }
 

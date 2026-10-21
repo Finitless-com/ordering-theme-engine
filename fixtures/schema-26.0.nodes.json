@@ -3202,9 +3202,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3331,9 +3331,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3460,9 +3460,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3589,9 +3589,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3718,9 +3718,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3847,9 +3847,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -3976,9 +3976,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -4105,9 +4105,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -4234,9 +4234,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -4363,9 +4363,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -4494,9 +4494,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {
@@ -4623,9 +4623,9 @@
                                     "key": "BUILDER_THEME_LINE_HEIGHT",
                                     "default": "Line height"
                                 },
-                                "min": 8,
-                                "max": 120,
-                                "unit": "px"
+                                "min": 1,
+                                "max": 2,
+                                "unit": "x"
                             },
                             "weight": {
                                 "label": {

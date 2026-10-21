@@ -1,4 +1,4 @@
-import { EDITOR, EXTENSION, MIGRATE, UPGRADE } from './compile.js'
+import { EDITOR, EXTENSION, MIGRATE, UPGRADE, editorLimits } from './compile.js'
 import { dig, entries, get, has, identical, isArray, isList, isPhpEmpty, isScalar, phpString, values, type Json, type JsonMap } from './php.js'
 import type { Changes, NodeSchema, SchemaError } from './types.js'
 
@@ -7,13 +7,20 @@ import type { Changes, NodeSchema, SchemaError } from './types.js'
  * and whether it may (api-core's SchemaDiff). Both are in nodes.
  *
  * - A patch changes no key, type, option, default or rule: only texts and
- *   editor metadata.
- * - A minor may add keys and options and change defaults. A key it drops
- *   must have been `$deprecated` in the last version, or moved by a
- *   migration (of the key, or of the page that holds it); a key keeps
- *   its type, its scale and every option it had; the migrations of
- *   the base are never dropped; and its upgrade block only grows: it keeps
- *   its previous base, its rewrite, each move and each path it drops.
+ *   the editor metadata that validates no value. What of the editor's
+ *   metadata decides how a value is validated (a color's `alpha`, a
+ *   typography's `custom`, the numeric `min` and `max` of a control and of
+ *   its `fields`) is a rule like any other.
+ * - A minor may add keys, options and sections and change defaults and the
+ *   rules a product tunes (a string's `max_length` and `pattern`, the
+ *   limits, a section's `hideable` and `group`). A key it drops (a page's
+ *   section is one) must have been `$deprecated` in the last version, or
+ *   moved by a migration (of the key, or of the page or the list that holds
+ *   it; a platform's default goes with its property); a key keeps its type,
+ *   its scale, every option it had and the `alpha` and `custom` it allowed;
+ *   the migrations of the base are never dropped; and its upgrade block only
+ *   grows: it keeps its previous base, its rewrite, each move and each path
+ *   it drops.
  * - A new base is not compared.
  */
 
@@ -24,6 +31,9 @@ export interface Leaf {
   scale: Json
   options: Json[]
   deprecated: boolean
+  default: Json
+  rules: JsonMap
+  section?: { hideable: Json; group: Json; position: number }
 }
 
 export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaError[]; changes: Changes } {
@@ -45,6 +55,10 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
     removed: [],
     migrated: [],
     deprecated: Object.entries(after).filter(([path, leaf]) => leaf.deprecated && !(before[path]?.deprecated ?? false)).map(([path]) => path),
+    options_added: [],
+    defaults_changed: [],
+    rules_changed: [],
+    sections_changed: [],
   }
 
   const [oldBase, oldMinor] = parts(phpString(get(previous, 'version') ?? ''))
@@ -53,14 +67,20 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
     return { errors: [], changes }
   }
 
+  const among = (list: Json[], others: Json[]): boolean => {
+    const kept = new Set(others.map(phpString))
+    return list.some((option) => !kept.has(phpString(option)))
+  }
   for (const [path, leaf] of Object.entries(before)) {
     const now = after[path]
     if (now === undefined) {
+      const property = platformBase(path)
       if (isMoved(path, moved)) {
         changes.migrated.push(path)
       } else {
         changes.removed.push(path)
-        if (!leaf.deprecated) {
+        // A platform's default goes with its property's `$deprecated`.
+        if (!leaf.deprecated && !(property !== null && (before[property]?.deprecated ?? false))) {
           errors.push({ path, code: `${path}.removed` })
         }
       }
@@ -73,9 +93,36 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
     if (!identical(leaf.scale, now.scale)) {
       errors.push({ path, code: `${path}.scale_changed` })
     }
-    const kept = new Set(now.options.map(phpString))
-    if (leaf.options.some((option) => !kept.has(phpString(option)))) {
+    if (among(leaf.options, now.options)) {
       errors.push({ path, code: `${path}.option_removed` })
+    }
+    // A translucent color, or a typography's own style, the key took and no longer takes.
+    for (const rule of ['alpha', 'custom']) {
+      if (get(leaf.rules, rule) === true && get(now.rules, rule) !== true) {
+        errors.push({ path, code: `${path}.${rule}_removed` })
+      }
+    }
+    if (among(now.options, leaf.options)) {
+      changes.options_added.push(path)
+    }
+    if (canonical(leaf.default) !== canonical(now.default)) {
+      changes.defaults_changed.push(path)
+    }
+    if (canonical(leaf.rules) !== canonical(now.rules)) {
+      changes.rules_changed.push(path)
+    }
+    if (leaf.section !== undefined && now.section !== undefined
+      && (!identical(leaf.section.hideable, now.section.hideable) || !identical(leaf.section.group, now.section.group))) {
+      changes.sections_changed.push(path)
+    }
+  }
+  // A page whose sections, those both versions have, come in another order.
+  const orders = sectionOrders(after)
+  for (const [list, order] of sectionOrders(before)) {
+    const now = (orders.get(list) ?? []).filter((key) => order.includes(key))
+    const was = order.filter((key) => now.includes(key))
+    if (now.some((key, index) => key !== was[index])) {
+      changes.sections_changed.push(list)
     }
   }
 
@@ -98,21 +145,57 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
 }
 
 /**
+ * The path of the property a platform's default
+ * (`components.<c>.platforms.<p>.<prop>`) is the default of
+ * (`components.<c>.base.<prop>`), or null for any other path
+ * (SchemaDiff::platformBase()).
+ */
+export function platformBase(path: string): string | null {
+  const segments = path.split('.')
+  return segments.length === 5 && segments[0] === 'components' && segments[2] === 'platforms'
+    ? `components.${segments[1]}.base.${segments[4]}`
+    : null
+}
+
+/**
  * Whether a migration moves a leaf (SchemaDiff::isMoved()): the leaf
- * itself, or the page that holds it (`pages.<page>` moves its footer and
- * its sections). A key of visibility or images holds dots of its own: only
- * itself. isset(): a migration to null moves nothing.
+ * itself, the page that holds it (`pages.<page>` moves its footer and its
+ * sections), the list that holds a section (`pages.<page>.sections`) and,
+ * for a platform's default, its property. A key of visibility or images
+ * holds dots of its own: only itself. isset(): a migration to null moves
+ * nothing.
  */
 function isMoved(path: string, moved: Map<string, Json>): boolean {
   const segments = path.split('.')
-  return (moved.get(path) ?? null) !== null
-    || (segments[0] === 'pages' && segments.length > 2 && (moved.get(`pages.${segments[1]}`) ?? null) !== null)
+  const property = platformBase(path)
+  const set = (key: string): boolean => (moved.get(key) ?? null) !== null
+  return set(path)
+    || (segments[0] === 'pages' && segments.length > 2 && set(`pages.${segments[1]}`))
+    || (segments[0] === 'pages' && segments.length === 4 && set(`pages.${segments[1]}.sections`))
+    || (property !== null && set(property))
+}
+
+/** The keys of each page's sections in their default order, by the path of their list. */
+function sectionOrders(all: Record<string, Leaf>): Map<string, string[]> {
+  const orders = new Map<string, Array<[number, string]>>()
+  for (const [path, leaf] of Object.entries(all)) {
+    if (leaf.section !== undefined) {
+      const at = path.lastIndexOf('.')
+      const list = path.slice(0, at)
+      orders.set(list, [...(orders.get(list) ?? []), [leaf.section.position, path.slice(at + 1)]])
+    }
+  }
+  return new Map([...orders].map(([list, keys]) => [list, keys.sort(([a], [b]) => a - b).map(([, key]) => key)]))
 }
 
 /**
  * Each value of a schema by the path a theme stores it at, with its type
- * (its own or its closest group's), its own scale, its options and whether
- * it or a group above it is deprecated.
+ * (its own or its closest group's), its own scale, its options, whether it
+ * or a group above it is deprecated, its default and its rules: `max_length`
+ * and `pattern`, and what of its editor validates a value (editorRules()).
+ * A page's sections are a leaf each (`pages.<page>.sections.<key>`, of type
+ * `section`), whose default is its `visible`, with its `hideable`, its
+ * `group` and its place in the list.
  */
 export function leaves(schema: NodeSchema): Record<string, Leaf> {
   const answer: Record<string, Leaf> = {}
@@ -121,14 +204,42 @@ export function leaves(schema: NodeSchema): Record<string, Leaf> {
     const type = typeof own === 'string' ? own : inherited
     const deprecated = deprecatedAbove || !isPhpEmpty(get(group, '$deprecated'))
     if (has(group, '$value')) {
-      const options = dig(group, '$extensions', EXTENSION, 'options') ?? []
+      const value = get(group, '$value')
+      if (type === 'sections' && isArray(value) && isList(value)) {
+        values(value).forEach((section, position) => {
+          const key = get(section, 'key')
+          if (isArray(section) && typeof key === 'string') {
+            answer[`${path}.${key}`] = {
+              type: 'section',
+              scale: null,
+              options: [],
+              deprecated,
+              default: get(section, 'visible'),
+              rules: {},
+              section: { hideable: get(section, 'hideable'), group: get(section, 'group'), position },
+            }
+          }
+        })
+        return
+      }
+      const extension = dig(group, '$extensions', EXTENSION)
+      const options = get(extension, 'options') ?? []
+      const rules: JsonMap = {}
+      for (const key of ['max_length', 'pattern']) {
+        const rule = get(isArray(extension) ? extension : {}, key)
+        if (rule !== null) {
+          rules[key] = rule
+        }
+      }
       answer[path] = {
         type,
-        scale: dig(group, '$extensions', EXTENSION, 'scale'),
+        scale: get(isArray(extension) ? extension : {}, 'scale'),
         options: isArray(options)
           ? values(options).map((option) => isArray(option) ? get(option, 'value') : option).filter(isScalar)
           : [],
         deprecated,
+        default: value,
+        rules: { ...rules, ...editorRules(dig(group, '$extensions', EDITOR)) },
       }
       return
     }
@@ -145,6 +256,29 @@ export function leaves(schema: NodeSchema): Record<string, Leaf> {
     }
   }
   return answer
+}
+
+/**
+ * What of a node's or group's editor metadata decides how a value is
+ * validated (SchemaDiff::editorRules()): `alpha` and `custom` when they are
+ * true, and its numeric limits (editorLimits()).
+ */
+export function editorRules(editor: Json): JsonMap {
+  if (!isArray(editor)) {
+    return {}
+  }
+  const rules: JsonMap = {}
+  for (const mark of ['alpha', 'custom']) {
+    if (get(editor, mark) === true) {
+      rules[mark] = true
+    }
+  }
+  return { ...rules, ...editorLimits(editor) }
+}
+
+/** A value as a string two values share only when PHP's json_encode() of them, each map's keys sorted, would (SchemaDiff::canonical()). */
+export function canonical(value: Json): string {
+  return encode(value, false)
 }
 
 /**
@@ -188,8 +322,8 @@ function parts(version: string): [string, string] {
 /**
  * What a schema says that a theme resolves with, as a string two schemas
  * share only when PHP's json_encode() of it would: everything but its
- * version, its texts and what only the editor reads, each map's keys
- * sorted as strings.
+ * version, its texts and the editor metadata that validates no value
+ * (editorRules() is what stays of it), each map's keys sorted as strings.
  */
 function valuesOf(schema: NodeSchema): string {
   const root: JsonMap = {}
@@ -198,24 +332,31 @@ function valuesOf(schema: NodeSchema): string {
       root[key] = value
     }
   }
-  return encode(root)
+  return encode(root, true)
 }
 
-function encode(value: Json): string {
+/** $value as PHP's json_encode() of it, each map's keys sorted; $strip leaves out texts and what the editor reads that validates no value. */
+function encode(value: Json, strip: boolean): string {
   if (!isArray(value)) {
     return JSON.stringify(value)
   }
   if (isList(value)) {
-    return `[${values(value).map(encode).join(',')}]`
+    return `[${values(value).map((child) => encode(child, strip)).join(',')}]`
   }
 
   const pairs: Array<[string, Json]> = []
   for (const [key, child] of entries(value)) {
-    if (key === '$description') {
+    if (strip && key === '$description') {
       continue
     }
-    if (key === '$extensions' && isArray(child)) {
-      const extensions = entries(child).filter(([name]) => name !== EDITOR)
+    if (strip && key === '$extensions' && isArray(child)) {
+      const extensions: Array<[string, Json]> = []
+      for (const [name, extension] of entries(child)) {
+        const kept = name === EDITOR ? editorRules(extension) : extension
+        if (name !== EDITOR || Object.keys(kept as JsonMap).length > 0) {
+          extensions.push([name, kept])
+        }
+      }
       if (extensions.length > 0) {
         pairs.push([key, Object.fromEntries(extensions) as JsonMap])
       }
@@ -230,7 +371,7 @@ function encode(value: Json): string {
   }
   // json_encode() writes a list for keys 0…n-1 in order, whatever produced them.
   if (pairs.every(([key], index) => key === String(index))) {
-    return `[${pairs.map(([, child]) => encode(child)).join(',')}]`
+    return `[${pairs.map(([, child]) => encode(child, strip)).join(',')}]`
   }
-  return `{${pairs.map(([key, child]) => `${JSON.stringify(key)}:${encode(child)}`).join(',')}}`
+  return `{${pairs.map(([key, child]) => `${JSON.stringify(key)}:${encode(child, strip)}`).join(',')}}`
 }

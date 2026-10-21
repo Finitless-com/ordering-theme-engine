@@ -73,27 +73,56 @@ $apply = function (array $document, array $ops) {
 
 // 26.4: what 27 takes otherwise (a property, a color, a visibility key, a
 // typography style, a page and a setting named otherwise; a property whose
-// scale, and one whose type, 27 changes; an option 27 renames; keys 27
+// scale, and one whose type, 27 changes; an option 27 renames; a boolean 27
+// turns around and one it turns into an option; options 27 merges; keys 27
 // drops), and a migration of its own base.
+// 26.5: a later minor of 26 that renames, by migrations, a property, a
+// color, a visibility key, a home section and a setting.
 // 27.0: the product's schema, with its block from 26 (it leaves the
 // changed type of the modal's padding to the step that drops what changed
 // kind). 28.0: renames the button's icon gap.
+$base_26 = [
+    $set('version', '26.4.0'),
+    $set('components.button.base.old_gap', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
+    $set([ 'components', 'link', 'base', 'underline', '$extensions', 'co.ordering', 'options' ], [ 'none', 'hover', 'underlined' ]),
+    $set('components.card.base.padding', $node('dimension', '{size.lg}', [ 'scale' => 'size' ])),
+    $set('components.modal.base.padding', $node('dimension', '{space.lg}', [ 'scale' => 'space' ])),
+    $set('tokens.color.brand', [ '$value' => '#E4002B' ]),
+    $set('tokens.typography.small', [ '$value' => [ 'size' => 11, 'line' => 1.4, 'weight' => 400 ] ]),
+    $set([ 'visibility', 'header.brand' ], $node(null, true)),
+    $set([ 'visibility', 'old_banner' ], $node(null, false)),
+    $set('pages.shop', $original['pages']['multi_cart']),
+    $set('site.slug', $node('string', '')),
+    $set('site.legacy_flag', $node('boolean', false)),
+    $set('site.kiosk_only', $node('boolean', false)),
+    $set([ 'visibility', 'hide_prices' ], $node(null, false)),
+    $set('components.card.base.tone', $node('option', 'soft', [ 'options' => [ 'soft', 'loud', 'neutral' ] ])),
+    $del('site.description'),
+    $set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'components.card.base.corner', 'to' => 'components.card.base.radius' ] ]),
+];
+$home = $original['pages']['home']['sections']['$value'];
 $schemas = [
-    '26' => [
-        $set('version', '26.4.0'),
-        $set('components.button.base.old_gap', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
-        $set([ 'components', 'link', 'base', 'underline', '$extensions', 'co.ordering', 'options' ], [ 'none', 'hover', 'underlined' ]),
-        $set('components.card.base.padding', $node('dimension', '{size.lg}', [ 'scale' => 'size' ])),
-        $set('components.modal.base.padding', $node('dimension', '{space.lg}', [ 'scale' => 'space' ])),
-        $set('tokens.color.brand', [ '$value' => '#E4002B' ]),
-        $set('tokens.typography.small', [ '$value' => [ 'size' => 11, 'line' => 1.4, 'weight' => 400 ] ]),
-        $set([ 'visibility', 'header.brand' ], $node(null, true)),
-        $set([ 'visibility', 'old_banner' ], $node(null, false)),
-        $set('pages.shop', $original['pages']['multi_cart']),
-        $set('site.slug', $node('string', '')),
-        $set('site.legacy_flag', $node('boolean', false)),
-        $del('site.description'),
-        $set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'components.card.base.corner', 'to' => 'components.card.base.radius' ] ]),
+    '26' => $base_26,
+    '26.5' => [
+        ...$base_26,
+        $set('version', '26.5.0'),
+        $del('components.button.base.old_gap'),
+        $set('components.button.base.spacer', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
+        $del('tokens.color.favorite'),
+        $set('tokens.color.danger_text', [ '$value' => '#B02A3E' ]),
+        $del([ 'visibility', 'header.brand' ]),
+        $set([ 'visibility', 'header.badge' ], $node(null, true)),
+        $set('pages.home.sections.$value', array_map(fn (array $section) => $section['key'] === 'content' ? [ 'key' => 'main_content' ] + $section : $section, $home)),
+        $del('site.slug'),
+        $set('site.shop_slug', $node('string', '')),
+        $set([ '$extensions', 'co.ordering.migrate' ], [
+            [ 'from' => 'components.card.base.corner', 'to' => 'components.card.base.radius' ],
+            [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.spacer' ],
+            [ 'from' => 'tokens.color.favorite', 'to' => 'tokens.color.danger_text' ],
+            [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.badge' ],
+            [ 'from' => 'pages.home.sections.content', 'to' => 'pages.home.sections.main_content' ],
+            [ 'from' => 'site.slug', 'to' => 'site.shop_slug' ],
+        ]),
     ],
     '27' => [
         $set('version', '27.0.0'),
@@ -107,10 +136,16 @@ $schemas = [
                 [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
                 [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
                 [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
+                [ 'from' => 'visibility.hide_prices', 'to' => 'visibility.show_prices', 'map' => [ 'true' => false, 'false' => true ] ],
+                [ 'from' => 'site.kiosk_only', 'to' => 'site.kiosk_mode', 'map' => [ 'true' => 'on', 'false' => 'off' ] ],
+                [ 'from' => 'components.card.base.tone', 'to' => 'components.card.base.tone', 'map' => [ 'soft' => 'soft', 'loud' => 'loud', 'neutral' => 'soft' ] ],
             ],
             'drop' => [ 'visibility.old_banner', 'site.legacy_flag' ],
             'rewrite' => [ 'id' => 'test.bolder', 'paths' => [ 'tokens.typography.small' ] ],
         ]),
+        $set([ 'visibility', 'show_prices' ], $node(null, true)),
+        $set('site.kiosk_mode', $node('option', 'off', [ 'options' => [ 'on', 'off' ] ])),
+        $set('components.card.base.tone', $node('option', 'soft', [ 'options' => [ 'soft', 'loud' ] ])),
     ],
     '28' => [
         $set('version', '28.0.0'),
@@ -215,7 +250,7 @@ $cases = [
     [ 'settings', 'settings-chain', 'The same settings through 28.', [ '26', '27', '28' ], false, <<<'JSON'
         { "slug": "my-shop", "business_slug": "kept", "third_party_code": { "head": "<meta>" } }
         JSON ],
-    [ 'cutDown', 'cut-down', 'A theme of 27 for a client of 26: what has the same path and kind and fits 26 stays; an option 26 has not, a property whose scale or type differs (even a number both take) and a key 26 has not take 26\'s defaults.', [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down', "A theme of 27 for a client of 26: the block's one-to-one maps undone (`always` is `underlined` again, `{space.lg}` is `{size.lg}`, also on a platform where it is a number 26 cannot read); what has the same path and kind and fits 26 stays; a move into a key 26 already has (the gap, `header.logo`) is not undone; a property whose type differs and no move takes takes 26's default.", [ '27', '26' ], false, <<<'JSON'
         {
             "tokens": { "color": { "primary": "#111111" } },
             "components": {
@@ -228,11 +263,45 @@ $cases = [
             "platforms": { "mobile_web": { "components": { "card": { "base": { "padding": 8 } } } } }
         }
         JSON ],
-    [ 'cutDown', 'cut-down-28', 'A theme of 28 for a client of 27: the gap 28 renamed is no key of 27.', [ '28', '27' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down-28', 'A theme of 28 for a client of 27: the gap 28 renamed is `icon_gap` again.', [ '28', '27' ], false, <<<'JSON'
         { "components": { "button": { "base": { "icon_space": "{space.md}", "radius": "{radius.sm}" } } } }
         JSON ],
-    [ 'cutDownSettings', 'cut-down-settings', 'Settings of 27 for a client of 26: a setting 26 has not (its description) is left out.', [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDownSettings', 'cut-down-settings', 'Settings of 27 for a client of 26: a setting 26 has not (its description) is left out; the slug 27 moved into `business_slug`, which 26 has too, stays there.', [ '27', '26' ], false, <<<'JSON'
         { "business_slug": "my-shop", "description": "Fresh food", "mode": "single_store" }
+        JSON ],
+    [ 'upgrade', 'map-boolean', 'A boolean turned around by a map (`true` and `false` as its keys), also a platform\'s override.', [ '26', '27' ], false, <<<'JSON'
+        { "visibility": { "hide_prices": true }, "platforms": { "mobile_web": { "visibility": { "hide_prices": false } } } }
+        JSON ],
+    [ 'upgrade', 'map-many', 'A map that merges two options: `neutral` is `soft`.', [ '26', '27' ], false, <<<'JSON'
+        { "components": { "card": { "base": { "tone": "neutral" } } } }
+        JSON ],
+    [ 'settings', 'settings-map-boolean', 'A boolean setting that becomes an option by a map.', [ '26', '27' ], false, <<<'JSON'
+        { "kiosk_only": true }
+        JSON ],
+    [ 'settings', 'settings-migrate', "Settings saved with 26.4 read with 26.5, the same base: the setting 26.5 renamed takes its new name.", [ '26.5' ], false, <<<'JSON'
+        { "slug": "my-shop", "name": "My shop" }
+        JSON ],
+    [ 'cutDown', 'cut-down-renames', "A theme of 26.5 for a client of 26.4, the same base: every migration 26.4 does not have is undone, a property, a color (its value in dark mode and the aliases to it), a visibility key (and a platform's override) and a home section, in its place.", [ '26.5', '26' ], false, <<<'JSON'
+        {
+            "components": { "button": { "base": { "spacer": "{space.lg}" } }, "card": { "base": { "background": "{color.danger_text}" } } },
+            "tokens": { "color": { "danger_text": "#B02A3E" } },
+            "modes": { "dark": { "color": { "danger_text": "#FF8899" } } },
+            "visibility": { "header.badge": false },
+            "pages": { "home": { "sections": [ { "key": "promo_banners", "visible": true }, { "key": "main_content", "visible": false }, { "key": "login_account", "visible": true } ] } },
+            "platforms": { "mobile_web": { "visibility": { "header.badge": true }, "components": { "button": { "base": { "spacer": "{space.xs}" } } } } }
+        }
+        JSON ],
+    [ 'cutDown', 'cut-down-chain', "A theme of 28 for a client of 26: 28's rename undone, then 27's map; the gap is `icon_gap` in both 27 and 26.", [ '28', '27', '26' ], false, <<<'JSON'
+        { "components": { "button": { "base": { "icon_space": "{space.md}" } }, "link": { "base": { "underline": "always" } } } }
+        JSON ],
+    [ 'cutDown', 'cut-down-map-boolean', "A theme of 27 for a client of 26: the boolean the block turned around, turned back, and the map that merged two options, which cannot be undone: 26's default.", [ '27', '26' ], false, <<<'JSON'
+        { "visibility": { "show_prices": false }, "components": { "card": { "base": { "tone": "loud" } } } }
+        JSON ],
+    [ 'cutDownSettings', 'cut-down-settings-renames', 'Settings of 26.5 for a client of 26.4: the setting 26.5 renamed takes its old name.', [ '26.5', '26' ], false, <<<'JSON'
+        { "shop_slug": "my-shop", "name": "My shop" }
+        JSON ],
+    [ 'cutDownSettings', 'cut-down-settings-map-boolean', 'Settings of 27 for a client of 26: the option a boolean became is the boolean again.', [ '27', '26' ], false, <<<'JSON'
+        { "kiosk_mode": "off" }
         JSON ],
 ];
 
@@ -245,8 +314,8 @@ foreach ($cases as [ $kind, $name, $description, $bases, $with_rewrite, $json ])
     $expected = match ($kind) {
         'upgrade' => ThemeUpgrades::chain($values, $chain, $callback),
         'settings' => ThemeUpgrades::settingsChain($values, $chain, $callback),
-        'cutDown' => ThemeUpgrades::cutDown($values, $chain[0], $chain[1]),
-        'cutDownSettings' => ThemeUpgrades::cutDownSettings($values, $chain[0], $chain[1]),
+        'cutDown' => ThemeUpgrades::cutDown($values, $chain),
+        'cutDownSettings' => ThemeUpgrades::cutDownSettings($values, $chain),
     };
     $answers[] = [
         'name' => $name,

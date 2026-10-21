@@ -1,11 +1,14 @@
 import { compile, isNodes } from './compile.js'
-import { MODES, OWN_GROUPS, ROLES, SLOT_AXES, alias, isTranslucent, tokenNames } from './format.js'
+import { MODES, OWN_GROUPS, ROLES, SLOT_AXES, alias, isTranslucent, isTypography, tokenNames } from './format.js'
 import { applyMigrations, withoutKey } from './migrations.js'
 import { defaultSections } from './pages.js'
 import { clone, count, dig, entries, get, has, identical, isArray, isEmpty, isList, phpString, values, type Json, type JsonMap } from './php.js'
 import { specAt } from './schemas.js'
 import type { NodeSchema, SchemaError, ThemeValues, TupleSchema } from './types.js'
-import { error, tokenErrors, valueError } from './validator.js'
+import { IMAGE_FORMATS, error, tokenErrors, valueError } from './validator.js'
+
+/** What an image key takes when its schema entry names no formats (ThemeImage::DEFAULT_FORMATS). */
+const DEFAULT_FORMATS = ['jpg', 'png', 'webp', 'avif']
 
 /**
  * What of a theme fits its schema, as api-core's ThemeValidator::validate()
@@ -21,6 +24,8 @@ const PLATFORM_SECTIONS = ['components', 'pages', 'visibility']
 const COMPONENT_SECTIONS = ['base', 'variants', 'sizes', 'shapes', 'colors', 'appearances']
 
 const PLATFORM_VISIBILITY = /^platforms\.([a-z0-9_]+)\.visibility\.(.+)$/
+
+const SECTION_ITEM = /^((?:platforms\.[a-z0-9_]+\.)?pages\.[a-z0-9_]+\.sections)\.\d+$/
 
 /** PHP's in_array($value, $list, true). */
 function within(list: readonly Json[], value: unknown): boolean {
@@ -44,14 +49,20 @@ export function valid(values: ThemeValues | JsonMap | null | undefined, schema: 
 }
 
 /** valid() over a compiled schema. */
-export function validTuples(values: unknown, schema: TupleSchema): JsonMap {
-  const copy = clone(values as Json)
+export function validTuples(theme: unknown, schema: TupleSchema): JsonMap {
+  const copy = clone(theme as Json)
   if (!isArray(copy) || (!isEmpty(copy) && isList(copy))) {
     return {}
   }
   const migrate = get(schema, 'migrate')
   let answer = applyMigrations(copy as JsonMap, isArray(migrate) ? migrate : [])
+  const lists = new Set<string>()
   for (const problem of themeErrors(answer, schema)) {
+    // A section left out of its page's list, which stays a list.
+    const item = SECTION_ITEM.exec(problem.path)
+    if (item !== null) {
+      lists.add(item[1]!)
+    }
     const [section, rest] = splitOnce(problem.path)
     if ((section === 'visibility' || section === 'images') && rest !== null) {
       // Their keys hold dots of their own.
@@ -71,7 +82,42 @@ export function validTuples(values: unknown, schema: TupleSchema): JsonMap {
     }
     answer = forget(answer, problem.path.split('.')) as JsonMap
   }
+  for (const list of lists) {
+    const path = list.split('.')
+    const sections = dig(answer, ...path)
+    const parent = dig(answer, ...path.slice(0, -1))
+    if (isArray(sections) && isArray(parent)) {
+      ;(parent as Record<string, Json>)[path[path.length - 1]!] = values(sections)
+    }
+  }
   return answer
+}
+
+/**
+ * What of a site's settings fits its schema (ThemeResolver::validSettings()),
+ * as valid() a theme: what the schema renamed or moved within its base (its
+ * migrations of `site.` paths) is first taken where it went, then each
+ * setting settingsErrors() finds wrong is left out, so its default shows
+ * instead. A list is no settings: `{}`. The settings are not changed.
+ */
+export function validSettings(settings: JsonMap | null | undefined, schema: NodeSchema | TupleSchema): JsonMap {
+  return validSettingsTuples(settings ?? {}, tuplesOf(schema))
+}
+
+/** validSettings() over a compiled schema. */
+export function validSettingsTuples(settings: unknown, schema: TupleSchema): JsonMap {
+  const copy = clone(settings as Json)
+  const migrations = values(get(schema, 'migrate')).filter((migration) => isArray(migration)
+    && typeof get(migration, 'from') === 'string' && (get(migration, 'from') as string).split('.')[0] === 'site')
+  const document = applyMigrations({ site: isArray(copy) ? copy : {} }, migrations)
+  let own: Json = isArray(get(document, 'site')) ? get(document, 'site') : {}
+  for (const problem of settingsErrors(own, schema)) {
+    if (problem.path === 'site') {
+      return {}
+    }
+    own = forget(own, problem.path.split('.').slice(1))
+  }
+  return own as JsonMap
 }
 
 /** A path's first segment and the rest (PHP's explode('.', $path, 2)). */
@@ -105,9 +151,11 @@ function tuplesOf(schema: NodeSchema | TupleSchema): TupleSchema {
  * What is wrong with a theme against its schema (ThemeValidator::validate()):
  * each problem `{ path, code }`, the code being the path and the rule:
  * `unknown` (not in the schema), `invalid` (wrong type, format or option),
- * `alias` (an alias to a token that does not exist or is of another kind)
- * or `alpha` (a translucent color where the schema keeps it opaque). Each
- * code once, in the order found.
+ * `alias` (an alias to a token that does not exist or is of another kind),
+ * `alpha` (a translucent color where the schema keeps it opaque),
+ * `out_of_range` (a number outside its editor's limits) or `format` (an
+ * image of a format its key does not take). Each code once, in the order
+ * found.
  */
 export function themeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
   if (isArray(theme) && !isEmpty(theme) && isList(theme)) {
@@ -166,6 +214,12 @@ export function themeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
               continue
             }
             errors.push(...tokenErrors({ color: colors }, `modes.${mode}`))
+            // Of the schema's own colors only, as `tokens.color`.
+            for (const [name] of entries(colors)) {
+              if (tokenNames('color').includes(name) && !has(dig(schema, 'tokens', 'color') ?? {}, name)) {
+                errors.push(error(`modes.${mode}.color.${name}`, 'unknown'))
+              }
+            }
           }
         }
         break
@@ -217,6 +271,7 @@ export function themeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
   }
   refers(sections, '')
   errors.push(...translucentErrors(theme, schema))
+  errors.push(...rangeErrors(theme, schema))
 
   // Once each, though a value's own check may have said it too.
   const seen = new Set<string>()
@@ -232,11 +287,12 @@ export function settingsErrors(settings: Json, schema: TupleSchema): SchemaError
     return [error('site', 'invalid')]
   }
   const site = get(schema, 'site')
-  return treeErrors(settings, isArray(site) ? site : {}, 'site')
+  const limits = get(schema, 'limits')
+  return treeErrors(settings, isArray(site) ? site : {}, 'site', isArray(limits) ? limits : {})
 }
 
-/** A block of settings in groups, against the schema's. */
-function treeErrors(settings: Json, specs: Json, path: string): SchemaError[] {
+/** A block of settings in groups, against the schema's, each number within its editor's limits. */
+function treeErrors(settings: Json, specs: Json, path: string, limits: Json): SchemaError[] {
   const errors: SchemaError[] = []
   for (const [key, value] of entries(settings)) {
     const at = `${path}.${key}`
@@ -244,11 +300,13 @@ function treeErrors(settings: Json, specs: Json, path: string): SchemaError[] {
     if (!isArray(spec)) {
       errors.push(error(at, 'unknown'))
     } else if (!isList(spec)) {
-      errors.push(...(isStoredMap(value) ? treeErrors(value, spec, at) : [error(at, 'invalid')]))
+      errors.push(...(isStoredMap(value) ? treeErrors(value, spec, at, limits) : [error(at, 'invalid')]))
     } else {
       const rule = valueError(phpString(get(spec, 0)), value, get(spec, 2), get(spec, 3))
       if (rule !== null) {
         errors.push(error(at, rule))
+      } else {
+        errors.push(...outOfRange(value, at, get(limits, at), null))
       }
     }
   }
@@ -267,9 +325,36 @@ function keyErrors(set: Json, schema: TupleSchema, section: string, path: string
     const rule = valueError(kind, item)
     if (rule !== null) {
       errors.push(error(`${path}.${key}`, rule))
+    } else if (kind === 'image' && !inFormats(item as string, imageFormats(schema, key))) {
+      errors.push(error(`${path}.${key}`, 'format'))
     }
   }
   return errors
+}
+
+/** The formats an image key of the schema takes (ThemeImage::formats()): its own, else DEFAULT_FORMATS. */
+function imageFormats(schema: TupleSchema, key: string): Json[] {
+  const formats = get(dig(schema, 'images', key), 2)
+  return formats === null ? DEFAULT_FORMATS : values(formats)
+}
+
+/**
+ * Whether an image URL is of one of its key's formats, by the extension of
+ * its path (`jpeg` is `jpg`; ThemeValidator::inFormats()). One without the
+ * extension of a format the engine knows, or none at all, says nothing of
+ * its format: only an upload tells it.
+ */
+function inFormats(url: string, formats: Json[]): boolean {
+  if (url === '') {
+    return true
+  }
+  // parse_url()'s path, then pathinfo()'s extension: its last segment, trailing slashes aside.
+  const path = url.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i, '').split(/[?#]/)[0]!
+  const last = path.replace(/\/+$/, '').split('/').pop() ?? ''
+  const dot = last.lastIndexOf('.')
+  let extension = dot < 0 ? '' : last.slice(dot + 1).toLowerCase()
+  extension = extension === 'jpeg' ? 'jpg' : extension
+  return !(IMAGE_FORMATS as readonly string[]).includes(extension) || formats.includes(extension)
 }
 
 /**
@@ -493,13 +578,7 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
   const errors: SchemaError[] = []
 
   const check = (value: Json, path: string, candidates: string[]): void => {
-    let node = candidates[0]!
-    for (const candidate of candidates) {
-      if (specAt(schema, candidate) !== null) {
-        node = candidate
-        break
-      }
-    }
+    const node = declaring(schema, candidates)
     const spec = specAt(schema, node)
     if (spec !== null && !['color', 'role', 'border'].includes(phpString(spec[0]))) {
       return
@@ -519,8 +598,87 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
     }
   }
 
-  // A component's values, by the nodes that may declare each: $at gives,
-  // for a path under the component, its candidates.
+  for (const [name, value] of entries(isArray(themeColors) ? themeColors : {})) {
+    check(value, `tokens.color.${name}`, [`tokens.color.${name}`])
+  }
+  for (const [mode, groups] of entries(get(theme, 'modes'))) {
+    const modeColors = get(groups, 'color')
+    for (const [name, value] of entries(isArray(modeColors) ? modeColors : {})) {
+      check(value, `modes.${mode}.color.${name}`, [`tokens.color.${name}`])
+    }
+  }
+  eachComponentValue(theme, check)
+  return errors
+}
+
+
+/**
+ * The numbers a theme sets outside the limits its schema's editor gives
+ * them (`limits`; ThemeValidator::ranges()): a number below the node's `min`
+ * or above its `max` is `<path>.out_of_range`, and a typography style's
+ * field outside the node's `fields` (a token's own, else the
+ * `tokens.typography` group's, which a component's custom style takes too)
+ * is `<path>.<field>.out_of_range`, both at the value's path. The node that
+ * declares a property decides, as for `alpha`. An alias is not checked.
+ */
+function rangeErrors(theme: Json, schema: TupleSchema): SchemaError[] {
+  const limits = get(schema, 'limits')
+  if (!isArray(limits) || isEmpty(limits)) {
+    return []
+  }
+  const errors: SchemaError[] = []
+  const typography = dig(limits, 'tokens.typography', 'fields')
+  const check = (value: Json, path: string, node: string): void => {
+    errors.push(...outOfRange(value, path, get(limits, node), typography))
+  }
+  for (const [group, names] of entries(get(theme, 'tokens'))) {
+    for (const [name, value] of entries(isArray(names) ? names : {})) {
+      check(value, `tokens.${group}.${name}`, `tokens.${group}.${name}`)
+    }
+  }
+  eachComponentValue(theme, (value, path, candidates) => check(value, path, declaring(schema, candidates)))
+  return errors
+}
+
+/**
+ * What is out of range of a value against its node's limits (null: none),
+ * ThemeValidator::outOfRange(): a number, or each numeric field of a
+ * typography style, whose fields are the node's own or, when it has none,
+ * $fields.
+ */
+function outOfRange(value: Json, path: string, limits: Json, fields: Json): SchemaError[] {
+  const outside = (number: Json, range: Json): boolean => typeof number === 'number' && isArray(range)
+    && ((typeof get(range, 'min') === 'number' && number < (get(range, 'min') as number))
+      || (typeof get(range, 'max') === 'number' && number > (get(range, 'max') as number)))
+  if (typeof value === 'number') {
+    return outside(value, limits) ? [error(path, 'out_of_range')] : []
+  }
+  if (!isTypography(value)) {
+    return []
+  }
+  const own = get(limits, 'fields')
+  const errors: SchemaError[] = []
+  for (const [field, range] of entries(isArray(own) ? own : (fields ?? {}))) {
+    if (outside(get(value, field), range)) {
+      errors.push({ path, code: `${path}.${field}.out_of_range` })
+    }
+  }
+  return errors
+}
+
+/** The first of a value's candidate nodes the schema declares, or the first one (ThemeValidator::declaring()). */
+function declaring(schema: TupleSchema, candidates: string[]): string {
+  return candidates.find((candidate) => specAt(schema, candidate) !== null) ?? candidates[0]!
+}
+
+/**
+ * Each value a theme sets on its components and on each platform's
+ * override of them, with its path and the schema nodes that may declare it,
+ * in order (ThemeValidator::eachComponentValue()): a variant's own property,
+ * then its base's; a group's scope, then the scoped component's; a
+ * platform's default, then the base's. Slots choose, they set nothing.
+ */
+function eachComponentValue(theme: Json, visit: (value: Json, path: string, candidates: string[]) => void): void {
   const component = (sections: Json, path: string, at: (rest: string) => string[]): void => {
     for (const [section, props] of entries(sections)) {
       if (!isArray(props) || section === 'slots') {
@@ -536,7 +694,7 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
       }
       if (section === 'base') {
         for (const [prop, value] of entries(props)) {
-          check(value, `${path}.base.${prop}`, at(`base.${prop}`))
+          visit(value, `${path}.base.${prop}`, at(`base.${prop}`))
         }
         continue
       }
@@ -548,28 +706,19 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
           if (prop === 'states' && isArray(value)) {
             for (const [state, stateProps] of entries(value)) {
               for (const [stateProp, stateValue] of entries(isArray(stateProps) ? stateProps : {})) {
-                check(stateValue, `${path}.${section}.${name}.states.${state}.${stateProp}`,
+                visit(stateValue, `${path}.${section}.${name}.states.${state}.${stateProp}`,
                   [...at(`${section}.${name}.states.${state}.${stateProp}`), ...at(`${section}.${name}.${stateProp}`), ...at(`base.${stateProp}`)])
               }
             }
             continue
           }
-          check(value, `${path}.${section}.${name}.${prop}`,
+          visit(value, `${path}.${section}.${name}.${prop}`,
             section === 'colors' ? at(`colors.${name}.${prop}`) : [...at(`${section}.${name}.${prop}`), ...at(`base.${prop}`)])
         }
       }
     }
   }
 
-  for (const [name, value] of entries(isArray(themeColors) ? themeColors : {})) {
-    check(value, `tokens.color.${name}`, [`tokens.color.${name}`])
-  }
-  for (const [mode, groups] of entries(get(theme, 'modes'))) {
-    const modeColors = get(groups, 'color')
-    for (const [name, value] of entries(isArray(modeColors) ? modeColors : {})) {
-      check(value, `modes.${mode}.color.${name}`, [`tokens.color.${name}`])
-    }
-  }
   const components = get(theme, 'components')
   for (const [name, sections] of entries(isArray(components) ? components : {})) {
     if (isArray(sections)) {
@@ -587,6 +736,4 @@ function translucentErrors(theme: Json, schema: TupleSchema): SchemaError[] {
       }
     }
   }
-  return errors
 }
-

@@ -50,7 +50,7 @@ class ThemeUpgradesTest extends TestCase
         $compiled = NodeCompiler::compile($schema)['schema'];
 
         self::assertSame($block, $compiled['upgrade']);
-        self::assertSame(5, ThemeSchemas::COMPILED);
+        self::assertSame(6, ThemeSchemas::COMPILED);
         self::assertNotContains('upgrade.invalid', array_column(ThemeSchemas::check($compiled), 'code'));
         foreach ([ [], [ 'from' => '26', 'moves' => [], 'drop' => [] ], [ 'from' => 26, 'moves' => [ 'a' => 1 ], 'drop' => [] ], [ 'from' => 26, 'moves' => [] ] ] as $invalid) {
             $compiled['upgrade'] = $invalid;

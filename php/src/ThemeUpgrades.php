@@ -32,7 +32,9 @@ use Ordering\ThemeEngine\Schema\SchemaDiff;
  *    not fit is left out, so its default shows.
  *
  * A site's settings take the same step by their `site.` paths. A
- * schema's own checks of the block are self::check()'s, at publish.
+ * schema's own checks of the block are self::check()'s, at publish. The
+ * other way, for a client of an older version, self::cutDown() undoes what
+ * each newer version renamed or moved (self::down()).
  *
  * The schemas are compiled (tuples), except self::check()'s, in nodes.
  */
@@ -74,7 +76,8 @@ final class ThemeUpgrades
      * - `upgrade.<path>.unaccounted`: a key of the previous base that
      *   neither arrives at the same path with the same kind nor is moved,
      *   dropped or rewritten (a path also covers what is under it, but in
-     *   visibility and images, whose keys hold dots of their own).
+     *   visibility and images, whose keys hold dots of their own). A
+     *   platform's default of a component's property goes with the property.
      *
      * Whether api-core has the rewrite is api-core's to check.
      *
@@ -121,7 +124,7 @@ final class ThemeUpgrades
                 if (explode('.', $source)[0] !== explode('.', $target)[0] || ($source_kind !== $target_kind && $map === null)) {
                     $errors[] = self::error($at, 'kind');
                 }
-                if ($map !== null && !self::validMap($map, $after, $target)) {
+                if ($map !== null && !self::validMap($map, $after, $target, $source_kind)) {
                     $errors[] = self::error("{$at}.map", 'invalid');
                 }
             }
@@ -145,7 +148,10 @@ final class ThemeUpgrades
         $arrived = SchemaDiff::leaves($next);
         foreach ($leaves as $path => $leaf) {
             $path = (string) $path;
-            if (self::arrives($path, $leaf, $before, $after, $arrived) || self::coveredBy($path, $taken)) {
+            // A platform's default of a property is no value a theme stores:
+            // the property accounts for it, and the theme's override of it.
+            $property = SchemaDiff::platformBase($path);
+            if (($property !== null && isset($leaves[$property])) || self::arrives($path, $leaf, $before, $after, $arrived) || self::coveredBy($path, $taken)) {
                 continue;
             }
             $errors[] = self::error("upgrade.{$path}", 'unaccounted');
@@ -210,7 +216,7 @@ final class ThemeUpgrades
     {
         $document = self::step([ 'site' => $settings ], $next, $previous, $rewrite, true);
 
-        return self::validSettings(is_array($document['site'] ?? null) ? $document['site'] : [], $next);
+        return ThemeResolver::validSettings(is_array($document['site'] ?? null) ? $document['site'] : [], $next);
     }
 
     /**
@@ -224,7 +230,7 @@ final class ThemeUpgrades
     {
         $schemas = array_values($schemas);
         if (count($schemas) === 1) {
-            return self::validSettings($settings, $schemas[0]);
+            return ThemeResolver::validSettings($settings, $schemas[0]);
         }
         for ($index = 1; $index < count($schemas); $index++) {
             $settings = self::settings($settings, $schemas[$index], $schemas[$index - 1], $rewrite);
@@ -234,35 +240,128 @@ final class ThemeUpgrades
     }
 
     /**
-     * A theme's values of one version as an older one reads them, for a
-     * client of that version: what has the same path and kind in both
-     * survives, if it fits the older one (ThemeResolver::valid()); anything
-     * else takes the older one's default.
+     * A theme's values as a client of an older version reads them: $schemas
+     * compiled, from the version the values are of (any version of its
+     * base: they are first read with it, ThemeResolver::valid()) down to
+     * the client's, with the last version of each base on the way between
+     * them (28.L, 27.L, 26.L, 26.x). Each step undoes what the newer
+     * version renamed or moved (self::down()), so a value the client's
+     * version has under another name keeps it; what has the same path and
+     * kind in both survives as it is; anything else, and what a newer
+     * version added, takes the client's default. With one schema, what of
+     * the values fits it.
      *
-     * @param array<string, mixed> $values of $from
-     * @param array<string, mixed> $from compiled, the version the values are of
-     * @param array<string, mixed> $to compiled, the older version
+     * @param array<string, mixed> $values
+     * @param array<int, array<string, mixed>> $schemas
      * @return array<string, mixed>
      */
-    public static function cutDown(array $values, array $from, array $to): array
+    public static function cutDown(array $values, array $schemas): array
     {
-        return ThemeResolver::valid(self::changed($values, $from, $to, []), $to);
+        $schemas = array_values($schemas);
+        $values = ThemeResolver::valid($values, $schemas[0]);
+        for ($index = 1; $index < count($schemas); $index++) {
+            $values = self::down($values, $schemas[$index - 1], $schemas[$index], false);
+        }
+
+        return count($schemas) === 1 ? $values : ThemeResolver::valid($values, $schemas[count($schemas) - 1]);
     }
 
     /**
-     * A site's settings of one version as an older one reads them, as
-     * self::cutDown() a theme.
+     * A site's settings as a client of an older version reads them, as
+     * self::cutDown() a theme, by their `site.` paths.
      *
      * @param array<string, mixed> $settings
-     * @param array<string, mixed> $from compiled
-     * @param array<string, mixed> $to compiled
+     * @param array<int, array<string, mixed>> $schemas
      * @return array<string, mixed>
      */
-    public static function cutDownSettings(array $settings, array $from, array $to): array
+    public static function cutDownSettings(array $settings, array $schemas): array
     {
-        $document = self::changed([ 'site' => $settings ], $from, $to, []);
+        $schemas = array_values($schemas);
+        $settings = ThemeResolver::validSettings($settings, $schemas[0]);
+        for ($index = 1; $index < count($schemas); $index++) {
+            $document = self::down([ 'site' => $settings ], $schemas[$index - 1], $schemas[$index], true);
+            $settings = is_array($document['site'] ?? null) ? $document['site'] : [];
+        }
 
-        return self::validSettings(is_array($document['site'] ?? null) ? $document['site'] : [], $to);
+        return count($schemas) === 1 ? $settings : ThemeResolver::validSettings($settings, $schemas[count($schemas) - 1]);
+    }
+
+    /**
+     * One step down, from a version ($newer) to an older one ($older),
+     * over a theme's values or `['site' => $settings]`: what $newer moved
+     * goes back where $older keeps it, each move undone in reverse order.
+     *
+     * - Within a base, the migrations $newer has and $older has not.
+     * - From the next base, all of $newer's migrations, then its upgrade
+     *   block's moves when its `from` is $older's base.
+     *
+     * A move is undone only when $older has no key at its `to` (a rename,
+     * not a merge into a key it already had), or when it stays at its own
+     * path; a `map` is undone when it is one to one, and otherwise the
+     * value is dropped. Then, as a step up, a value whose kind is another
+     * in $older at the same path is dropped, unless an undone move put it
+     * there; what $older does not take is left to ThemeResolver::valid().
+     *
+     * @param array<string, mixed> $document
+     * @param array<string, mixed> $newer compiled
+     * @param array<string, mixed> $older compiled
+     * @return array<string, mixed>
+     */
+    private static function down(array $document, array $newer, array $older, bool $site): array
+    {
+        $base = fn (array $schema) => (int) explode('.', (string) ($schema['version'] ?? ''))[0];
+        $migrations = self::within($newer['migrate'] ?? [], $site);
+        $moves = [];
+        if ($base($newer) === $base($older)) {
+            $kept = self::within($older['migrate'] ?? [], $site);
+            $migrations = array_values(array_filter($migrations, fn (array $migration) => !in_array($migration, $kept, true)));
+        } else if (self::isBlock($newer['upgrade'] ?? null) && $newer['upgrade']['from'] === $base($older)) {
+            $moves = self::within($newer['upgrade']['moves'], $site);
+        }
+        // A key the next base's own move filled is one it had at the start of that base.
+        $filled = array_column($moves, 'to');
+        $undoable = fn (array $move, array $filled) => is_string($move['to'] ?? null)
+            && ($move['to'] === $move['from'] || (ThemeSchemas::kindAt($older, $move['to']) === null && !in_array($move['to'], $filled, true)));
+
+        $undo = [];
+        foreach (array_reverse(array_values(array_filter($migrations, fn (array $migration) => $undoable($migration, $filled)))) as $migration) {
+            $undo[] = self::inverse($migration);
+        }
+        foreach (array_reverse(array_values(array_filter($moves, fn (array $move) => $undoable($move, [])))) as $move) {
+            $undo[] = self::inverse($move);
+        }
+        $document = ThemeMigrations::apply($document, $undo);
+
+        return self::changed($document, $newer, $older, array_values(array_filter(array_column($moves, 'from'), 'is_string')));
+    }
+
+    /**
+     * A move the other way: from its `to` to its `from`, with its map
+     * inverted when it is one to one (each value once, as a key a map can
+     * have); otherwise an empty map, which drops what it would move.
+     *
+     * @param array<string, mixed> $move
+     * @return array<string, mixed>
+     */
+    private static function inverse(array $move): array
+    {
+        $inverse = [ 'from' => $move['to'], 'to' => $move['from'] ];
+        if (!is_array($move['map'] ?? null)) {
+            return $inverse;
+        }
+        $map = [];
+        foreach ($move['map'] as $old => $new) {
+            $key = ThemeMigrations::mapKey($new);
+            if ($key === null || array_key_exists($key, $map)) {
+                $map = [];
+                break;
+            }
+            // The key names the stored value: a boolean as `true` or `false`.
+            $map[$key] = $old === 'true' || $old === 'false' ? $old === 'true' : $old;
+        }
+        $inverse['map'] = $map;
+
+        return $inverse;
     }
 
     /**
@@ -518,13 +617,22 @@ final class ThemeUpgrades
      * options included, and of the schema's own colors, styles and
      * opacities).
      *
+     * A boolean's map (a source of kind `bool`) has only the keys `true`
+     * and `false`; one to a boolean only boolean values.
+     *
      * @param mixed $map
      * @param array<string, mixed> $schema compiled
      */
-    private static function validMap($map, array $schema, string $target): bool
+    private static function validMap($map, array $schema, string $target, ?string $source_kind): bool
     {
         if (!is_array($map)) {
             return false;
+        }
+        if ($source_kind === 'bool' && array_diff(array_map('strval', array_keys($map)), [ 'true', 'false' ]) !== []) {
+            return false;
+        }
+        if (ThemeSchemas::kindAt($schema, $target) === 'bool') {
+            return array_filter($map, fn ($value) => !is_bool($value)) === [];
         }
         $segments = explode('.', $target);
         if ($segments[0] === 'tokens') {
@@ -555,39 +663,6 @@ final class ThemeUpgrades
         }
 
         return true;
-    }
-
-    /**
-     * What of a site's settings fits a schema: its migrations of `site.`
-     * applied, then each setting ThemeValidator::settings() finds wrong left
-     * out.
-     *
-     * @param array<string, mixed> $settings
-     * @param array<string, mixed> $schema compiled
-     * @return array<string, mixed>
-     */
-    private static function validSettings(array $settings, array $schema): array
-    {
-        $document = ThemeMigrations::apply([ 'site' => $settings ], self::within($schema['migrate'] ?? [], true));
-        $settings = is_array($document['site'] ?? null) ? $document['site'] : [];
-        foreach (ThemeValidator::settings($settings, $schema) as $error) {
-            if ($error['path'] === 'site') {
-                return [];
-            }
-            $segments = array_slice(explode('.', $error['path']), 1);
-            $last = array_pop($segments);
-            $node = &$settings;
-            foreach ($segments as $segment) {
-                if (!is_array($node[$segment] ?? null)) {
-                    continue 2;
-                }
-                $node = &$node[$segment];
-            }
-            unset($node[$last]);
-            unset($node);
-        }
-
-        return $settings;
     }
 
     /**

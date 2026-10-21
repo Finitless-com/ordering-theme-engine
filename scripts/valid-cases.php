@@ -6,7 +6,9 @@
  * ThemeResolver::valid() keeps of it, over the product's current schema as
  * NodeCompiler compiles it with its version 1 map and the colors the
  * editor may make translucent (fixtures/schema-26.0.compiled.json); and for
- * site settings, what ThemeValidator::settings() answers. JSON on stdout;
+ * site settings, what ThemeValidator::settings() answers and what
+ * ThemeResolver::validSettings() keeps of them (a case may give some
+ * settings `limits` of its own, over the schema's). JSON on stdout;
  * scripts/sync-fixtures.sh runs it in PHP 8.3, after compile-schema.php:
  *
  *   php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
@@ -111,6 +113,42 @@ $themes = [
     'platform-parts' => [ "A platform's part that is no map, and one it has not.", <<<'JSON'
         { "platforms": { "mobile_web": { "visibility": [ true ], "pages": "home", "tokens": {} } } }
         JSON ],
+    'section-lists' => [ "Sections left out of a page's list, not the last ones, also on a platform: the list kept is still a list.", <<<'JSON'
+        {
+            "pages": { "home": { "sections": [ { "key": "nope", "visible": false }, { "key": "hero", "visible": false }, { "key": "content", "visible": false }, { "key": "promo_banners", "visible": true } ] } },
+            "platforms": { "mobile_web": { "pages": { "home": { "sections": [ { "key": "nope", "visible": true }, { "key": "content", "visible": true } ] } } } }
+        }
+        JSON ],
+    'mode-colors' => [ "A mode's colors are the schema's own, as `tokens.color`: a color of the catalog the schema does not name is unknown in a mode too.", <<<'JSON'
+        { "modes": { "dark": { "color": { "primary": "#111111", "danger_text": "#B02A3E", "favorite": "#FF5A5F" } } }, "tokens": { "color": { "danger_text": "#B02A3E" } } }
+        JSON ],
+    'out-of-range' => [ "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to; within them, at the limits, and an alias are kept.", <<<'JSON'
+        {
+            "tokens": {
+                "size": { "sm": 90, "md": 20 },
+                "space": { "md": 96 },
+                "typography": { "h1": { "size": 120, "line": 2.5, "weight": 600 }, "h2": { "size": 24, "line": 1.2, "weight": 600 } }
+            },
+            "components": {
+                "choice": { "variants": { "default": { "states": { "disabled": { "opacity": 0.05 } } } } },
+                "button": { "base": { "icon_gap": "{space.lg}" }, "sizes": { "xs": { "height": 40, "icon_size": 16 } } },
+                "empty_state": { "base": { "padding_y": 120 } }
+            },
+            "platforms": { "mobile_web": { "components": { "empty_state": { "base": { "padding_x": 100, "padding_y": 90 } } } } }
+        }
+        JSON ],
+    'image-formats' => [ "An image's extension is one of its formats (`jpeg` is `jpg`, in any case, the query aside): the favicon takes no SVG and a key without formats no ICO; a URL without the extension of a known format says nothing.", <<<'JSON'
+        {
+            "images": {
+                "logo": "https://cdn.example.com/a/logo.SVG?w=2",
+                "logo_mobile": "https://cdn.example.com/logo.jpeg",
+                "logo_inverse": "https://cdn.example.com/image/upload/abc",
+                "favicon": "https://cdn.example.com/favicon.svg",
+                "home_hero": "https://cdn.example.com/hero.ico",
+                "app_icon": "https://cdn.example.com/icon.v2/file"
+            }
+        }
+        JSON ],
 ];
 
 $settings = [
@@ -119,6 +157,7 @@ $settings = [
         { "mode": "kiosk", "name": 12, "nope": true, "tracking_only": "yes", "third_party_code": "x", "smart_banner": { "apple_id": "123", "nope": "x" }, "franchise_id": -1, "business_slug": { "x": 1 } }
         JSON ],
     'settings-list' => [ 'A list is no settings.', '[ "x" ]' ],
+    'settings-out-of-range' => [ "A setting outside its editor's limits (the franchise's id, given `min` 1 and `max` 1000 for this case).", '{ "franchise_id": 5000, "name": "Shop" }', [ 'site.franchise_id' => [ 'min' => 1, 'max' => 1000 ] ] ],
 ];
 
 $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR;
@@ -133,12 +172,18 @@ foreach ($themes as $name => [ $description, $json ]) {
         'valid' => ThemeResolver::valid($values, $schema),
     ];
 }
-foreach ($settings as $name => [ $description, $json ]) {
+foreach ($settings as $name => $case) {
+    [ $description, $json ] = $case;
+    $limits = $case[2] ?? null;
+    $over = $limits === null ? $schema : [ ...$schema, 'limits' => [ ...$schema['limits'], ...$limits ] ];
+    $settings_values = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     $cases[] = [
         'name' => $name,
         'description' => $description,
         'settings' => json_decode($json, false, 512, JSON_THROW_ON_ERROR),
-        'errors' => ThemeValidator::settings(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $schema),
+        ...($limits === null ? [] : [ 'limits' => $limits ]),
+        'errors' => ThemeValidator::settings($settings_values, $over),
+        'valid' => is_array($settings_values) && !array_is_list($settings_values) ? ThemeResolver::validSettings($settings_values, $over) : ThemeResolver::validSettings([], $over),
     ];
 }
 

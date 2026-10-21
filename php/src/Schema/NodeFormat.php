@@ -148,6 +148,36 @@ final class NodeFormat
     }
 
     /**
+     * The numeric limits an editor block sets on a value: its `min` and
+     * `max`, and those of each of its `fields` (a typography's size, line
+     * height…), only the numbers. Empty when it sets none.
+     *
+     * @param mixed $editor
+     * @return array{min?: int|float, max?: int|float, fields?: array<string, array{min?: int|float, max?: int|float}>}
+     */
+    public static function limits($editor): array
+    {
+        if (!is_array($editor)) {
+            return [];
+        }
+        $range = fn ($spec) => is_array($spec)
+            ? array_filter([ 'min' => $spec['min'] ?? null, 'max' => $spec['max'] ?? null ], fn ($limit) => is_int($limit) || is_float($limit))
+            : [];
+        $limits = $range($editor);
+        $fields = [];
+        foreach (is_array($editor['fields'] ?? null) ? $editor['fields'] : [] as $field => $spec) {
+            if (($own = $range($spec)) !== []) {
+                $fields[(string) $field] = $own;
+            }
+        }
+        if ($fields !== []) {
+            $limits['fields'] = $fields;
+        }
+
+        return $limits;
+    }
+
+    /**
      * Whether a value of the node tree is a node (a leaf) rather than a group.
      */
     public static function isNode($value): bool

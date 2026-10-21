@@ -48,21 +48,36 @@ export interface SchemaError {
  */
 export type V1Map = JsonMap
 
-/** What a new version changes from the previous one of its base (SchemaDiff). */
+/**
+ * What a new version changes from the previous one of its base (SchemaDiff),
+ * each a list of paths: the keys added, removed, migrated and deprecated,
+ * those with options added, with another default, with other rules
+ * (`max_length`, `pattern`, the editor's `alpha`, `custom` and limits),
+ * and the sections with another `hideable` or `group` (and the list of a
+ * page whose sections come in another order).
+ */
 export interface Changes {
   added: string[]
   removed: string[]
   migrated: string[]
   deprecated: string[]
+  options_added: string[]
+  defaults_changed: string[]
+  rules_changed: string[]
+  sections_changed: string[]
 }
 
 export interface ValidateOptions {
-  /** The last version published of the schema's base, in nodes. */
+  /**
+   * The last version published of the schema's base, in nodes; or the same
+   * version as published, which the schema is compared with: the same
+   * content is `unchanged`, another is `schema.version_exists`.
+   */
   previous?: NodeSchema | null
   /**
-   * The version 1 map to compile with. None by default; api-core, given
-   * none, uses the last one published for the product type (or the one it
-   * keeps in resources/themes/<product_type>/v1-map.json).
+   * The version 1 map to compile with, whose every path must be one of the
+   * schema (`v1_map.<section>.<path>.unknown`). None by default; api-core,
+   * given none, uses the last one published for the product type.
    */
   v1Map?: V1Map | null
   /**
@@ -74,9 +89,10 @@ export interface ValidateOptions {
    */
   previousBase?: NodeSchema | null
   /**
-   * api-core's development mode: neither the version's order nor the
-   * diff's incompatibilities refuse the schema, but the changes are still
-   * answered against `previous`.
+   * api-core's development mode: neither the version (its order, or the
+   * same version with another content) nor the diff's incompatibilities
+   * refuse the schema; what production would refuse is answered in
+   * `warnings`, and the changes against `previous`.
    */
   development?: boolean
 }
@@ -84,13 +100,18 @@ export interface ValidateOptions {
 /**
  * What ThemeSchemaPublisher::validate() answers: the code of the first
  * stage that fails (`schema.format`, `schema.invalid`,
- * `schema.version_order`, `schema.incompatible`) or null, its errors, and
- * the changes from `previous` when the schema is valid against it.
+ * `schema.version_exists`, `schema.version_order`, `schema.incompatible`)
+ * or null, its errors, in development what production would refuse
+ * (`warnings`), the changes from `previous` when the schema is valid
+ * against it, and whether it is `previous` again (`unchanged`: the same
+ * version with the same content).
  */
 export interface ValidationResult {
   code: string | null
   errors: SchemaError[]
+  warnings: SchemaError[]
   changes: Changes | null
+  unchanged: boolean
 }
 
 /**

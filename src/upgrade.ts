@@ -1,11 +1,11 @@
 import { UPGRADE, compile, isNodes } from './compile.js'
-import { leaves, type Leaf } from './diff.js'
+import { leaves, platformBase, type Leaf } from './diff.js'
 import { COLORS, OPTION_KINDS, OWN_GROUPS, PROPERTY_KINDS, ROLES, alias, tokenType } from './format.js'
-import { applyMigrations, dropPaths, withoutKey } from './migrations.js'
+import { applyMigrations, dropPaths, mapKey, withoutKey } from './migrations.js'
 import { clone, count, dig, entries, get, has, identical, isArray, isEmpty, isInt, isList, phpString, toInt, values, type Json, type JsonMap, type PhpArray } from './php.js'
 import { kindAt, specAt } from './schemas.js'
 import type { NodeSchema, SchemaError, ThemeValues, TupleSchema } from './types.js'
-import { settingsErrors, validTuples } from './valid.js'
+import { validSettingsTuples, validTuples } from './valid.js'
 import { valueError } from './validator.js'
 
 /**
@@ -79,7 +79,8 @@ export function isUpgradeBlock(block: Json): boolean {
  * (ThemeUpgrades::check()): `upgrade.required`, `upgrade.from.invalid` (then
  * nothing else), `upgrade.moves.<n>.from.unknown`, `.to.unknown`, `.kind`,
  * `.map.invalid`, `.duplicate`, `upgrade.drop.<n>.unknown` and
- * `upgrade.<path>.unaccounted`. Whether api-core has the rewrite is
+ * `upgrade.<path>.unaccounted` (a platform's default of a component's
+ * property goes with the property). Whether api-core has the rewrite is
  * api-core's to check.
  */
 export function checkUpgrade(next: NodeSchema, previous: NodeSchema | null): SchemaError[] {
@@ -120,7 +121,7 @@ export function checkUpgrade(next: NodeSchema, previous: NodeSchema | null): Sch
       if (source!.split('.')[0] !== destination!.split('.')[0] || (sourceKind !== destinationKind && map === null)) {
         errors.push(error(at, 'kind'))
       }
-      if (map !== null && !validMap(map, after, destination!)) {
+      if (map !== null && !validMap(map, after, destination!, sourceKind)) {
         errors.push(error(`${at}.map`, 'invalid'))
       }
     }
@@ -147,7 +148,10 @@ export function checkUpgrade(next: NodeSchema, previous: NodeSchema | null): Sch
   ].filter((path): path is string => typeof path === 'string')
   const arrived = leaves(next)
   for (const [path, leaf] of Object.entries(previousLeaves)) {
-    if (arrives(path, leaf, before, after, arrived) || coveredBy(path, taken)) {
+    // A platform's default of a property is no value a theme stores: the
+    // property accounts for it, and the theme's override of it.
+    const property = platformBase(path)
+    if ((property !== null && has(previousLeaves, property)) || arrives(path, leaf, before, after, arrived) || coveredBy(path, taken)) {
       continue
     }
     errors.push(error(`upgrade.${path}`, 'unaccounted'))
@@ -191,13 +195,13 @@ export function upgradeChain(values: ThemeValues | JsonMap, schemas: Schema[], r
 export function upgradeSettings(settings: JsonMap, next: Schema, previous: Schema, rewrite?: Rewrite): JsonMap {
   const after = tuplesOf(next)
   const document = step({ site: theme(settings) }, after, tuplesOf(previous), rewrite, true)
-  return validSettings(get(document, 'site'), after)
+  return validSettingsTuples(get(document, 'site'), after)
 }
 
 /** A site's settings through every step, as upgradeChain() a theme. */
 export function upgradeSettingsChain(settings: JsonMap, schemas: Schema[], rewrite?: Rewrite): JsonMap {
   if (schemas.length === 1) {
-    return validSettings(theme(settings), tuplesOf(schemas[0]!))
+    return validSettingsTuples(settings, tuplesOf(schemas[0]!))
   }
   let answer = theme(settings)
   for (let index = 1; index < schemas.length; index++) {
@@ -207,20 +211,97 @@ export function upgradeSettingsChain(settings: JsonMap, schemas: Schema[], rewri
 }
 
 /**
- * A theme's values of one version as an older one reads them, for a client
- * of that version (ThemeUpgrades::cutDown()): what has the same path and kind
- * in both survives, if it fits the older one (valid()); anything else takes
- * the older one's default.
+ * A theme's values as a client of an older version reads them
+ * (ThemeUpgrades::cutDown()): $schemas from the version the values are of
+ * (any version of its base: they are first read with it, valid()) down to
+ * the client's, with the last version of each base on the way between them
+ * (28.L, 27.L, 26.L, 26.x). Each step undoes what the newer version renamed
+ * or moved (down()), so a value the client's version has under another name
+ * keeps it; what has the same path and kind in both survives as it is;
+ * anything else, and what a newer version added, takes the client's
+ * default. With one schema, valid(). The values are not changed.
  */
-export function cutDown(values: ThemeValues | JsonMap, from: Schema, to: Schema): JsonMap {
-  const older = tuplesOf(to)
-  return validTuples(changed(theme(values), tuplesOf(from), older, []), older)
+export function cutDown(values: ThemeValues | JsonMap, schemas: Schema[]): JsonMap {
+  const tuples = schemas.map(tuplesOf)
+  let answer = validTuples(values, tuples[0]!)
+  for (let index = 1; index < tuples.length; index++) {
+    answer = down(answer, tuples[index - 1]!, tuples[index]!, false)
+  }
+  return tuples.length === 1 ? answer : validTuples(answer, tuples[tuples.length - 1]!)
 }
 
-/** A site's settings of one version as an older one reads them, as cutDown() a theme. */
-export function cutDownSettings(settings: JsonMap, from: Schema, to: Schema): JsonMap {
-  const older = tuplesOf(to)
-  return validSettings(get(changed({ site: theme(settings) }, tuplesOf(from), older, []), 'site'), older)
+/** A site's settings as a client of an older version reads them, as cutDown() a theme (ThemeUpgrades::cutDownSettings()). */
+export function cutDownSettings(settings: JsonMap, schemas: Schema[]): JsonMap {
+  const tuples = schemas.map(tuplesOf)
+  let answer = validSettingsTuples(settings, tuples[0]!)
+  for (let index = 1; index < tuples.length; index++) {
+    const document = down({ site: answer }, tuples[index - 1]!, tuples[index]!, true)
+    answer = (isArray(get(document, 'site')) ? get(document, 'site') : {}) as JsonMap
+  }
+  return tuples.length === 1 ? answer : validSettingsTuples(answer, tuples[tuples.length - 1]!)
+}
+
+/**
+ * One step down, from a version ($newer) to an older one ($older), over a
+ * theme's values or `{ site: settings }` (ThemeUpgrades::down()): what
+ * $newer moved goes back where $older keeps it, each move undone in reverse
+ * order. Within a base, the migrations $newer has and $older has not; from
+ * the next base, all of $newer's migrations, then its upgrade block's moves
+ * when its `from` is $older's base. A move is undone only when $older has no
+ * key at its `to` (a rename, not a merge into a key it already had), or
+ * when it stays at its own path; a `map` is undone when it is one to one,
+ * otherwise the value is dropped. Then a value whose kind is another in
+ * $older at the same path is dropped, unless an undone move put it there.
+ */
+function down(document: JsonMap, newer: TupleSchema, older: TupleSchema, site: boolean): JsonMap {
+  const base = (schema: TupleSchema): number => toInt(phpString(get(schema, 'version') ?? '').split('.')[0])
+  let migrations = within(get(newer, 'migrate'), site)
+  let moves: JsonMap[] = []
+  const block = get(newer, 'upgrade')
+  if (base(newer) === base(older)) {
+    const kept = within(get(older, 'migrate'), site)
+    migrations = migrations.filter((migration) => !kept.some((other) => identical(other, migration)))
+  } else if (isUpgradeBlock(block) && get(block, 'from') === base(older)) {
+    moves = within(get(block, 'moves'), site)
+  }
+  // A key the next base's own move filled is one it had at the start of that base.
+  const filled = moves.map((move) => get(move, 'to'))
+  const undoable = (move: JsonMap, taken: Json[]): boolean => {
+    const to = get(move, 'to')
+    return typeof to === 'string' && (to === get(move, 'from') || (kindAt(older, to) === null && !taken.includes(to)))
+  }
+  const undo = [
+    ...migrations.filter((migration) => undoable(migration, filled)).reverse().map(inverse),
+    ...moves.filter((move) => undoable(move, [])).reverse().map(inverse),
+  ]
+  const answer = applyMigrations(document, undo)
+  return changed(answer, newer, older, moves.map((move) => get(move, 'from')).filter((path): path is string => typeof path === 'string'))
+}
+
+/**
+ * A move the other way (ThemeUpgrades::inverse()): from its `to` to its
+ * `from`, with its map inverted when it is one to one (each value once, as a
+ * key a map can have); otherwise an empty map, which drops what it would
+ * move.
+ */
+function inverse(move: JsonMap): JsonMap {
+  const answer: JsonMap = { from: get(move, 'to'), to: get(move, 'from') }
+  const map = get(move, 'map')
+  if (!isArray(map)) {
+    return answer
+  }
+  let inverted: JsonMap = {}
+  for (const [old, value] of entries(map)) {
+    const key = mapKey(value)
+    if (key === null || has(inverted, key)) {
+      inverted = {}
+      break
+    }
+    // The key names the stored value: an integer as PHP keys it, a boolean as `true` or `false`.
+    inverted[key] = old === 'true' || old === 'false' ? old === 'true' : /^(0|-?[1-9][0-9]*)$/.test(old) && Number.isSafeInteger(Number(old)) ? Number(old) : old
+  }
+  answer.map = inverted
+  return answer
 }
 
 /** A copy to change (what is no array, as `{}`). */
@@ -392,10 +473,21 @@ function arrives(path: string, leaf: Leaf, before: TupleSchema, after: TupleSche
   return now !== undefined && now.type === leaf.type && identical(now.scale, leaf.scale)
 }
 
-/** Whether every value of a move's `map` is an option or a level of its destination (ThemeUpgrades::validMap()). */
-function validMap(map: Json, schema: TupleSchema, destination: string): boolean {
+/**
+ * Whether every value of a move's `map` is an option or a level of its
+ * destination (ThemeUpgrades::validMap()). A boolean's map (a source of kind
+ * `bool`) has only the keys `true` and `false`; one to a boolean only boolean
+ * values.
+ */
+function validMap(map: Json, schema: TupleSchema, destination: string, sourceKind: string | null): boolean {
   if (!isArray(map)) {
     return false
+  }
+  if (sourceKind === 'bool' && entries(map).some(([key]) => key !== 'true' && key !== 'false')) {
+    return false
+  }
+  if (kindAt(schema, destination) === 'bool') {
+    return values(map).every((value) => typeof value === 'boolean')
   }
   const segments = destination.split('.')
   const within = (list: Json, value: Json): boolean => values(list).some((option) => identical(option, value))
@@ -429,38 +521,6 @@ function validMap(map: Json, schema: TupleSchema, destination: string): boolean 
     }
   }
   return true
-}
-
-/** What of a site's settings fits a schema: its migrations of `site.` applied, then each setting settingsErrors() finds wrong left out. */
-function validSettings(settings: Json, schema: TupleSchema): JsonMap {
-  const document = applyMigrations({ site: isArray(settings) ? settings : {} }, within(get(schema, 'migrate'), true))
-  const answer = get(document, 'site')
-  let own: Json = isArray(answer) ? answer : {}
-  for (const problem of settingsErrors(own, schema)) {
-    if (problem.path === 'site') {
-      return {}
-    }
-    const segments = problem.path.split('.').slice(1)
-    own = unset(own, segments)
-  }
-  return own as JsonMap
-}
-
-/** PHP's unset() at a path, which leaves its parents as they are. */
-function unset(tree: Json, path: string[]): Json {
-  const [segment, ...rest] = path
-  if (!isArray(tree) || segment === undefined) {
-    return tree
-  }
-  if (rest.length === 0) {
-    return withoutKey(tree, segment)
-  }
-  const child = get(tree, segment)
-  if (!isArray(child)) {
-    return tree
-  }
-  ;(tree as Record<string, Json>)[segment] = unset(child, rest)
-  return tree
 }
 
 /** Drops the value, and each map it leaves empty. */

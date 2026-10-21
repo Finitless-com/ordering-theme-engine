@@ -109,6 +109,18 @@ final class NodeCompiler
         if ($alpha !== []) {
             $tuples['alpha'] = $alpha;
         }
+        // The editor's numeric limits, by path (a group's too: the custom
+        // typography's fields): a theme's number outside them is refused
+        // (ThemeValidator).
+        $limits = [];
+        foreach ([ 'tokens', 'components', 'site' ] as $block) {
+            if (is_array($schema[$block] ?? null)) {
+                self::limits($schema[$block], $block, $limits);
+            }
+        }
+        if ($limits !== []) {
+            $tuples['limits'] = $limits;
+        }
         // The options a schema keeps of a token it narrows (NodeFormat::NARROWABLE).
         if ($token_options !== []) {
             $tuples['token_options'] = $token_options;
@@ -370,6 +382,29 @@ final class NodeCompiler
                 }
             } else {
                 self::alpha($child, "{$path}.{$key}", $paths);
+            }
+        }
+    }
+
+    /**
+     * The limits the editor sets on $tree and on every node and group under
+     * it (NodeFormat::limits()), by path.
+     *
+     * @param array<string, mixed> $tree
+     * @param array<string, array<string, mixed>> $limits
+     */
+    private static function limits(array $tree, string $path, array &$limits): void
+    {
+        $own = NodeFormat::limits($tree['$extensions'][NodeFormat::EDITOR] ?? null);
+        if ($own !== []) {
+            $limits[$path] = $own;
+        }
+        if (NodeFormat::isNode($tree)) {
+            return;
+        }
+        foreach (self::children($tree) as $key => $child) {
+            if (is_array($child)) {
+                self::limits($child, "{$path}.{$key}", $limits);
             }
         }
     }

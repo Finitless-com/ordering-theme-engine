@@ -7925,6 +7925,1092 @@
             "components.chip.variants.default.states.pressed.background",
             "components.modal.base.background"
         ],
+        "limits": {
+            "tokens.typography.display": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.h1": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.h2": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.h3": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.h4": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.body_lg": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.body": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.body_sm": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.label": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.caption": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.overline": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.typography.button": {
+                "fields": {
+                    "size": {
+                        "min": 8,
+                        "max": 96
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -20,
+                        "max": 20
+                    }
+                }
+            },
+            "tokens.size.sm": {
+                "min": 20,
+                "max": 80
+            },
+            "tokens.size.md": {
+                "min": 20,
+                "max": 80
+            },
+            "tokens.size.lg": {
+                "min": 20,
+                "max": 80
+            },
+            "tokens.size.xl": {
+                "min": 20,
+                "max": 80
+            },
+            "tokens.icon.sm": {
+                "min": 12,
+                "max": 32
+            },
+            "tokens.icon.md": {
+                "min": 12,
+                "max": 32
+            },
+            "tokens.icon.lg": {
+                "min": 12,
+                "max": 32
+            },
+            "tokens.space.xxs": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.xs": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.sm": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.md": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.lg": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.xl": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.xxl": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.space.xxxl": {
+                "min": 0,
+                "max": 96
+            },
+            "tokens.motion.fast": {
+                "min": 50,
+                "max": 1000
+            },
+            "tokens.motion.base": {
+                "min": 50,
+                "max": 1000
+            },
+            "tokens.motion.slow": {
+                "min": 50,
+                "max": 1000
+            },
+            "tokens.opacity.scrim": {
+                "min": 0,
+                "max": 1
+            },
+            "tokens.layout.page_gutter": {
+                "min": 0,
+                "max": 80
+            },
+            "tokens.scrollbar.size": {
+                "min": 2,
+                "max": 24
+            },
+            "tokens.scrollbar.radius": {
+                "min": 0,
+                "max": 12
+            },
+            "components.button.base.icon_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.button.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.button.sizes.xs.height": {
+                "min": 12,
+                "max": 32
+            },
+            "components.button.sizes.xs.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.button.sizes.xs.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.button.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.button.sizes.sm.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.button.sizes.sm.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.button.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.button.sizes.md.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.button.sizes.md.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.button.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.button.sizes.lg.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.button.sizes.lg.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.link.variants.default.states.pressed.opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.link.variants.muted.states.pressed.opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.link.variants.danger.states.pressed.opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.input.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.input.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.input.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.input.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.input.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.input.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.input.sizes.code.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.input.sizes.code.width": {
+                "min": 20,
+                "max": 80
+            },
+            "components.input.sizes.code.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.field.base.label_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.field.base.message_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.field.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.field.base.actions_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.auth_form.base.social_icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.auth_form.base.social_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.auth_form.base.social_margin": {
+                "min": 0,
+                "max": 96
+            },
+            "components.menu.base.item_height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.menu.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.menu.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.checkbox.base.size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.checkbox.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.radio.base.size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.radio.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.choice.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.choice.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.choice.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.choice.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.choice.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.choice.variants.default.states.disabled.opacity": {
+                "min": 0.1,
+                "max": 1
+            },
+            "components.stepper.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.stepper.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.stepper.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.switch.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.switch.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.switch.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.switch.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.tabs.base.icon_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.tabs.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.tabs.sizes.sm.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.sizes.sm.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.tabs.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.tabs.sizes.md.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.sizes.md.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.tabs.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.tabs.sizes.lg.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.sizes.lg.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.tabs.variants.pill.inset": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.variants.pill.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.variants.underline.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tabs.variants.underline.indicator_thickness": {
+                "min": 1,
+                "max": 6
+            },
+            "components.tabs.variants.plain.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.chip.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.chip.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.chip.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.chip.sizes.sm.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.chip.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.chip.sizes.md.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.chip.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.chip.sizes.lg.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.badge.sizes.sm.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.badge.sizes.md.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.favorite.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.ribbon.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.ribbon.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.toast.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.toast.base.offset": {
+                "min": 0,
+                "max": 96
+            },
+            "components.toast.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.modal.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.modal.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.alert.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.alert.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.alert.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.tooltip.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tooltip.base.offset": {
+                "min": 0,
+                "max": 96
+            },
+            "components.tooltip.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.empty_state.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.base.image_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.base.actions_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.variants.compact.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.variants.compact.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.variants.compact.image_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.platforms.mobile_web.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.platforms.mobile_web.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.empty_state.platforms.mobile_web.image_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.banner.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.banner.variants.promo.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.banner.variants.rewards.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.promo_carousel.base.margin_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.promo_carousel.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.promo_carousel.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.accordion.base.chevron_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.accordion.base.header_padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.accordion.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.slider.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.timer.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.item.spacing": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.item.indent": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.section.spacing": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.section.indent": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.band.spacing": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.band.indent": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.vertical.spacing": {
+                "min": 0,
+                "max": 96
+            },
+            "components.divider.variants.vertical.indent": {
+                "min": 0,
+                "max": 96
+            },
+            "components.card.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.header.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.footer.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.footer.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.footer.base.margin_top": {
+                "min": 0,
+                "max": 96
+            },
+            "components.home_hero.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.order_type_card.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.order_type_card.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.order_type_card.variants.default.states.selected.opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.order_type_card.variants.default.states.idle.opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.business_card.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.business_card.base.status_opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.business_card.base.meta_icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.business_card.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.business_types.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.business_types.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.business_header.base.actions_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.category_tabs.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.product_section.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.product_section.base.margin_bottom": {
+                "min": 0,
+                "max": 96
+            },
+            "components.product_card.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.product_card.base.tag_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.product_card.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.product_modal.base.thumb_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.product_modal.base.tag_size": {
+                "min": 20,
+                "max": 80
+            },
+            "components.product_option.base.image_size": {
+                "min": 20,
+                "max": 80
+            },
+            "components.product_option.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.checkout.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.checkout.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.checkout.base.section_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.checkout.base.totals_padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.driver_tips.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.account_page.base.padding_top": {
+                "min": 0,
+                "max": 96
+            },
+            "components.account_page.base.padding_bottom": {
+                "min": 0,
+                "max": 96
+            },
+            "components.wallet_balance.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.wallet_balance.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.wallet_transaction.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.help_topic.base.chevron_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.signup_page.base.description_gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.signup_page.base.form_padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.signup_page.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.signup_page.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.signup_page.base.padding_y_mobile": {
+                "min": 0,
+                "max": 96
+            },
+            "components.signup_page.base.padding_x_mobile": {
+                "min": 0,
+                "max": 96
+            },
+            "components.order_card.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.order_tracking.base.step_icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.progress.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.progress.sizes.sm.height": {
+                "min": 2,
+                "max": 32
+            },
+            "components.progress.sizes.md.height": {
+                "min": 2,
+                "max": 32
+            },
+            "components.progress.sizes.lg.height": {
+                "min": 2,
+                "max": 32
+            },
+            "components.section_header.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.section_header.base.margin_bottom": {
+                "min": 0,
+                "max": 96
+            },
+            "components.section_header.variants.page.margin_bottom": {
+                "min": 0,
+                "max": 96
+            },
+            "components.offer_card.base.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.offer_card.platforms.mobile_web.padding": {
+                "min": 0,
+                "max": 96
+            },
+            "components.search_bar.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.search_bar.sizes.sm.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.search_bar.sizes.md.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.search_bar.sizes.lg.height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.sidebar_menu.base.item_height": {
+                "min": 20,
+                "max": 80
+            },
+            "components.sidebar_menu.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.sidebar_menu.base.speed": {
+                "min": 50,
+                "max": 1000
+            },
+            "components.bottom_nav.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.bottom_nav.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.bottom_nav.base.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.chat_bubble.base.padding_x": {
+                "min": 0,
+                "max": 96
+            },
+            "components.chat_bubble.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.avatar.sizes.sm.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.avatar.sizes.md.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.avatar.sizes.lg.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.avatar.sizes.xl.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.rating.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.rating.sizes.sm.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.rating.sizes.md.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.rating.sizes.lg.icon_size": {
+                "min": 12,
+                "max": 32
+            },
+            "components.date_strip.base.padding_y": {
+                "min": 0,
+                "max": 96
+            },
+            "components.date_strip.base.gap": {
+                "min": 0,
+                "max": 96
+            },
+            "components.steps.base.connector_opacity": {
+                "min": 0,
+                "max": 1
+            },
+            "components.connection_status.base.margin": {
+                "min": 0,
+                "max": 96
+            }
+        },
         "site": {
             "mode": [
                 "option",
