@@ -25,9 +25,10 @@ Contents:
 11. [Derivations, Identity and matrices](#11-derivations-identity-and-matrices)
 12. [`$extensions["co.ordering.editor"]` and `editor`: what the editor reads](#12-extensionscoorderingeditor-and-editor-what-the-editor-reads)
 13. [Versions and compatibility](#13-versions-and-compatibility)
-14. [Migrations (`co.ordering.migrate`)](#14-migrations-coorderingmigrate)
-15. [Errors](#15-errors)
-16. [Deviations from DTCG](#16-deviations-from-dtcg)
+14. [Migrations within a base (`co.ordering.migrate`)](#14-migrations-within-a-base-coorderingmigrate)
+15. [A new base (`co.ordering.upgrade`)](#15-a-new-base-coorderingupgrade)
+16. [Errors](#16-errors)
+17. [Deviations from DTCG](#17-deviations-from-dtcg)
 
 ---
 
@@ -41,7 +42,10 @@ Contents:
   "format": 2,                              // the format of the served theme; always 2
   "platforms": ["mobile_web"],              // optional: the platforms with their own values
   "$description": "…",                      // optional
-  "$extensions": { "co.ordering.migrate": [ … ] }, // optional (§14)
+  "$extensions": {                          // optional
+    "co.ordering.migrate": [ … ],            // renames within the base (§14)
+    "co.ordering.upgrade": { … }             // from the previous base (§15)
+  },
   "editor": { … },                          // optional (§12)
   "tokens": { … },                          // §4
   "components": { … },                      // §5
@@ -764,11 +768,19 @@ The rules, in the order they run:
 
 ## 13. Versions and compatibility
 
-`version` is `base.minor.patch`. The **base** is the product's major version (26); a v2
-theme is always resolved with **the latest published version of its base**, not with
-the one it was created with. So, within a base, each version must serve the themes saved
-with the earlier ones. On publish, api-core compares the schema with the latest version
-of its base:
+`version` is `base.minor.patch`. The **base** is the product's major version (26). A
+product type has one **current version**: the last one published (a deploy that
+publishes an older version again, a rollback, makes it the current one again). The
+Ordering.co API resolves every theme of the product type with its current version,
+whatever version the theme was saved with:
+
+- a theme saved with an earlier version **of the same base** is read through that
+  version's migrations (§14): within a base, each version must serve the themes saved
+  with the earlier ones, which is what the rules below enforce;
+- a theme saved with an **earlier base** is read through each base's upgrade step
+  (§15): 26 → 27, or 26 → 27 → 28.
+
+On publish, the API compares the schema with the latest version of its base:
 
 - **Order:** the version is greater than the latest of its base (`26.0` counts as
   `26.0.0`). Otherwise, `schema.version_order`.
@@ -776,7 +788,8 @@ of its base:
   is `schema.version_exists`; with the same, `unchanged`.
 - **A patch** (`26.1.0` → `26.1.1`) only changes texts (`$description`) and editor
   metadata (`co.ordering.editor`, the `editor` block). Changing a key, a type, an option,
-  a default, a rule, a `$deprecated` or a migration is `schema.patch_changes_values`.
+  a default, a rule, a `$deprecated`, a migration or the upgrade block is
+  `schema.patch_changes_values`.
 - **A minor** (`26.1.x` → `26.2.0`) can add keys and options and change defaults. It
   cannot:
   - remove a key (`<path>.removed`), unless the previous version marked it
@@ -787,9 +800,12 @@ of its base:
     its level;
   - remove one of its options (`<path>.option_removed`);
   - remove a migration that was already there (`schema.migration_removed`): within a
-    base the list only grows.
-- **A new base** (`27.0.0`) is not compared with the previous one: it can change
-  everything, but themes saved with the previous base do not follow it.
+    base the list only grows;
+  - remove anything of the base's upgrade block (`schema.upgrade_removed`, §15.4).
+- **A new base** (`27.0.0`) is not compared with the previous base's versions key by
+  key: it may change anything. Instead it declares, in its upgrade block, how a theme of
+  the previous base takes its values, and publishing checks that block against the last
+  version of the previous base (§15).
 
 The compared paths are those of each node (`tokens.color.primary`,
 `components.button.base.radius`, `visibility.header.logo`…), with the `$type` of the node
@@ -804,10 +820,26 @@ and staging while no site uses v2 themes) replaces an already published version
 `changes`. Everything else is validated the same way. `validate(schema, { previous,
 development: true })` does the same.
 
-## 14. Migrations (`co.ordering.migrate`)
+### 13.1 Which tool for which change
 
-At the root, `$extensions["co.ordering.migrate"]` is a list of renames and moves of a
-theme's values:
+| Change | Version | How saved themes follow it |
+|---|---|---|
+| Texts, labels, editor metadata | patch | nothing to do |
+| Add a key, a component, an option; change a default | minor | a theme that does not set it gets the default |
+| Mark a key `$deprecated`; later remove it | minor | its value is left out on reading |
+| Rename or move a key, keeping its section and kind | minor | `co.ordering.migrate` (§14) |
+| Remove a key that is not deprecated, change a type or a scale, remove an option, turn a key into one of another section, change what a stored value means | major: a new base | `co.ordering.upgrade` (§15) |
+
+## 14. Migrations within a base (`co.ordering.migrate`)
+
+A migration renames or moves a key **within a base**, so that every theme saved before
+keeps the value it chose. It is the only way a minor can take a key away from where
+themes store it.
+
+### 14.1 How to declare one
+
+At the root, `$extensions["co.ordering.migrate"]` is a list of `{ from, to }`, both theme
+paths (§14.2):
 
 ```jsonc
 "$extensions": {
@@ -817,82 +849,319 @@ theme's values:
 }
 ```
 
-- api-core applies them in order every time it reads or saves a theme, and this
-  package's `resolve()` does too, before anything else (before `inherits`): the value in
-  `from` moves to `to` if the theme does not set `to`, and `from` is deleted either way.
-  A map left empty by the move is deleted too.
-- Each migration also applies under every platform the theme overrides
-  (`platforms.<platform>.…`), which sets components, visibility and pages by the same
-  paths: a platform's value moves the same way, unless that platform sets `to`.
-- Each migration needs a `from` the schema **no longer has** and a `to` it does have, in
-  the same section (the same first segment), and different from each other. Otherwise,
-  `migrate.<index>.invalid`. A `from` in `tokens` or `components` that the schema still
-  has as a group (`tokens.color`, `components.button.base`, a variant) is not one it no
-  longer has: moving it would move a group themes still set.
-- Within a base the list only grows (§13).
+- `from` is a key the schema **no longer has**; `to`, one it **has**. Both are in the
+  same section (the same first segment) and of the same kind (§14.2), and they differ.
+- A `from` in `tokens` or `components` that the schema still has as a group
+  (`tokens.color`, `components.button.base`, a variant) is not a key it no longer has:
+  moving it would move a group themes still set.
+- Anything else is `migrate.<n>.invalid`, `<n>` being the migration's index, and the
+  schema is `schema.invalid`.
+- **The list only grows.** Each version of the base keeps every migration of the
+  versions before it (`schema.migration_removed` otherwise), because a theme saved with
+  any of them may still be read. A patch cannot change the list at all
+  (`schema.patch_changes_values`).
+- On publish, a key a migration moves is reported as `migrated`, not `removed`; so are
+  the `footer` and `sections` of a page a migration moves as a whole.
 
-### 14.1 Visibility, images and pages
+### 14.2 Paths and kinds
 
 A path names what a theme stores, with the kind it has:
 
 | Path | Kind | What moves |
 |---|---|---|
+| `tokens.<group>.<name>` | the token's group (`color`, `typography`, `opacity`…; `layout_mode` for `layout.mode`) | the token's value, a color's value in each mode, and every alias to it |
+| `components.<component>.<section>….<property>` | the property's (its `$type` and `scale`) | the value, and each platform's override of it |
 | `visibility.<key>` | `bool` | the boolean, and each platform's override of it |
 | `images.<key>` | `image` | the URL, as it is |
 | `pages.<page>` | `page` | the whole page: its `footer` and its `sections` |
 | `pages.<page>.footer` | `bool` | the footer (`true`, `false` or `null`) |
 | `pages.<page>.sections` | `sections` | the page's whole list |
 | `pages.<page>.sections.<key>` | `section` | one section of the list, with its `visible` |
+| `site.<setting>` | the setting's | nothing in the theme (§14.4) |
 
+- **Tokens** are named by the schema's own names (the catalog's, §4.1, in a group where
+  the schema names none). A token can only be renamed within its group: in the groups
+  whose names every schema has whole (`radius`, `space`, `shadow`…) there is nothing to
+  rename.
+- **Components:** a property, also one of a variant or a state. A whole variant or state
+  is no path with a kind.
 - The key of `visibility` and `images` is the whole rest of the path, dots included
   (`visibility.business.header.info` is the key `business.header.info`), as in §6 and §7.
-- **Type safety.** In these three sections `from` must also have the shape of a path of
-  that table (a `<key>` as in §6, a page or section name `[a-z0-9_]+`), **of the same
-  kind as `to`**: a footer does not become a section, a section does not become a page,
-  and a path deeper than a section names nothing. Otherwise, `migrate.<index>.invalid`.
-  Moving across sections is rejected like any other (a visibility key that becomes a
-  page's section, an image that becomes a visibility key): its value changes type, and
-  needs a data migration in api-core.
-- **A section is an item of its page's list**, not a key. Its migration takes the first
+- **Visibility, images and pages:** `from` must also have the shape of a path of that
+  table (a `<key>` as in §6, a page or section name `[a-z0-9_]+`) of the **same kind as
+  `to`**: a footer does not become a section, a section does not become a page, and a
+  path deeper than a section names nothing.
+- Moving across sections (a visibility key that becomes a page's section, an image that
+  becomes a visibility key) or changing a key's kind is not a migration: it needs a new
+  base (§15).
+- `kindAt()` reads the schema's own keys: what the schema does not have has no kind.
+
+### 14.3 What happens to a saved theme
+
+The API applies the migrations, in order, every time it reads or saves a theme (and
+this package's `resolve()` and `valid()` do too, before anything else):
+
+- the value at `from` moves to `to` **if the theme does not set `to`**; `from` is deleted
+  either way (so a theme that already set `to` keeps that value). A map left empty by the
+  move is deleted too;
+- the same happens under every platform the theme overrides
+  (`platforms.<platform>.…`, for components, visibility and pages), unless that platform
+  sets `to`;
+- a **token**'s migration also moves a color's value in each mode
+  (`modes.<mode>.color.<name>`, unless the mode sets `to`), and rewrites **every alias
+  to it** the theme stores (`{color.brand}` in a property, a border, a platform's
+  override becomes `{color.primary}`), whether or not the theme set the token itself;
+- a **section** is an item of its page's list, not a key. Its migration takes the first
   item with the `from` key: within the same page it is renamed **in its place**; to
   another page it goes **to the end** of that page's list (the list is created if the
   theme has none), so it lands last among its `group` there until the theme reorders
   it. "The theme sets `to`" means that list already has an item with the `to` key: then
   nothing moves. Every item with the `from` key is deleted either way, and a list left
-  empty is deleted (the page then shows its default sections).
-- **An image** moves as it is: the new key's `formats` and `hints` only apply to the
-  next upload, as with any stored image.
-- What a theme stores but the destination does not take (a moved section that cannot be
-  hidden there with `visible: false`, a page with sections the new page lacks) is left
-  out on reading, as any invalid value is, and the default shows.
-- On publish (§13), a key a migration moves is not `removed`; neither are the `footer` and
-  `sections` of a page when a migration moves the whole page. A section that disappears
-  from a page's list is not a removed key (the list is one node), with or without a
-  migration: the migration only keeps what themes chose for it.
-- `kindAt()` reads the schema's own keys: a key, image, page or section the schema does
-  not have has no kind.
+  empty is deleted (the page then shows its default sections);
+- an **image** moves as it is: the new key's `formats` and `hints` only apply to the
+  next upload;
+- what a theme stores but the destination does not take (a moved section that cannot be
+  hidden there, a page with sections the new page lacks, a value that is not valid for
+  `to`) is left out on reading, as any invalid value is, and the default shows.
 
-### 14.2 What works today
+Nothing is rewritten in the database: the migrations run whenever a theme is read, and
+the API saves the moved values the next time the theme is saved.
 
-- **`components.*`**: renaming or moving a property, also one of a variant or a state (a
-  whole variant or state is no path with a kind, and is rejected as `to`).
-- **`visibility.*`, `images.*` and `pages.*`**: as in §14.1.
-- **`tokens.*`**: a token of any group (§4), renamed within its group, by the schema's
-  own names: a `from` the schema no longer names and a `to` it names (the catalog's
-  names when the schema names none in that group). The token's value moves, a color's
-  value in each mode too (`modes.<mode>.color.<name>`, unless the mode sets `to`), and
-  **every alias to it** a theme stores (`{color.brand}` in a component, a border, a
-  platform's override) becomes an alias to `to`, whether or not the theme set the token
-  itself. A token's kind is its group (`color`, `typography`, `opacity`, `radius`…;
-  `layout_mode` for `layout.mode`), so in the groups whose names every schema has whole
-  (§4.1) nothing can be renamed.
-- **`site.*`** passes validation, but site settings are not in the theme and the
-  migration does not move them.
+### 14.4 Site settings
 
-What cannot be declared needs a data migration in api-core
-([creating-a-schema.md §6](creating-a-schema.md#6-versions-and-migrations)).
+A migration of `site.*` passes validation and counts on publish (the key is `migrated`),
+but site settings are not part of the theme: within a base the API does not move them.
+Between bases the upgrade block does (§15).
 
-## 15. Errors
+### 14.5 Example: a minor that renames a property and a visibility key
+
+`26.1.0` has `components.button.base.padding_x` and `visibility.header.brand`. `26.2.0`
+calls them `padding_inline` and `header.logo`:
+
+```jsonc
+{
+  "version": "26.2.0",
+  "$extensions": {
+    "co.ordering.migrate": [
+      { "from": "components.button.base.padding_x", "to": "components.button.base.padding_inline" },
+      { "from": "visibility.header.brand", "to": "visibility.header.logo" }
+    ]
+  },
+  "components": { "button": { "base": { "padding_inline": { "$type": "dimension", "$value": "{space.lg}", "$extensions": { "co.ordering": { "scale": "space" } } } } } },
+  "visibility": { "header.logo": { "$value": true } }
+  // …the rest of the schema, without padding_x or header.brand
+}
+```
+
+Publishing answers `changes.migrated: ["components.button.base.padding_x",
+"visibility.header.brand"]` and `added` with the two new paths. A theme saved with 26.1
+
+```json
+{ "components": { "button": { "base": { "padding_x": "{space.md}" } } },
+  "visibility": { "header.brand": false },
+  "platforms": { "mobile_web": { "visibility": { "header.brand": true } } } }
+```
+
+is read as
+
+```json
+{ "components": { "button": { "base": { "padding_inline": "{space.md}" } } },
+  "visibility": { "header.logo": false },
+  "platforms": { "mobile_web": { "visibility": { "header.logo": true } } } }
+```
+
+`26.3.0` and every later 26 keep both migrations. Leaving one out is
+`schema.migration_removed`; giving `padding_inline` another scale is
+`components.button.base.padding_inline.scale_changed`: that needs a new base.
+
+## 15. A new base (`co.ordering.upgrade`)
+
+A new base (`27.0.0`) may change anything: remove keys, change types and scales, turn a
+key into another section's. In exchange it **declares how a theme of the previous base
+takes its values**, so that no theme is lost and nobody rewrites the database. The API
+publishes a base only with that declaration, and checks it against the last version of
+the previous base.
+
+### 15.1 The block
+
+At the root, beside `co.ordering.migrate`:
+
+```jsonc
+"$extensions": {
+  "co.ordering.upgrade": {
+    "from": 26,
+    "moves": [
+      { "from": "components.button.base.padding_x", "to": "components.button.base.padding_inline" },
+      { "from": "tokens.color.link", "to": "tokens.color.primary_text" },
+      { "from": "components.header.base.layout", "to": "components.header.base.layout",
+        "map": { "original": "classic", "centered": "center" } }
+    ],
+    "drop": [ "visibility.orders.previously_ordered", "tokens.opacity.scrim" ],
+    "rewrite": { "id": "marketplace_website.27", "paths": [ "tokens.typography" ] }
+  }
+}
+```
+
+- **`from`** (required): the previous base, an integer below the schema's own base. It
+  must be the product type's previous published base.
+- **`moves`** (required, may be empty): `{ from, to, map? }`, in order. `from` is a path
+  of the previous base, `to` one of the new base (§14.2's paths). Unlike a migration,
+  `from` may equal `to`: a key that stays where it is but whose values change, with a
+  `map`.
+- **`map`** (optional): `{ "<old value>": <new value> }`, translating an option
+  (`"original": "classic"`) or a level (`"{size.lg}": "{space.lg}"`). Its keys are the
+  stored values as strings; a stored value that is no string or integer, or has no entry,
+  is **dropped**. Its values are strings or integers.
+- **`drop`** (required, may be empty): paths of the previous base whose values are lost
+  on purpose. A path may name a group (`tokens.typography`, `pages.shop`): everything
+  under it is dropped. In `visibility` and `images` a path is exactly one key.
+- **`rewrite`** (optional): `{ id, paths }`, what cannot be declared (a value whose
+  meaning changes: a line height in px that becomes a ratio; a visibility key that
+  becomes a page's section). `id` names a transformation **registered in the API**,
+  written and deployed there before the schema that names it is published; `paths` are
+  the previous base's paths it takes care of (groups allowed).
+- The block is frozen with the base: every later 27 keeps it (§15.4).
+
+### 15.2 What happens to a saved theme
+
+The API resolves every theme with the product type's current version (§13). A theme
+saved with an earlier base is **converted when it is read**, in memory, and **saved
+converted the next time it is written** (a draft, a publish, a reset). Presets of an
+earlier base are offered (when their `compatible_bases` allow it) and converted when
+applied. A site's settings (`site.*`) follow the same steps. Nothing is migrated in the
+database for a new base.
+
+Each step, from the last version of the theme's base to the new base's, in order:
+
+1. **The previous base's migrations** (§14): the theme is first read as the last
+   version of its own base reads it.
+2. **Identity:** every value stays at its path.
+3. **What changed kind at the same path** (its `$type`, or a `dimension`'s scale) and no
+   move takes (nor the rewrite, when the API runs it) is dropped: a px value is not read
+   as a ratio, a level of `size` is not read as one of `space`. Also under platforms and
+   modes.
+4. **`moves`**, in order, exactly as a migration moves a key (§14.3): the value goes to
+   `to` if the theme does not set it, `from` is deleted either way, a platform's
+   override and a token's modes and aliases follow, a section moves as an item of its
+   list. With a `map`, the value is translated first, and dropped when the map has no
+   entry for it.
+5. **`drop`**: each path is deleted, under every platform too, a color in each mode, a
+   section out of its list.
+6. **`rewrite`**: the API runs the transformation registered under `id` over the values
+   (outside the API, this package skips it unless the caller passes one).
+7. **The new version's migrations and validation:** what the new version does not take
+   is left out, and its default shows. What the new base added has no origin and takes
+   its default, as with a minor.
+
+**A chain:** a theme of 26 read with 28 goes 26 → 27 → 28; each base declares only the
+step from the one before, and each step uses the last published version of its bases.
+
+**Clients of an older version.** Each client says which schema version it reads. One
+older than the current version (between publishing and deploying, or after rolling a
+build back) gets the theme resolved with the current version and **cut down** to its
+own: a value survives only if it has the same path and the same kind in both versions
+and its version takes it; anything else takes that version's default. A client that
+says nothing, an unknown version or a newer one gets the current version.
+
+### 15.3 What publishing checks
+
+With the last version of the previous base (the API looks it up; the CLI takes
+`--previous-base <file>`, `validateFull()` the `previousBase` option), every error is
+`schema.invalid` (422), each with its path:
+
+| Code | When |
+|---|---|
+| `upgrade.required` | the product type has a previous base and the schema has no block |
+| `upgrade.from.invalid` | `from` is not the previous base, or not below the schema's own base, or the product type has no earlier base. Nothing else is checked |
+| `upgrade.moves.<n>.from.unknown` | the previous base has no such key (`kindAt()`) |
+| `upgrade.moves.<n>.to.unknown` | the new base has no such key, also once its own migrations move it (a 27.1 may rename a move's `to`) |
+| `upgrade.moves.<n>.kind` | `from` and `to` are in different sections, or of different kinds without a `map` |
+| `upgrade.moves.<n>.map.invalid` | a `map` value is not an option or a level of the destination: an option of an `option` or `layout` property or of a token with options, or an alias to a level the property takes (of its scale, its options, and of the schema's own colors, styles and opacities) |
+| `upgrade.moves.<n>.duplicate` | a `from` an earlier move already has |
+| `upgrade.drop.<n>.unknown` | a path the previous base does not have, as a key or a group |
+| `upgrade.<path>.unaccounted` | a key of the previous base that neither arrives at the same path with the same kind (where the new version's own migrations take it) nor is covered by a move's `from`, a `drop` or a `rewrite.paths` |
+| `upgrade.rewrite.unknown` | the API has no transformation registered under `rewrite.id` (the API only) |
+| `upgrade.invalid` | a compiled schema whose `upgrade` is not `{ from: integer, moves: [], drop: [] }` (in nodes, the meta-schema answers first, `$extensions.co.ordering.upgrade.schema`) |
+
+`unaccounted` is what makes every loss explicit: the author confirms each key that does
+not arrive by moving, dropping or rewriting it.
+
+### 15.4 Within the new base
+
+The block behaves like the migrations: a patch cannot change it
+(`schema.patch_changes_values`), and a minor may only add moves and paths to drop. A
+minor that removes a move or a path, or changes `from` or the `rewrite`, is
+`schema.upgrade_removed` (`schema.incompatible`).
+
+If the previous base publishes a new minor after the new base exists, the API checks the
+new base's block against it again and reports what it no longer accounts for, without
+refusing; the next minor of the new base can add the moves or drops it needs.
+
+### 15.5 Example: 27.0.0
+
+26.4.0 has `components.button.base.old_gap`, a link `underline` with the option
+`underlined`, a card `padding` on the `size` scale, a modal `padding` that is a level of
+`space`, the color `brand`, the typography style `small`, the visibility keys
+`header.brand` and `old_banner`, and the site setting `slug`. 27.0.0 renames the gap to
+`icon_gap`, calls the option `always`, moves the card's padding to the `space` scale,
+makes the modal's padding a plain number, drops `brand` for `primary`, `small`,
+`header.brand` for `header.logo`, `old_banner` and `slug` for `business_slug`:
+
+```jsonc
+{
+  "version": "27.0.0",
+  "$extensions": {
+    "co.ordering.upgrade": {
+      "from": 26,
+      "moves": [
+        { "from": "components.button.base.old_gap", "to": "components.button.base.icon_gap" },
+        { "from": "components.link.base.underline", "to": "components.link.base.underline",
+          "map": { "none": "none", "hover": "hover", "underlined": "always" } },
+        { "from": "components.card.base.padding", "to": "components.card.base.padding",
+          "map": { "{size.lg}": "{space.lg}", "{size.md}": "{space.md}" } },
+        { "from": "tokens.color.brand", "to": "tokens.color.primary" },
+        { "from": "visibility.header.brand", "to": "visibility.header.logo" },
+        { "from": "site.slug", "to": "site.business_slug" }
+      ],
+      "drop": [ "components.modal.base.padding", "visibility.old_banner" ],
+      "rewrite": { "id": "marketplace_website.27", "paths": [ "tokens.typography.small" ] }
+    }
+  }
+  // …the rest of the 27 schema
+}
+```
+
+A theme saved with 26.4
+
+```json
+{ "components": { "button": { "base": { "old_gap": "{space.md}" } },
+                  "link": { "base": { "underline": "underlined" } },
+                  "card": { "base": { "padding": "{size.lg}", "background": "{color.brand}" } },
+                  "modal": { "base": { "padding": "{space.lg}" } } },
+  "tokens": { "color": { "brand": "#E4002B" } },
+  "visibility": { "header.brand": false, "old_banner": true } }
+```
+
+is read with 27.0.0 as
+
+```json
+{ "components": { "button": { "base": { "icon_gap": "{space.md}" } },
+                  "link": { "base": { "underline": "always" } },
+                  "card": { "base": { "padding": "{space.lg}", "background": "{color.primary}" } } },
+  "tokens": { "color": { "primary": "#E4002B" } },
+  "visibility": { "header.logo": false } }
+```
+
+and the API saves it like that the next time the theme is written. The typography
+`small` is whatever `marketplace_website.27`, registered in the API, makes of it.
+Leaving `components.modal.base.padding` out of `drop` would be
+`upgrade.components.modal.base.padding.unaccounted`; a map value `"{size.lg}"` for the
+card's padding, now on `space`, would be `upgrade.moves.2.map.invalid`. A 26 client
+asking while 27 is current gets this theme cut down to 26: `icon_gap`, `always` and the
+card's `{space.lg}` do not exist or have another kind in 26, so it sees 26's defaults
+there.
+
+## 16. Errors
 
 `validate()` and api-core answer `{ code, errors }`, with `errors` as
 `[{ path, code }]`. Each error's `code` is the path followed by the rule. The first
@@ -905,6 +1174,8 @@ stage that fails gives the overall `code`:
 | `schema.version_exists` | 409 | the version is already published with different content (api-core only) |
 | `schema.version_order` | 409 | the version is not greater than the latest of its base |
 | `schema.incompatible` | 422 | it would break the themes of the latest version of its base |
+
+The upgrade block's errors against the previous base (§15.3) are `schema.invalid`.
 
 Rules of each error:
 
@@ -924,6 +1195,7 @@ Rules of each error:
 | `token_options.<token>.invalid` | §4.2 |
 | `inherits.<c>.invalid`, `follows.<path>.invalid`, `derive.<color>.invalid`, `component_derive.<c>.<path>.invalid`, `matrix.<c>.invalid` | §5.1, §11 |
 | `migrate.<n>.invalid` | §14 |
+| `upgrade.required`, `upgrade.from.invalid`, `upgrade.moves.<n>.from.unknown`, `.to.unknown`, `.kind`, `.map.invalid`, `.duplicate`, `upgrade.drop.<n>.unknown`, `upgrade.<path>.unaccounted`, `upgrade.rewrite.unknown`, `upgrade.invalid` | §15.3 |
 | `.default_out_of_range` | a numeric default outside its editor's `min`/`max` |
 | `.alpha_required`, `.alpha_not_color` | §12.3, `alpha` |
 | `.platforms_not_visibility` | §12.3, platforms |
@@ -941,7 +1213,7 @@ Rules of each error:
 | `.alone_in_group`, `.not_snake_case` | §12.3, a page's sections |
 | `.not_boolean` | §12.3, visibility keys |
 | `version.semver` | the version is not `base.minor.patch` |
-| `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed` | §13 |
+| `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed`, `schema.upgrade_removed` | §13, §15.4 |
 
 The paths of compiler and rule errors are those of the compiled tuple: the same as the
 schema's, plus `.default`, `.options` or `.rules` at the end; those of the editor's rules,
@@ -949,7 +1221,7 @@ the ones §12.3 says. Meta-schema errors may name
 different paths depending on the validator (opis in api-core, Ajv in CI); whether the
 schema passes or not is the same.
 
-## 16. Deviations from DTCG
+## 17. Deviations from DTCG
 
 They are deliberate:
 

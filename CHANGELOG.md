@@ -7,6 +7,11 @@ change to the public API.
 
 ## Unreleased
 
+- Docs: `schema-format.md` §13–15 are the whole story of versions for a schema author:
+  which change needs which tool, migrations within a base (§14: paths and kinds, what
+  moves, what publish refuses, an example) and a new base's upgrade block (§15: the
+  block, its steps, what happens to stored themes and older clients, every code, an
+  example); `creating-a-schema.md` §6 sums them up. Errors are now §16.
 - **Removed:** `co.ordering.editor.preview` (`{ page, path }`), the data of an editor
   preview no product uses. The editor's metadata takes no unknown key, so a schema that
   still carries it fails the meta-schema:

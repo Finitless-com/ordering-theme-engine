@@ -15,7 +15,7 @@ themes of the sites of that product type.
 3. [The meta-schema and the editor](#3-the-meta-schema-and-the-editor)
 4. [Validate locally](#4-validate-locally)
 5. [Publish](#5-publish)
-6. [Versions and migrations](#6-versions-and-migrations)
+6. [Versions, migrations and new bases](#6-versions-migrations-and-new-bases)
 7. [Using the result: `resolve()` and `defaults()`](#7-using-the-result-resolve-and-defaults)
 8. [Complete minimal example](#8-complete-minimal-example)
 
@@ -123,7 +123,7 @@ pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.jso
 ```
 
 `validate` exits with code 1 if the schema does not pass, and lists each `{ path, code }`
-([schema-format.md §15](schema-format.md#15-errors)). The rules include the editor
+([schema-format.md §16](schema-format.md#16-errors)). The rules include the editor
 metadata's ([§12.3](schema-format.md#123-rules)): every path a group lists exists, each
 visibility key is in one group, the orders, limits, scales and fonts agree; a product
 repository needs no script of its own for them. `ordering-theme --help` lists all
@@ -206,47 +206,47 @@ base (null if it is the first). With the same key, `GET {api}/system/theme_schem
 lists the published versions (`{ version, sha256, created_at }`) and
 `GET {api}/system/theme_schemas/{product_type}/{version}` returns one.
 
-## 6. Versions and migrations
+## 6. Versions, migrations and new bases
 
 `version` is `base.minor.patch`. The base is the product's major version (for example
-`26` for the v26 apps), and **a theme is resolved with the latest published version of
-its base**. So publishing `26.3.0` changes what every site with base-26 themes sees,
-without anyone migrating anything, as long as the new version is compatible with the
-earlier ones. The exact rules are in
-[schema-format.md §13](schema-format.md#13-versions-and-compatibility); in short:
+`26` for the v26 apps). The Ordering.co API resolves **every theme of the product type
+with its current version**, the last one published: a theme saved with an earlier
+version is read through the steps that version left declared, and saved with the
+current version the next time someone edits it. So publishing `26.3.0` changes what
+every site sees without anyone migrating anything, and the rules below are what keep
+that safe. Everything about it, with the exact rules, the codes and worked examples, is
+in one place: [schema-format.md §13–15](schema-format.md#13-versions-and-compatibility).
+In short:
 
-| Change | Version |
-|---|---|
-| Texts, labels and editor metadata | patch |
-| Add a key, a component, an option; change a default | minor |
-| Mark a key `$deprecated` | minor |
-| Remove a key the previous version already marked `$deprecated` | minor |
-| Rename a token within its group, or rename or move a component property, a visibility key, an image, a page or a page's section, with its migration | minor |
-| Remove a non-deprecated key, change a type or a `dimension`'s scale, remove an option, remove a migration | **breaks**: new base |
+| Change | Version | What you declare |
+|---|---|---|
+| Texts, labels and editor metadata | patch | nothing |
+| Add a key, a component, an option; change a default | minor | nothing: themes that do not set it get the default |
+| Mark a key `$deprecated`; remove one the previous version already marked | minor | nothing: its value is left out |
+| Rename or move a token (within its group), a component property, a visibility key, an image, a page or one of its sections, keeping its section and kind | minor | a migration, `co.ordering.migrate` ([§14](schema-format.md#14-migrations-within-a-base-coorderingmigrate)) |
+| Remove a key that is not deprecated, change a type or a `dimension`'s scale, remove an option, turn a key into another section's, change what a stored value means | **new base** (`27.0.0`) | the upgrade block, `co.ordering.upgrade` ([§15](schema-format.md#15-a-new-base-coorderingupgrade)) |
 
-Changing a `dimension`'s scale (`size` → `space`) breaks saved themes, which name a level
-of the previous scale: within a base it is rejected just like a type change
-(`<path>.scale_changed`).
+**Within a base: migrations.** Declare `{ from, to }` at the root, in
+`$extensions["co.ordering.migrate"]`: `from` is the key the schema no longer has, `to`
+the one it has, in the same section and of the same kind. The API moves each saved
+theme's value when it reads or saves it, unless the theme already sets `to`; on every
+platform the theme overrides too, and for a token its value in each mode and every
+alias to it. The list only grows: every later version of the base keeps it. Example:
+[§14.5](schema-format.md#145-example-a-minor-that-renames-a-property-and-a-visibility-key).
 
-**When `co.ordering.migrate` is enough.** To rename a token within its group (a color, a
-typography style, an opacity), or rename or move a component's property, a visibility
-key, an image, a page, a page's footer or one of its sections, within the same section
-and keeping its kind: declare `{ from, to }` at the root and api-core moves the value of
-each saved theme when reading and saving it, on every platform the theme overrides too,
-and for a token its value in each mode and every alias to it
-([schema-format.md §14](schema-format.md#14-migrations-coorderingmigrate)).
-
-**When a data migration in api-core is needed.** When what changes cannot be declared:
-
-- turning a key of one section into another's (a visibility key that becomes a page
-  section), or changing its kind (a footer that becomes a section);
-- changing the meaning of a stored value (a line height in px that becomes a ratio);
-- any change that breaks within a base with themes already saved.
-
-That is a PR in api-core with a migration that rewrites the saved themes
-(`site_themes.values` and `draft_values` of each project) and the presets, deployed
-before publishing the schema version that needs it. Coordinate it with whoever maintains
-api-core.
+**A new base: the upgrade block.** `27.0.0` may change anything, and declares at the
+root, in `$extensions["co.ordering.upgrade"]`, how a theme of 26 takes its values:
+`from: 26`, the `moves` (each `{ from, to }`, with a `map` that translates options or
+levels), the paths it `drop`s on purpose, and, for what cannot be declared (a value
+whose meaning changes), a `rewrite` that names a transformation the API team registers
+and deploys first. Every key of 26 must arrive at the same path with the same kind or be
+moved, dropped or rewritten: publishing refuses the rest
+(`upgrade.<path>.unaccounted`), so no loss is silent. Check it before publishing with
+`ordering-theme validate theme.schema.json --previous-base <the last 26 schema>`.
+Stored themes are not migrated in the database: the API converts each one when it reads
+it and saves it converted on its next write, and a client still on 26 gets the theme cut
+down to 26. Example:
+[§15.5](schema-format.md#155-example-2700).
 
 **While the product is in development.** An api-core with
 `THEME_SCHEMA_DEVELOPMENT=true` (local and staging until v2 themes launch) replaces an
