@@ -96,6 +96,18 @@ alone.
   control (`<path>.default_out_of_range`).
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` with
   `changes: { added, removed, migrated, deprecated }`.
+- `checkUpgrade(next, previousBase)`: what a schema's upgrade block
+  (`co.ordering.upgrade`) gets wrong against the last version of the previous base,
+  both in nodes (`ThemeUpgrades::check()`); null as the previous base when the product
+  type has none. `validateFull(schema, { previousBase })` runs it too.
+- `upgrade(values, next, previous, rewrite?)`, `upgradeChain(values, schemas,
+  rewrite?)`: a theme of an older base read in a newer one, step by step
+  (`ThemeUpgrades::apply()`, `::chain()`); `schemas` goes from the last version of the
+  theme's base to the version to read it with. `rewrite(id, values, previous, next)`
+  runs what a base names in `rewrite` (api-core registers its own); without it that
+  step is skipped. `upgradeSettings()`, `upgradeSettingsChain()`: a site's settings.
+  `cutDown(values, from, to)`, `cutDownSettings()`: a version's values as an older
+  version reads them, for an older client. The schemas in nodes or compiled.
 - `valid(values, schema)`: what of a stored theme fits its schema
   (`ThemeResolver::valid()`): what the schema migrates moved first, then every value the
   schema does not have or that is not valid left out, so its default shows. The schema
@@ -138,7 +150,7 @@ use Ordering\ThemeEngine\ThemeSchemas;
 
 $compiled = ThemeSchemas::tuples($nodes, $v1Map);              // ['schema' => tuples, 'errors' => [...]]
 $theme = ThemeResolver::resolve($values, $compiled['schema']); // what the Ordering.co API serves
-$answer = ThemeSchemaPublisher::validate($nodes, $v1Map, $previous, $development);
+$answer = ThemeSchemaPublisher::validate($nodes, $v1Map, $previous, $development, $previousBase);
 // ['code' => null|'schema.format'|'schema.invalid'|'schema.version_order'|'schema.incompatible', 'errors' => [...], 'changes' => ...]
 ```
 
@@ -163,7 +175,11 @@ Public entry points:
   (`validateFull()` in TypeScript), and `outOfRange()`.
 - `ThemeValidator`: `validate()` (a theme against its schema), `settings()` (a site's
   settings), `codes()`, `value()`.
-- `ThemeMigrations` (`apply()`, `check()`), `ThemeSources` (`of()`, `aliases()`: where
+- `ThemeUpgrades`: `check($next, $previous_base)` (in nodes), `apply($values, $next,
+  $previous, $rewrite)`, `chain($values, $schemas, $rewrite)`, `settings()`,
+  `settingsChain()`, `cutDown($values, $from, $to)`, `cutDownSettings()` (compiled) and
+  `isBlock()`: a theme from one base to the next (§15 of the schema format).
+- `ThemeMigrations` (`apply()`, `drop()`, `check()`), `ThemeSources` (`of()`, `aliases()`: where
   each value comes from, for the editor), `ThemeImage` (`formats()`, `validFormats()`,
   `validHints()`, `FORMATS`, `DEFAULT_FORMATS`).
 - `Schema\NodeCompiler` (`compile()`, `isNodes()`), `Schema\NodeConverter` (`convert()`
@@ -175,9 +191,11 @@ Public entry points:
   `ThemePattern` (`source()`, `matches()`, `regex()`), a string's `pattern` rule.
 
 What stays in the Ordering.co API: the registry of published schemas and its cache, publishing
-(`schema.version_exists`, looking up `previous`), reading a site's theme, version 1
-themes (`ThemeV1Bridge`), the site's settings, stored-data migrations and inspecting an
-uploaded image.
+(`schema.version_exists`, looking up `previous` and the previous base), reading a site's
+theme (which version a client gets, the chain of bases to read a stored theme through,
+saving it converted), the rewrites a base names and their registry
+(`upgrade.rewrite.unknown`), version 1 themes (`ThemeV1Bridge`), the site's settings and
+inspecting an uploaded image.
 
 ## The `ordering-theme` CLI
 
@@ -186,9 +204,9 @@ What a product's repo runs on its schema. With the package installed,
 `npx @orderingco/ordering-theme-engine <command>`.
 
 ```sh
-ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous last.json]
+ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous last.json] [--previous-base last-of-26.json]
 ordering-theme defaults theme.schema.json [--out src/theme.defaults.json] [--check] [--site]
-ordering-theme publish  theme.schema.json [--v1-map v1-map.json] [--dry-run] [--required]
+ordering-theme publish  theme.schema.json [--v1-map v1-map.json] [--previous-base last-of-26.json] [--dry-run] [--required]
 ordering-theme --help      # -h
 ordering-theme --version   # -v
 ```
@@ -196,7 +214,11 @@ ordering-theme --version   # -v
 - `validate`: `validateFull()`. Prints one error per line (its code, with the path if
   the code does not include it, plus the validator's message for meta-schema errors) and
   exits 1; exits 0 if valid. With `--previous` (the last published version of its base)
-  it also checks the version order and that nothing breaks, and prints the changes.
+  it also checks the version order and that nothing breaks, and prints the changes. With
+  `--previous-base` (the last published version of the previous base) it also checks
+  the schema's upgrade block (`checkUpgrade()`); `publish` takes it too. Both are
+  optional: the Ordering.co API looks up the previous base and checks the block on
+  every publish.
 - `defaults`: the empty theme resolved (`defaults()`), what the Ordering.co API serves for a theme
   that changes nothing, as indented JSON with a trailing newline. Without `--out` it
   prints it; with `--out` it writes it. `--check` (requires `--out`) compares that file
@@ -420,6 +442,14 @@ What the PHP engine answers for them:
   alpha, duplicate), and `ThemeValidator::settings()` for site settings, over the
   compiled current schema (`scripts/valid-cases.php`); `themeErrors()`, `valid()` and
   `settingsErrors()` must answer the same;
+- `fixtures/upgrade.json`: three bases made from the current schema (26.4, 27.0 and
+  28.0, each a list of operations) and what `ThemeUpgrades` answers for themes and site
+  settings between them: identity, moves (with a platform's override, a whole page and
+  the previous base's own migration), a move onto a key the theme sets, `map` (an
+  option, a scale, a level and a number it does not name), a color's aliases and modes,
+  a type change no move takes, `drop`, the rewrite with and without its callback, the
+  chain 26 → 27 → 28, a chain of one, settings, and cut-downs to an older version
+  (`scripts/upgrade-cases.php`); the TypeScript test runs the same rewrite;
 - `fixtures/validate.json`: the golden cases of `validate()`
   (`scripts/validate-cases.php`). It starts from the current schema (with version
   `26.0.0`, the two `signup_page` paddings inside their control and the editor
@@ -436,7 +466,10 @@ What the PHP engine answers for them:
   `$deprecated: "0"`, migrating (a key, a visibility key, an image and a whole page, and a
   page only partly migrated), changing the type, changing the scale, removing an
   option, removing a migration, a new base, all errors together and a valid one with
-  all four kinds of change), plus several in development mode. The script fails if a
+  all four kinds of change), the upgrade block against the previous base (valid, a
+  `to` the base's own migrations move on, missing, a `from` that is not the previous
+  base or not below its own, every error at once, a minor that adds to it and one that
+  removes from it), plus several in development mode. The script fails if a
   case does not pass the meta-schema, so `validateFull()` answers the same as
   `validate()` in all of them.
 

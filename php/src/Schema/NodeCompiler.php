@@ -117,6 +117,10 @@ final class NodeCompiler
         if (is_array($schema['$extensions'][NodeFormat::MIGRATE] ?? null)) {
             $tuples['migrate'] = $schema['$extensions'][NodeFormat::MIGRATE];
         }
+        // How a theme of the previous base takes its values (ThemeUpgrades).
+        if (is_array($schema['$extensions'][NodeFormat::UPGRADE] ?? null)) {
+            $tuples['upgrade'] = $schema['$extensions'][NodeFormat::UPGRADE];
+        }
         if (is_array($schema['site'] ?? null)) {
             $tuples['site'] = self::tree(self::children($schema['site']), 'site', $fail);
         }

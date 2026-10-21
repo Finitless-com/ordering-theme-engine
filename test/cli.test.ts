@@ -75,6 +75,8 @@ beforeAll(() => {
   // Not even its shape: no product type.
   write('shapeless.json', apply(base, [['delete', ['product_type']]]))
   write('next.json', apply(base, [['set', ['version'], '26.1.0']]))
+  write('base-27.json', apply(base, [['set', ['version'], '27.0.0']]))
+  write('upgraded-27.json', apply(base, [['set', ['version'], '27.0.0'], ['set', ['$extensions'], { 'co.ordering.upgrade': { from: 26, moves: [], drop: [] } }]]))
   write('v1-map.json', map)
   write('broken.json', '{ not json')
   // Passes as JSON, but a property's `$type` is no property type.
@@ -134,6 +136,17 @@ describe('ordering-theme validate', () => {
     expect(older.code).toBe(1)
     expect(older.stderr).toBe('version: schema.version_order\nvalid.json: schema.version_order (1 error(s))\n')
     expect((await cli(['validate', 'next.json', '--previous', 'valid.json'])).code).toBe(0)
+  })
+
+  it('checks the upgrade block against --previous-base', async () => {
+    expect(await cli(['validate', 'base-27.json', '--previous-base', 'valid.json'])).toEqual({
+      code: 1,
+      stdout: '',
+      stderr: 'upgrade.required\nbase-27.json: schema.invalid (1 error(s))\n',
+    })
+    expect(await cli(['validate', 'upgraded-27.json', '--previous-base', 'valid.json'])).toEqual({ code: 0, stdout: 'upgraded-27.json 27.0.0 is valid\n', stderr: '' })
+    // Without it the block is the API's to check.
+    expect((await cli(['validate', 'base-27.json'])).code).toBe(0)
   })
 
   it('refuses a missing argument or option (2) and a file it cannot read (1)', async () => {
@@ -264,6 +277,13 @@ describe('ordering-theme publish', () => {
     for (const env of [{ THEME_PUBLISH_REQUIRED: '0' }, { THEME_PUBLISH_REQUIRED: 'yes' }, { WORKERS_CI: '1' }] as Array<Record<string, string>>) {
       expect((await cli(['publish', 'valid.json'], env)).code).toBe(0)
     }
+  })
+
+  it('sends nothing when the upgrade block fails against --previous-base', async () => {
+    const refused = await cli(['publish', 'base-27.json', '--previous-base', 'valid.json'], env())
+    expect(refused.code).toBe(1)
+    expect(refused.stderr).toBe('upgrade.required\nbase-27.json 27.0.0: not published, schema.invalid (1 error(s))\n')
+    expect(received).toEqual([])
   })
 
   it('sends nothing when the schema is not valid here', async () => {

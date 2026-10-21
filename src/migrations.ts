@@ -1,5 +1,5 @@
 import { alias } from './format.js'
-import { asMap, entries, get, has, isArray, isEmpty, isList, phpString, values, type Json, type JsonMap, type PhpArray } from './php.js'
+import { asMap, entries, get, has, isArray, isEmpty, isInt, isList, phpString, values, type Json, type JsonMap, type PhpArray } from './php.js'
 
 /**
  * The renames and moves a schema declares (`$extensions["co.ordering.migrate"]`,
@@ -18,6 +18,10 @@ import { asMap, entries, get, has, isArray, isEmpty, isList, phpString, values, 
  * of its list: it moves with its `visible`, renamed in its place within
  * the page, or to the end of another page's list.
  *
+ * A move may also carry a `map` (a base's `co.ordering.upgrade`,
+ * upgrade.ts): the value it moves is translated by it, and one it has no
+ * entry for is dropped; with a map, `from` and `to` may be the same path.
+ *
  * $theme is changed in place: pass a copy.
  */
 export function applyMigrations(theme: JsonMap, migrations: Json): JsonMap {
@@ -25,37 +29,91 @@ export function applyMigrations(theme: JsonMap, migrations: Json): JsonMap {
   for (const migration of values(migrations)) {
     const from = segments(phpString(get(migration, 'from') ?? ''))
     const to = segments(phpString(get(migration, 'to') ?? ''))
-    if (from.length < 2 || to.length < 2) {
+    const declared = get(migration, 'map')
+    const map = isArray(declared) ? declared : null
+    if (from.length < 2 || to.length < 2 || (same(from, to) && map === null)) {
       continue
     }
-    const roots: string[][] = [[]]
-    const platforms = get(answer, 'platforms')
-    for (const [platform] of entries(isArray(platforms) ? platforms : [])) {
-      roots.push(['platforms', platform])
-    }
-    for (const root of roots) {
-      answer = move(answer, [...root, ...from], [...root, ...to], root.length)
+    for (const root of roots(answer)) {
+      answer = move(answer, [...root, ...from], [...root, ...to], root.length, map)
     }
     if (from[0] === 'tokens' && to[0] === 'tokens' && from.length === 3 && to.length === 3) {
-      answer = moveToken(answer, from, to)
+      answer = moveToken(answer, from, to, map)
     }
   }
   return answer
 }
 
 /**
+ * $theme without what is at each path, wherever a migration of it would
+ * find it (ThemeMigrations::drop()): under every platform the theme
+ * overrides too, a color's value in each mode, and a page's section
+ * (`pages.<page>.sections.<key>`) out of its list. A path that names a group
+ * drops it whole; a map left empty goes too. $theme is changed in place.
+ */
+export function dropPaths(theme: JsonMap, paths: Json): JsonMap {
+  let answer = theme
+  for (const path of values(paths)) {
+    const parts = segments(phpString(path))
+    if (parts.length < 2) {
+      continue
+    }
+    for (const root of roots(answer)) {
+      answer = remove(answer, [...root, ...parts], root.length)
+    }
+    if (parts[0] === 'tokens' && parts[1] === 'color' && parts.length === 3) {
+      for (const [mode] of entries(get(answer, 'modes'))) {
+        answer = remove(answer, ['modes', mode, 'color', parts[2]!], 0)
+      }
+    }
+  }
+  return answer
+}
+
+/** Where a theme's paths start: its root, and each platform it overrides. */
+function roots(theme: JsonMap): string[][] {
+  const answer: string[][] = [[]]
+  const platforms = get(theme, 'platforms')
+  for (const [platform] of entries(isArray(platforms) ? platforms : [])) {
+    answer.push(['platforms', platform])
+  }
+  return answer
+}
+
+/**
+ * $theme without what is at $path, under a root of $depth segments: a
+ * section, every item of its key out of its page's list (the list goes when
+ * it is left empty).
+ */
+function remove(theme: JsonMap, path: string[], depth: number): JsonMap {
+  if (path.length === depth + 4 && path[depth] === 'pages' && path[depth + 2] === 'sections') {
+    const list = path.slice(0, -1)
+    const key = path[path.length - 1]!
+    const items = hasPath(theme, list) ? getPath(theme, list) : null
+    if (!isArray(items) || !isList(items) || find(items, key) === null) {
+      return theme
+    }
+    const kept = values(items).filter((item) => !isArray(item) || get(item, 'key') !== key)
+    return (kept.length === 0 ? forget(theme, list) : put(theme, list, kept)) as JsonMap
+  }
+  return hasPath(theme, path) ? forget(theme, path) as JsonMap : theme
+}
+
+const same = (a: string[], b: string[]): boolean => a.length === b.length && a.every((segment, at) => segment === b[at])
+
+/**
  * What a theme holds of a token besides its value, once it moved: its value
  * in each mode (a color's, `modes.<mode>.color.<name>`), moved the same
  * way, and every alias to it, which names the new token.
  */
-function moveToken(theme: JsonMap, from: string[], to: string[]): JsonMap {
+function moveToken(theme: JsonMap, from: string[], to: string[], map: Json): JsonMap {
   let answer = theme
   if (from[1] === 'color' && to[1] === 'color') {
     for (const [mode] of entries(get(answer, 'modes'))) {
-      answer = move(answer, ['modes', mode, 'color', from[2]!], ['modes', mode, 'color', to[2]!], 0)
+      answer = move(answer, ['modes', mode, 'color', from[2]!], ['modes', mode, 'color', to[2]!], 0, map)
     }
   }
-  return realias(answer, from[1]!, from[2]!, `{${to[1]}.${to[2]}}`) as JsonMap
+  return same(from, to) ? answer : realias(answer, from[1]!, from[2]!, `{${to[1]}.${to[2]}}`) as JsonMap
 }
 
 /** $node with every alias to the token `{group.name}` as $alias. */
@@ -70,8 +128,12 @@ function realias(node: Json, group: string, name: string, replacement: string): 
   return node
 }
 
-/** $theme with what is at $from moved to $to, both under the same root of $depth segments. */
-function move(theme: JsonMap, from: string[], to: string[], depth: number): JsonMap {
+/**
+ * $theme with what is at $from moved to $to, both under the same root of
+ * $depth segments, translated by $map when there is one. A section moves as
+ * it is.
+ */
+function move(theme: JsonMap, from: string[], to: string[], depth: number, map: Json = null): JsonMap {
   const section = (path: string[]): boolean => path.length === depth + 4 && path[depth] === 'pages' && path[depth + 2] === 'sections'
   if (section(from) || section(to)) {
     return section(from) && section(to) ? moveSection(theme, from, to) : theme
@@ -79,8 +141,15 @@ function move(theme: JsonMap, from: string[], to: string[], depth: number): Json
   if (!hasPath(theme, from)) {
     return theme
   }
-  const value = getPath(theme, from)
+  let value = getPath(theme, from)
   let answer = forget(theme, from) as JsonMap
+  if (map !== null) {
+    // A string or an integer the map translates; anything else it drops.
+    if (!(typeof value === 'string' || isInt(value)) || !has(map, String(value))) {
+      return answer
+    }
+    value = get(map, String(value))
+  }
   if (!hasPath(answer, to)) {
     answer = put(answer, to, value) as JsonMap
   }

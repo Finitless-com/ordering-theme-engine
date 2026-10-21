@@ -256,11 +256,15 @@ $cases = [];
  * @param array<int, array> $ops over the base (or the original)
  * @param array{from?: string, ops?: array}|null $previous
  * @param array<int, array>|null $v1 operations over the product's version 1 map; null passes none
+ * @param array{from?: string, ops?: array}|null $previous_base the last version of the previous base
  */
-$case = function (string $name, string $description, array $ops, ?array $previous = null, ?array $v1 = null, string $from = 'base') use (&$cases) {
+$case = function (string $name, string $description, array $ops, ?array $previous = null, ?array $v1 = null, string $from = 'base', ?array $previous_base = null) use (&$cases) {
     $entry = [ 'name' => $name, 'description' => $description, 'schema' => [ 'from' => $from, 'ops' => $ops ] ];
     if ($previous !== null) {
         $entry['previous'] = [ 'from' => $previous['from'] ?? 'base', 'ops' => $previous['ops'] ?? [] ];
+    }
+    if ($previous_base !== null) {
+        $entry['previousBase'] = [ 'from' => $previous_base['from'] ?? 'base', 'ops' => $previous_base['ops'] ?? [] ];
     }
     if ($v1 !== null) {
         $entry['v1Map'] = [ 'from' => 'product', 'ops' => $v1 ];
@@ -803,6 +807,88 @@ $case('diff-valid-changes', 'A valid minor with every kind of change: added, rem
     set('components.button.base.old_gap', node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
 ] ]);
 
+// --- Against the previous base (the upgrade block) -------------------------
+// The schema is the base as 27.0.0 with its block; the previous base, the
+// base as 26.4.0 with what the block takes from it: a property, a color, a
+// visibility key, a typography style, a page and site settings it named
+// otherwise, a property whose scale and one whose type changed, an option
+// renamed, and keys the new base drops.
+
+$previous_26 = [ 'ops' => [
+    version('26.4.0'),
+    set('components.button.base.old_gap', node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
+    set([ 'components', 'link', 'base', 'underline', '$extensions', 'co.ordering', 'options' ], [ 'none', 'hover', 'underlined' ]),
+    set('components.card.base.padding', node('dimension', '{size.lg}', [ 'scale' => 'size' ])),
+    set('components.modal.base.padding', node('dimension', '{space.lg}', [ 'scale' => 'space' ])),
+    set('tokens.color.brand', [ '$value' => '#E4002B' ]),
+    set([ 'tokens', 'typography', 'small' ], [ '$value' => [ 'size' => 11, 'line' => 1.4, 'weight' => 400 ] ]),
+    set([ 'visibility', 'header.brand' ], node(null, true)),
+    set([ 'visibility', 'old_banner' ], node(null, false)),
+    set('pages.shop', $original['pages']['multi_cart']),
+    set('site.slug', node('string', '')),
+    set('site.legacy_flag', node('boolean', false)),
+] ];
+$block = fn (array $changes = []) => set([ '$extensions', 'co.ordering.upgrade' ], $changes + [
+    'from' => 26,
+    'moves' => [
+        [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ],
+        [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'none' => 'none', 'hover' => 'hover', 'underlined' => 'always' ] ],
+        [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{space.lg}', '{size.md}' => '{space.md}' ] ],
+        [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
+        [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+        [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
+        [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
+    ],
+    'drop' => [ 'components.modal.base.padding', 'visibility.old_banner', 'site.legacy_flag' ],
+    'rewrite' => [ 'id' => 'marketplace_website.27', 'paths' => [ 'tokens.typography.small' ] ],
+]);
+
+$case('upgrade-valid', 'A new base whose block accounts for every key of the previous one: moves (a renamed property, a color, a visibility key, a whole page, a site setting, and two in place with a map, an option renamed and a scale changed), drops (a property whose type changed, a visibility key, a setting) and a rewrite.', [
+    version('27.0.0'),
+    $block(),
+], null, null, 'base', $previous_26);
+$case('upgrade-to-migrated', "A move to a key the new base's own migrations move on: it counts where they take it.", [
+    version('27.1.0'),
+    $block([ 'moves' => [
+        [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.gap_inline' ],
+        [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'none' => 'none', 'hover' => 'hover', 'underlined' => 'always' ] ],
+        [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{space.lg}' ] ],
+        [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
+        [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+        [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
+        [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
+    ] ]),
+    set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'components.button.base.gap_inline', 'to' => 'components.button.base.icon_gap' ] ]),
+], null, null, 'base', $previous_26);
+$case('upgrade-required', 'A new base without a block, though there is a previous one.', [ version('27.0.0') ], null, null, 'base', $previous_26);
+$case('upgrade-from-not-previous', 'A block whose `from` is not the previous base.', [ version('27.0.0'), $block([ 'from' => 25 ]) ], null, null, 'base', $previous_26);
+$case('upgrade-from-not-lower', 'A block whose `from` is not below its own base: nothing else is checked.', [ version('26.5.0'), $block([ 'from' => 26 ]) ], null, null, 'base', $previous_26);
+$case('upgrade-errors', "Every error of a block at once, in order: a move from a key the previous base has not, to one the new base has not, across sections, with a map to what is no option or level, from a key an earlier move has; drops of what the previous base has not; and the keys nothing accounts for (a property whose type changed, a setting, a typography style, a visibility key).", [
+    version('27.0.0'),
+    set([ '$extensions', 'co.ordering.upgrade' ], [
+        'from' => 26,
+        'moves' => [
+            [ 'from' => 'components.button.base.nope', 'to' => 'components.button.base.icon_gap' ],
+            [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.nope' ],
+            [ 'from' => 'visibility.header.brand', 'to' => 'pages.home.footer' ],
+            [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{size.lg}' ] ],
+            [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'underlined' => 'dotted' ] ],
+            [ 'from' => 'tokens.color.brand', 'to' => 'tokens.typography.h1' ],
+            [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+            [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
+        ],
+        'drop' => [ 'visibility.nope', 'components.nope', 'visibility.header' ],
+    ]),
+], null, null, 'base', $previous_26);
+$case('upgrade-minor-adds', 'A minor of the new base that adds a move and a path to drop: valid.', [
+    version('27.1.0'),
+    $block([ 'drop' => [ 'components.modal.base.padding', 'visibility.old_banner', 'site.legacy_flag', 'tokens.typography.small' ] ]),
+], [ 'ops' => [ version('27.0.0'), $block() ] ]);
+$case('upgrade-removed', "A minor of the new base that drops a move of its block, and one that changes its rewrite: schema.upgrade_removed.", [
+    version('27.1.0'),
+    $block([ 'moves' => [ [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ] ], 'rewrite' => [ 'id' => 'marketplace_website.27b', 'paths' => [] ] ]),
+], [ 'ops' => [ version('27.0.0'), $block() ] ]);
+
 // --- In development ---------------------------------------------------------
 // The same cases with development = true: the version's order and the diff's
 // incompatibilities refuse nothing, the changes are still answered, and the
@@ -834,11 +920,12 @@ $meta_failures = [];
 foreach ($cases as $index => $entry) {
     $schema = apply($start($entry['schema']['from']), $entry['schema']['ops']);
     $previous = isset($entry['previous']) ? apply($start($entry['previous']['from']), $entry['previous']['ops']) : null;
+    $previous_base = isset($entry['previousBase']) ? apply($start($entry['previousBase']['from']), $entry['previousBase']['ops']) : null;
     $v1_map = isset($entry['v1Map']) ? apply($map, $entry['v1Map']['ops']) : [];
     if (NodeCompiler::isNodes($schema) && ($errors = ThemeSchemas::meta($schema)) !== []) {
         $meta_failures[$entry['name']] = $errors;
     }
-    $cases[$index]['expected'] = ThemeSchemaPublisher::validate($schema, $v1_map, $previous, $entry['development'] ?? false);
+    $cases[$index]['expected'] = ThemeSchemaPublisher::validate($schema, $v1_map, $previous, $entry['development'] ?? false, $previous_base);
 }
 if ($meta_failures !== []) {
     fwrite(STDERR, "These cases do not pass the meta-schema, which the TypeScript validate() does not check:\n" . json_encode($meta_failures, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");

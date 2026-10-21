@@ -20,6 +20,7 @@ interface ValidateCase {
   description: string
   schema: Mutation
   previous?: Mutation
+  previousBase?: Mutation
   v1Map?: Mutation
   development?: boolean
   expected: ValidationResult
@@ -70,6 +71,7 @@ describe("validate() answers what api-core's validate() answers", () => {
   it.each(fixture.cases.map((golden) => [golden.name, golden] as const))('%s', (_name, golden) => {
     const answer = validate(start(golden.schema), {
       ...(golden.previous ? { previous: start(golden.previous) } : {}),
+      ...(golden.previousBase ? { previousBase: start(golden.previousBase) } : {}),
       ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map.ops) } : {}),
       ...(golden.development ? { development: true } : {}),
     })
@@ -101,6 +103,7 @@ describe('validateFull() adds the meta-schema, between the format and the compil
     }
     expect(validateFull(schema, {
       ...(golden.previous ? { previous: start(golden.previous) } : {}),
+      ...(golden.previousBase ? { previousBase: start(golden.previousBase) } : {}),
       ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map.ops) } : {}),
       ...(golden.development ? { development: true } : {}),
     })).toEqual(golden.expected)

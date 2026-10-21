@@ -19,6 +19,9 @@
 #   ThemeResolver::valid() answer for each theme over those tuples, and
 #   ThemeValidator::settings() for each site's settings
 #   (scripts/valid-cases.php);
+# - fixtures/upgrade.json: what ThemeUpgrades answers for each theme or
+#   site's settings between three bases made from that schema
+#   (scripts/upgrade-cases.php);
 # - fixtures/php-round.json and fixtures/php-strings.json: PHP's round(),
 #   version_compare() and (string) cast (scripts/php-round.php,
 #   scripts/php-strings.php).
@@ -77,9 +80,10 @@ into "$FIXTURES/schema-26.0.empty.json" php scripts/resolve-empty.php fixtures/s
 into "$FIXTURES/schema-26.0.compiled.json" php scripts/compile-schema.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
 into "$FIXTURES/validate.json" php scripts/validate-cases.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
 into "$FIXTURES/valid.json" php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
+into "$FIXTURES/upgrade.json" php scripts/upgrade-cases.php fixtures/schema-26.0.nodes.json
 
 # PHP's round(), version_compare() and (string), which the TypeScript engine imitates.
 into "$FIXTURES/php-round.json" php scripts/php-round.php
 into "$FIXTURES/php-strings.json" php scripts/php-strings.php
 
-echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') golden cases, the golden schema in nodes, the 26.0 schema's empty theme and tuples, $(php -r 'echo count(json_decode(file_get_contents("fixtures/validate.json"), true)["cases"]);') validate() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/valid.json"), true)["cases"]);') valid() cases, PHP's round() and strings."
+echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') golden cases, the golden schema in nodes, the 26.0 schema's empty theme and tuples, $(php -r 'echo count(json_decode(file_get_contents("fixtures/validate.json"), true)["cases"]);') validate() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/valid.json"), true)["cases"]);') valid() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/upgrade.json"), true)["cases"]);') upgrade cases, PHP's round() and strings."

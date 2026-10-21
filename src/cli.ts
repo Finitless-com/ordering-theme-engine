@@ -28,6 +28,9 @@ Commands:
       --v1-map <file>      The version 1 map published with the schema.
       --previous <file>    The last version published of its base: also checks
                            the version's order and that nothing breaks.
+      --previous-base <file>
+                           The last version published of the previous base:
+                           also checks the schema's upgrade block against it.
 
   defaults <schema.json>   The empty theme resolved (what the API serves for a
                            theme that sets nothing), as JSON.
@@ -39,6 +42,10 @@ Commands:
   publish <schema.json>    Validate the schema, then publish it to the API.
       --v1-map <file>      The version 1 map to publish with it (the API keeps
                            the last one published when none is sent).
+      --previous-base <file>
+                           The last version published of the previous base, to
+                           check the upgrade block here too (the API checks it
+                           against its own registry either way).
       --dry-run            The API checks everything and saves nothing.
       --required           Fail when THEME_PUBLISH_API or THEME_PUBLISH_KEY is
                            missing, instead of skipping (or THEME_PUBLISH_REQUIRED
@@ -125,6 +132,7 @@ function validateCommand(args: string[], io: Io): number {
   const { values, file } = parse(args, {
     'v1-map': { type: 'string' },
     previous: { type: 'string' },
+    'previous-base': { type: 'string' },
   })
   if (values.help) {
     io.stdout(HELP)
@@ -134,6 +142,7 @@ function validateCommand(args: string[], io: Io): number {
   const result = validateFull(schema, {
     v1Map: optionalJson(io, values['v1-map']) as V1Map | null,
     previous: optionalJson(io, values.previous) as NodeSchema | null,
+    previousBase: optionalJson(io, values['previous-base']) as NodeSchema | null,
   })
   if (result.code !== null) {
     result.errors.forEach((error) => io.stderr(`${describeError(error)}\n`))
@@ -198,6 +207,7 @@ function defaultsCommand(args: string[], io: Io): number {
 async function publishCommand(args: string[], io: Io): Promise<number> {
   const { values, file } = parse(args, {
     'v1-map': { type: 'string' },
+    'previous-base': { type: 'string' },
     'dry-run': { type: 'boolean' },
     required: { type: 'boolean' },
   })
@@ -209,7 +219,7 @@ async function publishCommand(args: string[], io: Io): Promise<number> {
   const schema = readJson(io, file) as NodeSchema
   const v1Map = optionalJson(io, values['v1-map']) as V1Map | null
   const version = versionOf(schema)
-  const checked = validateFull(schema, { v1Map })
+  const checked = validateFull(schema, { v1Map, previousBase: optionalJson(io, values['previous-base']) as NodeSchema | null })
   if (checked.code !== null) {
     checked.errors.forEach((error) => io.stderr(`${describeError(error)}\n`))
     io.stderr(`${file} ${version}: not published, ${checked.code} (${checked.errors.length} error(s))\n`)

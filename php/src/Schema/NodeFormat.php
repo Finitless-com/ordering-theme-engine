@@ -40,6 +40,12 @@ final class NodeFormat
     public const MIGRATE = 'co.ordering.migrate';
 
     /**
+     * At the root of a base's first version, how a theme of the previous
+     * base takes its values, `{ from, moves, drop, rewrite? }` (ThemeUpgrades).
+     */
+    public const UPGRADE = 'co.ordering.upgrade';
+
+    /**
      * The tokens whose options a schema may narrow to some of the ones
      * self::token() gives (the focus ring's colors and distances its editor
      * offers): a theme then takes only those (ThemeValidator).

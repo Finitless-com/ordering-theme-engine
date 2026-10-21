@@ -7,6 +7,32 @@ change to the public API.
 
 ## Unreleased
 
+- **API:** a base declares how a theme of the previous base takes its values, the root's
+  `$extensions["co.ordering.upgrade"]`: `{ from, moves: [{ from, to, map? }], drop,
+  rewrite?: { id, paths } }` (§15 of the schema format). The meta-schema takes it,
+  `compile()` carries it to the tuples as `upgrade`, and `check()` refuses one of
+  another shape (`upgrade.invalid`). `ThemeSchemas::COMPILED` is 5.
+- **API:** `checkUpgrade(next, previousBase)` (`ThemeUpgrades::check()`): the block
+  against the last version of the previous base, with `upgrade.required`,
+  `upgrade.from.invalid`, `upgrade.moves.<n>.from.unknown`, `.to.unknown`, `.kind`,
+  `.map.invalid`, `.duplicate`, `upgrade.drop.<n>.unknown` and
+  `upgrade.<path>.unaccounted`. `validate()`/`validateFull()` take `previousBase` (PHP:
+  `ThemeSchemaPublisher::validate()`'s fifth argument) and answer them as
+  `schema.invalid`; the CLI's `validate` and `publish` take `--previous-base <file>`.
+- **API:** `upgrade(values, next, previous, rewrite?)` and `upgradeChain(values,
+  schemas, rewrite?)` (`ThemeUpgrades::apply()`, `::chain()`): a theme's values read
+  through each base's step, ending in `valid()`; `upgradeSettings()` and
+  `upgradeSettingsChain()` (`::settings()`, `::settingsChain()`) for a site's settings;
+  `cutDown(values, from, to)` and `cutDownSettings()` (`::cutDown()`,
+  `::cutDownSettings()`): a version's values as an older version reads them. Golden
+  cases in `fixtures/upgrade.json`.
+- Within a base the upgrade block only grows, as the migrations: a minor that drops a
+  move or a path, or changes `from` or the rewrite, is `schema.upgrade_removed`.
+- A migration may carry a `map` (the moves of an upgrade block do): the value it moves
+  is translated, one without an entry dropped, and `from` may then be `to`.
+- PHP writes an empty `co.ordering.migrate` (and the block's empty lists) as a list for
+  the meta-schema: an empty list of migrations failed it in PHP and passed it in
+  TypeScript.
 - **API:** `valid(values, schema)` in TypeScript, `ThemeResolver::valid()`: what of a
   stored theme fits its schema, migrations applied, the rest left out; and
   `themeErrors()` and `settingsErrors()`, `ThemeValidator::validate()` and

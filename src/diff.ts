@@ -1,4 +1,4 @@
-import { EDITOR, EXTENSION, MIGRATE } from './compile.js'
+import { EDITOR, EXTENSION, MIGRATE, UPGRADE } from './compile.js'
 import { dig, entries, get, has, identical, isArray, isList, isPhpEmpty, isScalar, phpString, values, type Json, type JsonMap } from './php.js'
 import type { Changes, NodeSchema, SchemaError } from './types.js'
 
@@ -11,8 +11,9 @@ import type { Changes, NodeSchema, SchemaError } from './types.js'
  * - A minor may add keys and options and change defaults. A key it drops
  *   must have been `$deprecated` in the last version, or moved by a
  *   migration (of the key, or of the page that holds it); a key keeps
- *   its type, its scale and every option it had; and the migrations of
- *   the base are never dropped.
+ *   its type, its scale and every option it had; the migrations of
+ *   the base are never dropped; and its upgrade block only grows: it keeps
+ *   its previous base, its rewrite, each move and each path it drops.
  * - A new base is not compared.
  */
 
@@ -85,6 +86,10 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
     }
   }
 
+  if (upgradeRemoved(previous, next)) {
+    errors.push({ path: 'upgrade', code: 'schema.upgrade_removed' })
+  }
+
   if (oldMinor === newMinor && valuesOf(previous) !== valuesOf(next)) {
     errors.push({ path: 'version', code: 'schema.patch_changes_values' })
   }
@@ -140,6 +145,26 @@ export function leaves(schema: NodeSchema): Record<string, Leaf> {
     }
   }
   return answer
+}
+
+/**
+ * Whether a version drops anything of its base's upgrade block
+ * (SchemaDiff::upgradeRemoved()): the block itself, its previous base, its
+ * rewrite, a move or a path it drops (a minor may add moves and paths).
+ */
+function upgradeRemoved(previous: NodeSchema, next: NodeSchema): boolean {
+  const was = dig(previous, '$extensions', UPGRADE)
+  if (!isArray(was)) {
+    return false
+  }
+  const now = dig(next, '$extensions', UPGRADE)
+  if (!isArray(now) || !identical(get(was, 'from'), get(now, 'from')) || !identical(get(was, 'rewrite'), get(now, 'rewrite'))) {
+    return true
+  }
+  return ['moves', 'drop'].some((list) => {
+    const kept = get(now, list)
+    return values(isArray(get(was, list)) ? get(was, list) : []).some((item) => !values(isArray(kept) ? kept : []).some((other) => identical(other, item)))
+  })
 }
 
 interface Migration {

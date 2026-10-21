@@ -15,6 +15,12 @@ export const EDITOR = 'co.ordering.editor'
 /** At the root, the renames and moves of a theme's values, `[{ from, to }]`. */
 export const MIGRATE = 'co.ordering.migrate'
 
+/**
+ * At the root of a base's first version, how a theme of the previous base
+ * takes its values, `{ from, moves, drop, rewrite? }` (upgrade.ts).
+ */
+export const UPGRADE = 'co.ordering.upgrade'
+
 type Fail = (path: string, rule: string) => void
 
 /**
@@ -140,6 +146,11 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
   const migrate = dig(schema, '$extensions', MIGRATE)
   if (isArray(migrate)) {
     tuples.migrate = migrate
+  }
+  // How a theme of the previous base takes its values (upgrade.ts).
+  const upgrade = dig(schema, '$extensions', UPGRADE)
+  if (isArray(upgrade)) {
+    tuples.upgrade = upgrade
   }
   if (isArray(schema.site)) {
     tuples.site = tree(children(schema.site), 'site', fail)

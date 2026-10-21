@@ -11,8 +11,9 @@ namespace Ordering\ThemeEngine\Schema;
  * - A minor may add keys and options and change defaults. A key it drops
  *   must have been `$deprecated` in the last version, or moved by a
  *   migration (of the key, or of the page that holds it); a key keeps
- *   its type, its scale and every option it had; and the migrations of
- *   the base are never dropped.
+ *   its type, its scale and every option it had; the migrations of
+ *   the base are never dropped; and its upgrade block only grows: it keeps
+ *   its previous base, its rewrite, each move and each path it drops.
  * - A new base is not compared.
  */
 final class SchemaDiff
@@ -76,6 +77,10 @@ final class SchemaDiff
             }
         }
 
+        if (self::upgradeRemoved($old, $new)) {
+            $errors[] = [ 'path' => 'upgrade', 'code' => 'schema.upgrade_removed' ];
+        }
+
         if ($old_minor === $new_minor && self::values($old) !== self::values($new)) {
             $errors[] = [ 'path' => 'version', 'code' => 'schema.patch_changes_values' ];
         }
@@ -134,6 +139,36 @@ final class SchemaDiff
         }
 
         return $leaves;
+    }
+
+    /**
+     * Whether a version drops anything of its base's upgrade block: the
+     * block itself, its previous base, its rewrite, a move or a path it
+     * drops (a minor may add moves and paths).
+     *
+     * @param array<string, mixed> $old
+     * @param array<string, mixed> $new
+     */
+    private static function upgradeRemoved(array $old, array $new): bool
+    {
+        $was = $old['$extensions'][NodeFormat::UPGRADE] ?? null;
+        if (!is_array($was)) {
+            return false;
+        }
+        $now = $new['$extensions'][NodeFormat::UPGRADE] ?? null;
+        if (!is_array($now) || ($was['from'] ?? null) !== ($now['from'] ?? null) || ($was['rewrite'] ?? null) !== ($now['rewrite'] ?? null)) {
+            return true;
+        }
+        foreach ([ 'moves', 'drop' ] as $list) {
+            $kept = is_array($now[$list] ?? null) ? $now[$list] : [];
+            foreach (is_array($was[$list] ?? null) ? $was[$list] : [] as $item) {
+                if (!in_array($item, $kept, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

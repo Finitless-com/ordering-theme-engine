@@ -66,6 +66,14 @@ export interface ValidateOptions {
    */
   v1Map?: V1Map | null
   /**
+   * The last version published of the previous base, in nodes: the
+   * schema's upgrade block is checked against it (checkUpgrade()), its
+   * errors `schema.invalid` like the rest of the schema's own. Without it
+   * the block is not checked; api-core, which looks the previous base up,
+   * is the authority on publish.
+   */
+  previousBase?: NodeSchema | null
+  /**
    * api-core's development mode: neither the version's order nor the
    * diff's incompatibilities refuse the schema, but the changes are still
    * answered against `previous`.

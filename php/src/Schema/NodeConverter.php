@@ -353,6 +353,10 @@ final class NodeConverter
                 return $node;
             }
             foreach ($node as $key => $child) {
+                if (in_array($key, [ NodeFormat::MIGRATE, NodeFormat::UPGRADE ], true) && is_array($child)) {
+                    $node[$key] = self::changesJson($key, $child);
+                    continue;
+                }
                 // An extension is an object even when it is left empty; what it holds is written as it is.
                 $node[$key] = in_array($key, [ NodeFormat::EXTENSION, NodeFormat::EDITOR ], true) && $child === []
                     ? new \stdClass()
@@ -363,6 +367,33 @@ final class NodeConverter
         };
 
         return json_encode($objects($nodes), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    /**
+     * A root's migrations or upgrade block as JSON reads it: its lists are
+     * lists even when empty (`moves`, `drop`, a rewrite's `paths`), and a
+     * move's `map` is an object even when its keys are 0…n-1.
+     *
+     * @param array<string|int, mixed> $block
+     * @return array<string|int, mixed>|\stdClass
+     */
+    private static function changesJson(string $key, array $block): array|\stdClass
+    {
+        $moves = fn (array $moves) => array_map(fn ($move) => is_array($move) && is_array($move['map'] ?? null) ? [ 'map' => (object) $move['map'] ] + $move : $move, $moves);
+        if ($key === NodeFormat::MIGRATE) {
+            return array_is_list($block) ? $moves($block) : (object) $block;
+        }
+        if ($block === [] || array_is_list($block)) {
+            return $block === [] ? new \stdClass() : $block;
+        }
+        if (is_array($block['moves'] ?? null) && array_is_list($block['moves'])) {
+            $block['moves'] = $moves($block['moves']);
+        }
+        if (is_array($block['rewrite'] ?? null)) {
+            $block['rewrite'] = $block['rewrite'] === [] ? new \stdClass() : $block['rewrite'];
+        }
+
+        return $block;
     }
 
     private static function isTuple($value): bool

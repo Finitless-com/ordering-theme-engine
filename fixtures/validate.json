@@ -16684,6 +16684,2399 @@
             }
         },
         {
+            "name": "upgrade-valid",
+            "description": "A new base whose block accounts for every key of the previous one: moves (a renamed property, a color, a visibility key, a whole page, a site setting, and two in place with a map, an option renamed and a scale changed), drops (a property whose type changed, a visibility key, a setting) and a rewrite.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-to-migrated",
+            "description": "A move to a key the new base's own migrations move on: it counts where they take it.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.gap_inline"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "from": 26,
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "components.button.base.gap_inline",
+                                "to": "components.button.base.icon_gap"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-required",
+            "description": "A new base without a block, though there is a previous one.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "upgrade",
+                        "code": "upgrade.required"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-from-not-previous",
+            "description": "A block whose `from` is not the previous base.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 25,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "upgrade.from",
+                        "code": "upgrade.from.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-from-not-lower",
+            "description": "A block whose `from` is not below its own base: nothing else is checked.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.5.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "upgrade.from",
+                        "code": "upgrade.from.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-errors",
+            "description": "Every error of a block at once, in order: a move from a key the previous base has not, to one the new base has not, across sections, with a map to what is no option or level, from a key an earlier move has; drops of what the previous base has not; and the keys nothing accounts for (a property whose type changed, a setting, a typography style, a visibility key).",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.nope",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.nope"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "pages.home.footer"
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{size.lg}"
+                                    }
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "underlined": "dotted"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.typography.h1"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                }
+                            ],
+                            "drop": [
+                                "visibility.nope",
+                                "components.nope",
+                                "visibility.header"
+                            ]
+                        }
+                    ]
+                ]
+            },
+            "previousBase": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.4.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "button",
+                            "base",
+                            "old_gap"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.sm}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "link",
+                            "base",
+                            "underline",
+                            "$extensions",
+                            "co.ordering",
+                            "options"
+                        ],
+                        [
+                            "none",
+                            "hover",
+                            "underlined"
+                        ]
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "card",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{size.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "size"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "components",
+                            "modal",
+                            "base",
+                            "padding"
+                        ],
+                        {
+                            "$type": "dimension",
+                            "$value": "{space.lg}",
+                            "$extensions": {
+                                "co.ordering": {
+                                    "scale": "space"
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "color",
+                            "brand"
+                        ],
+                        {
+                            "$value": "#E4002B"
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "tokens",
+                            "typography",
+                            "small"
+                        ],
+                        {
+                            "$value": {
+                                "size": 11,
+                                "line": 1.4,
+                                "weight": 400
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "old_banner"
+                        ],
+                        {
+                            "$value": false
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "slug"
+                        ],
+                        {
+                            "$type": "string",
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "site",
+                            "legacy_flag"
+                        ],
+                        {
+                            "$type": "boolean",
+                            "$value": false
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "upgrade.moves.0.from",
+                        "code": "upgrade.moves.0.from.unknown"
+                    },
+                    {
+                        "path": "upgrade.moves.1.to",
+                        "code": "upgrade.moves.1.to.unknown"
+                    },
+                    {
+                        "path": "upgrade.moves.2",
+                        "code": "upgrade.moves.2.kind"
+                    },
+                    {
+                        "path": "upgrade.moves.3.map",
+                        "code": "upgrade.moves.3.map.invalid"
+                    },
+                    {
+                        "path": "upgrade.moves.4.map",
+                        "code": "upgrade.moves.4.map.invalid"
+                    },
+                    {
+                        "path": "upgrade.moves.5",
+                        "code": "upgrade.moves.5.kind"
+                    },
+                    {
+                        "path": "upgrade.moves.6",
+                        "code": "upgrade.moves.6.duplicate"
+                    },
+                    {
+                        "path": "upgrade.drop.0",
+                        "code": "upgrade.drop.0.unknown"
+                    },
+                    {
+                        "path": "upgrade.drop.1",
+                        "code": "upgrade.drop.1.unknown"
+                    },
+                    {
+                        "path": "upgrade.drop.2",
+                        "code": "upgrade.drop.2.unknown"
+                    },
+                    {
+                        "path": "upgrade.tokens.typography.small",
+                        "code": "upgrade.tokens.typography.small.unaccounted"
+                    },
+                    {
+                        "path": "upgrade.components.modal.base.padding",
+                        "code": "upgrade.components.modal.base.padding.unaccounted"
+                    },
+                    {
+                        "path": "upgrade.visibility.old_banner",
+                        "code": "upgrade.visibility.old_banner.unaccounted"
+                    },
+                    {
+                        "path": "upgrade.site.slug",
+                        "code": "upgrade.site.slug.unaccounted"
+                    },
+                    {
+                        "path": "upgrade.site.legacy_flag",
+                        "code": "upgrade.site.legacy_flag.unaccounted"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "upgrade-minor-adds",
+            "description": "A minor of the new base that adds a move and a path to drop: valid.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag",
+                                "tokens.typography.small"
+                            ],
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "upgrade-removed",
+            "description": "A minor of the new base that drops a move of its block, and one that changes its rewrite: schema.upgrade_removed.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                }
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27b",
+                                "paths": []
+                            },
+                            "from": 26,
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ]
+                        }
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "27.0.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.upgrade"
+                        ],
+                        {
+                            "from": 26,
+                            "moves": [
+                                {
+                                    "from": "components.button.base.old_gap",
+                                    "to": "components.button.base.icon_gap"
+                                },
+                                {
+                                    "from": "components.link.base.underline",
+                                    "to": "components.link.base.underline",
+                                    "map": {
+                                        "none": "none",
+                                        "hover": "hover",
+                                        "underlined": "always"
+                                    }
+                                },
+                                {
+                                    "from": "components.card.base.padding",
+                                    "to": "components.card.base.padding",
+                                    "map": {
+                                        "{size.lg}": "{space.lg}",
+                                        "{size.md}": "{space.md}"
+                                    }
+                                },
+                                {
+                                    "from": "tokens.color.brand",
+                                    "to": "tokens.color.primary"
+                                },
+                                {
+                                    "from": "visibility.header.brand",
+                                    "to": "visibility.header.logo"
+                                },
+                                {
+                                    "from": "pages.shop",
+                                    "to": "pages.multi_cart"
+                                },
+                                {
+                                    "from": "site.slug",
+                                    "to": "site.business_slug"
+                                }
+                            ],
+                            "drop": [
+                                "components.modal.base.padding",
+                                "visibility.old_banner",
+                                "site.legacy_flag"
+                            ],
+                            "rewrite": {
+                                "id": "marketplace_website.27",
+                                "paths": [
+                                    "tokens.typography.small"
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "upgrade",
+                        "code": "schema.upgrade_removed"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
             "name": "development-semver",
             "description": "In development, the version is still semver.",
             "schema": {

@@ -7,6 +7,7 @@ import {
   count, entries, get, has, identical, isArray, isEmpty, isInt, isList, phpString, uniqueCount, values, type Json, type JsonMap,
 } from './php.js'
 import { kindAt, propertySpec } from './schemas.js'
+import { isUpgradeBlock } from './upgrade.js'
 import type { NodeSchema, SchemaError, TupleSchema } from './types.js'
 import { tokenErrors, validFormats, validHints, validRules, valueError } from './validator.js'
 
@@ -17,7 +18,7 @@ const KEY = /^[a-z0-9_]+(\.[a-z0-9_]+){0,7}\n?$/
 const SCHEMA_VERSION = /^\d{1,4}(\.\d{1,4}){0,2}\n?$/
 const SECTIONS = [
   'product_type', 'version', 'format', 'tokens', 'components', 'inherits', 'visibility', 'images', 'pages', 'platforms',
-  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'alpha', 'token_options',
+  'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'upgrade', 'alpha', 'token_options',
 ]
 
 /** PHP's in_array($value, $list, true) for a list of strings. */
@@ -287,6 +288,10 @@ export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
   }
 
   errors.push(...checkMigrations(schema))
+  // The upgrade block's shape; what it says is checked against the previous base (checkUpgrade()).
+  if (has(schema, 'upgrade') && !isUpgradeBlock(get(schema, 'upgrade'))) {
+    fail('upgrade', 'invalid')
+  }
   errors.push(...checkPages(schema))
 
   // Two controls on one version 1 key would fight: whichever is projected

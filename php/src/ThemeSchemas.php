@@ -75,11 +75,11 @@ class ThemeSchemas
     /**
      * What tuples() answers, by revision: raised when it changes (the
      * colors marked `alpha` added the 2nd, a visibility key's platform
-     * defaults the 3rd, a property's rules and the narrowed tokens the 4th),
-     * so whoever caches what it answers (api-core) never serves a schema an
-     * earlier version compiled.
+     * defaults the 3rd, a property's rules and the narrowed tokens the 4th,
+     * a base's `upgrade` block the 5th), so whoever caches what it answers
+     * (api-core) never serves a schema an earlier version compiled.
      */
-    public const COMPILED = 4;
+    public const COMPILED = 5;
 
     public const KEY = '/^[a-z0-9_]+(\.[a-z0-9_]+){0,7}$/';
 
@@ -192,7 +192,7 @@ class ThemeSchemas
             $fail('format', 'invalid');
         }
         foreach (array_keys($schema) as $section) {
-            if (!in_array($section, [ 'product_type', 'version', 'format', 'tokens', 'components', 'inherits', 'visibility', 'images', 'pages', 'platforms', 'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'alpha', 'token_options' ], true)) {
+            if (!in_array($section, [ 'product_type', 'version', 'format', 'tokens', 'components', 'inherits', 'visibility', 'images', 'pages', 'platforms', 'site', 'v1', 'follows', 'derive', 'component_derive', 'matrix', 'migrate', 'upgrade', 'alpha', 'token_options' ], true)) {
                 $fail((string) $section, 'unknown');
             }
         }
@@ -407,6 +407,10 @@ class ThemeSchemas
 
         foreach (ThemeMigrations::check($schema) as $error) {
             $errors[] = $error;
+        }
+        // The upgrade block's shape; what it says is checked against the previous base (ThemeUpgrades::check()).
+        if (array_key_exists('upgrade', $schema) && !ThemeUpgrades::isBlock($schema['upgrade'])) {
+            $fail('upgrade', 'invalid');
         }
 
         foreach (ThemePages::check($schema) as $error) {

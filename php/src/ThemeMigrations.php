@@ -19,6 +19,10 @@ namespace Ordering\ThemeEngine;
  * per segment. A page's section (`pages.<page>.sections.<key>`) is an item
  * of its list: it moves with its `visible`, renamed in its place within
  * the page, or to the end of another page's list.
+ *
+ * A move may also carry a `map` (a base's `co.ordering.upgrade`,
+ * ThemeUpgrades): the value it moves is translated by it, and one it has no
+ * entry for is dropped; with a map, `from` and `to` may be the same path.
  */
 final class ThemeMigrations
 {
@@ -27,7 +31,7 @@ final class ThemeMigrations
 
     /**
      * @param array<string, mixed> $values
-     * @param array<int, array{from: string, to: string}> $migrations
+     * @param array<int, array{from: string, to: string, map?: array<string|int, mixed>}> $migrations
      * @return array<string, mixed>
      */
     public static function apply(array $values, array $migrations): array
@@ -35,19 +39,96 @@ final class ThemeMigrations
         foreach ($migrations as $migration) {
             $from = self::segments((string) ($migration['from'] ?? ''));
             $to = self::segments((string) ($migration['to'] ?? ''));
-            if (count($from) < 2 || count($to) < 2) {
+            $map = is_array($migration['map'] ?? null) ? $migration['map'] : null;
+            if (count($from) < 2 || count($to) < 2 || ($from === $to && $map === null)) {
                 continue;
             }
-            $roots = [ [] ];
-            foreach (is_array($values['platforms'] ?? null) ? array_keys($values['platforms']) : [] as $platform) {
-                $roots[] = [ 'platforms', (string) $platform ];
-            }
-            foreach ($roots as $root) {
-                $values = self::move($values, [ ...$root, ...$from ], [ ...$root, ...$to ], count($root));
+            foreach (self::roots($values) as $root) {
+                $values = self::move($values, [ ...$root, ...$from ], [ ...$root, ...$to ], count($root), $map);
             }
             if ($from[0] === 'tokens' && $to[0] === 'tokens' && count($from) === 3 && count($to) === 3) {
-                $values = self::moveToken($values, $from, $to);
+                $values = self::moveToken($values, $from, $to, $map);
             }
+        }
+
+        return $values;
+    }
+
+    /**
+     * $values without what is at each path, wherever a migration of it
+     * would find it: under every platform the theme overrides too, a
+     * color's value in each mode, and a page's section
+     * (`pages.<page>.sections.<key>`) out of its list. A path that names a
+     * group drops it whole; a map left empty goes too.
+     *
+     * @param array<string, mixed> $values
+     * @param array<int, string> $paths
+     * @return array<string, mixed>
+     */
+    public static function drop(array $values, array $paths): array
+    {
+        foreach ($paths as $path) {
+            $segments = self::segments((string) $path);
+            if (count($segments) < 2) {
+                continue;
+            }
+            foreach (self::roots($values) as $root) {
+                $values = self::remove($values, [ ...$root, ...$segments ], count($root));
+            }
+            if ($segments[0] === 'tokens' && $segments[1] === 'color' && count($segments) === 3) {
+                foreach (is_array($values['modes'] ?? null) ? array_keys($values['modes']) : [] as $mode) {
+                    $values = self::remove($values, [ 'modes', (string) $mode, 'color', $segments[2] ], 0);
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * Where a theme's paths start: its root, and each platform it overrides.
+     *
+     * @param array<string, mixed> $values
+     * @return array<int, array<int, string>>
+     */
+    private static function roots(array $values): array
+    {
+        $roots = [ [] ];
+        foreach (is_array($values['platforms'] ?? null) ? array_keys($values['platforms']) : [] as $platform) {
+            $roots[] = [ 'platforms', (string) $platform ];
+        }
+
+        return $roots;
+    }
+
+    /**
+     * $values without what is at $path, under a root of $depth segments: a
+     * section, every item of its key out of its page's list (the list goes
+     * when it is left empty).
+     *
+     * @param array<string, mixed> $values
+     * @param array<int, string> $path
+     * @return array<string, mixed>
+     */
+    private static function remove(array $values, array $path, int $depth): array
+    {
+        if (count($path) === $depth + 4 && $path[$depth] === 'pages' && $path[$depth + 2] === 'sections') {
+            $key = array_pop($path);
+            $list = self::has($values, $path) ? self::get($values, $path) : null;
+            if (!is_array($list) || !array_is_list($list) || self::find($list, $key) === null) {
+                return $values;
+            }
+            $kept = array_values(array_filter($list, fn ($item) => !is_array($item) || ($item['key'] ?? null) !== $key));
+            if ($kept === []) {
+                self::forget($values, $path);
+            } else {
+                self::set($values, $path, $kept);
+            }
+
+            return $values;
+        }
+        if (self::has($values, $path)) {
+            self::forget($values, $path);
         }
 
         return $values;
@@ -61,17 +142,18 @@ final class ThemeMigrations
      * @param array<string, mixed> $values
      * @param array{0: string, 1: string, 2: string} $from `tokens, <group>, <name>`
      * @param array{0: string, 1: string, 2: string} $to
+     * @param array<string|int, mixed>|null $map
      * @return array<string, mixed>
      */
-    private static function moveToken(array $values, array $from, array $to): array
+    private static function moveToken(array $values, array $from, array $to, ?array $map): array
     {
         if ($from[1] === 'color' && $to[1] === 'color') {
             foreach (is_array($values['modes'] ?? null) ? array_keys($values['modes']) : [] as $mode) {
-                $values = self::move($values, [ 'modes', (string) $mode, 'color', $from[2] ], [ 'modes', (string) $mode, 'color', $to[2] ], 0);
+                $values = self::move($values, [ 'modes', (string) $mode, 'color', $from[2] ], [ 'modes', (string) $mode, 'color', $to[2] ], 0, $map);
             }
         }
 
-        return self::realias($values, [ $from[1], $from[2] ], "{{$to[1]}.{$to[2]}}");
+        return $from === $to ? $values : self::realias($values, [ $from[1], $from[2] ], "{{$to[1]}.{$to[2]}}");
     }
 
     /**
@@ -169,14 +251,16 @@ final class ThemeMigrations
 
     /**
      * $values with what is at $from moved to $to, both under the same root
-     * of $depth segments (none, or a platform's).
+     * of $depth segments (none, or a platform's), translated by $map when
+     * there is one. A section moves as it is.
      *
      * @param array<string, mixed> $values
      * @param array<int, string> $from
      * @param array<int, string> $to
+     * @param array<string|int, mixed>|null $map
      * @return array<string, mixed>
      */
-    private static function move(array $values, array $from, array $to, int $depth): array
+    private static function move(array $values, array $from, array $to, int $depth, ?array $map = null): array
     {
         $section = fn (array $segments) => count($segments) === $depth + 4 && $segments[$depth] === 'pages' && $segments[$depth + 2] === 'sections';
         if ($section($from) || $section($to)) {
@@ -187,6 +271,13 @@ final class ThemeMigrations
         }
         $value = self::get($values, $from);
         self::forget($values, $from);
+        if ($map !== null) {
+            // A string or an integer the map translates; anything else it drops.
+            if (!(is_string($value) || is_int($value)) || !array_key_exists($value, $map)) {
+                return $values;
+            }
+            $value = $map[$value];
+        }
         if (!self::has($values, $to)) {
             self::set($values, $to, $value);
         }

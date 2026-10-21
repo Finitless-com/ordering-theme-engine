@@ -9,8 +9,9 @@ use Ordering\ThemeEngine\Schema\SchemaDiff;
 /**
  * What publishing a theme schema checks before the registry (api-core's
  * docs/THEMES_V2_PLAN.md §6.4.2): the schema itself, that each default fits
- * its editor's control, that versions only go forward within a base, and
- * that nothing breaks the themes made with an earlier one (SchemaDiff).
+ * its editor's control, that versions only go forward within a base, that
+ * nothing breaks the themes made with an earlier one (SchemaDiff), and how
+ * a theme of the previous base takes its values (ThemeUpgrades).
  * api-core publishes (its own App\Themes\ThemeSchemaPublisher): it looks up
  * the previous version, keeps each version immutable and stores it.
  */
@@ -31,18 +32,30 @@ final class ThemeSchemaPublisher
      * compared for its changes: neither its order nor its compatibility
      * refuses anything.
      *
+     * Given the last version of the previous base, the schema's upgrade
+     * block is also checked against it (ThemeUpgrades::check()), and its
+     * errors are `schema.invalid` like the rest of the schema's own. Without
+     * it the block is not checked: api-core, which looks it up, calls
+     * ThemeUpgrades::check() itself when the product type has no previous
+     * base.
+     *
      * @param array<string, mixed> $schema in nodes
      * @param array<string, mixed>|null $v1_map null compiles no version 1 paths
      * @param array<string, mixed>|null $previous in nodes, the last version of its base
+     * @param array<string, mixed>|null $previous_base in nodes, the last version of the previous base
      * @return array{code: ?string, errors: array<int, array{path: string, code: string}>, changes: ?array<string, array<int, string>>}
      */
-    public static function validate(array $schema, ?array $v1_map = null, ?array $previous = null, bool $development = false): array
+    public static function validate(array $schema, ?array $v1_map = null, ?array $previous = null, bool $development = false, ?array $previous_base = null): array
     {
         if (!NodeCompiler::isNodes($schema)) {
             return [ 'code' => 'schema.format', 'errors' => [ [ 'path' => '$schema', 'code' => 'schema.format' ] ], 'changes' => null ];
         }
         $compiled = ThemeSchemas::tuples($schema, $v1_map);
-        $errors = $compiled['errors'] !== [] ? $compiled['errors'] : [ ...ThemeSchemas::check($compiled['schema'], $schema), ...self::outOfRange($schema) ];
+        $errors = $compiled['errors'] !== [] ? $compiled['errors'] : [
+            ...ThemeSchemas::check($compiled['schema'], $schema),
+            ...self::outOfRange($schema),
+            ...($previous_base === null ? [] : ThemeUpgrades::check($schema, $previous_base)),
+        ];
         if (!preg_match(self::SEMVER, (string) ($schema['version'] ?? ''))) {
             $errors[] = [ 'path' => 'version', 'code' => 'version.semver' ];
         }

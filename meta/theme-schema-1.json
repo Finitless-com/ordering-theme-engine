@@ -46,6 +46,81 @@
             ],
             "additionalProperties": false
           }
+        },
+        "co.ordering.upgrade": {
+          "type": "object",
+          "description": "How a theme of the previous base takes its values (docs/schema-format.md §15): the previous base, the moves in order (a map translates options or levels), the paths dropped and the transformation api-core runs.",
+          "properties": {
+            "from": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999
+            },
+            "moves": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+                  },
+                  "to": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+                  },
+                  "map": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "integer"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+              }
+            },
+            "rewrite": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"
+                },
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "paths"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "from",
+            "moves",
+            "drop"
+          ],
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
