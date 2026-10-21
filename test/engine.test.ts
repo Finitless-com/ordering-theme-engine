@@ -250,6 +250,70 @@ describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPubl
   })
 })
 
+describe('tokens in migrations, as the PHP ThemeSchemaPublicationTest', () => {
+  const schema = (): JsonMap => {
+    const compiled = compile(json<NodeSchema>('schema-26.0.nodes.json'), json<V1Map>('v1-map.json')).schema
+    delete ((compiled.tokens as JsonMap).typography as JsonMap).overline
+    return compiled
+  }
+  const codes = (errors: SchemaError[]): string[] => errors.map((error) => error.code)
+
+  // Prior behavior: only a color, a font role and the layout's mode had a kind.
+  it('gives every token the kind of its group, by the schema\'s own names', () => {
+    const compiled = schema()
+    const kinds = (paths: string[]): Array<string | null> => paths.map((path) => kindAt(compiled, path))
+    expect(kinds(['tokens.color.primary', 'tokens.font.body', 'tokens.layout.mode', 'tokens.layout.page_gutter', 'tokens.typography.h1', 'tokens.opacity.scrim', 'tokens.radius.md', 'tokens.space.xxxl', 'tokens.shadow_style.color', 'tokens.scrollbar.size']))
+      .toEqual(['color', 'font', 'layout_mode', 'layout', 'typography', 'opacity', 'radius', 'space', 'shadow_style', 'scrollbar'])
+    expect(kinds(['tokens.typography.overline', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more']))
+      .toEqual(Array(5).fill(null))
+  })
+
+  // Prior behavior: a token other than a color could not be migrated, and a
+  // `from` the schema still has as a group passed.
+  it('migrates a token by its group, and takes no group the schema still has as a from', () => {
+    const compiled = schema()
+    compiled.migrate = [
+      { from: 'tokens.typography.overline', to: 'tokens.typography.caption' },
+      { from: 'tokens.opacity.dim', to: 'tokens.opacity.scrim' },
+      { from: 'tokens.color.brand', to: 'tokens.color.primary' },
+      { from: 'tokens.color', to: 'tokens.color.primary' },
+      { from: 'components.button.base', to: 'components.button.base.radius' },
+      { from: 'components.card.variants.default', to: 'components.card.base.radius' },
+    ]
+    expect(codes(check(compiled))).toEqual(['migrate.3.invalid', 'migrate.4.invalid', 'migrate.5.invalid'])
+  })
+
+  // Prior behavior: a color's value in each mode stayed, and its aliases
+  // named a color the schema no longer has.
+  it('moves a token with its modes and every alias to it', () => {
+    const moved = applyMigrations({
+      tokens: { color: { brand: '#E4002B', accent: '#00AA55', secondary: '#123456' }, typography: { overline: { size: 11 } } },
+      modes: { dark: { color: { brand: '#FF5A5F', accent: '#33CC77' } } },
+      components: {
+        button: { colors: { primary: { main: '{color.brand}', on: '{color.on_primary}' } } },
+        card: { base: { border: { width: 1, color: '{color.accent}' } } },
+        header: { base: { title: '{typography.overline}' } },
+      },
+      platforms: { mobile_web: { components: { card: { base: { background: '{color.brand}' } } } } },
+    }, [
+      { from: 'tokens.color.brand', to: 'tokens.color.primary' },
+      { from: 'tokens.color.accent', to: 'tokens.color.secondary' },
+      { from: 'tokens.typography.overline', to: 'tokens.typography.caption' },
+    ])
+    // In the same order as PHP's.
+    expect(JSON.stringify(moved)).toBe(JSON.stringify({
+      tokens: { color: { secondary: '#123456', primary: '#E4002B' }, typography: { caption: { size: 11 } } },
+      modes: { dark: { color: { primary: '#FF5A5F', secondary: '#33CC77' } } },
+      components: {
+        button: { colors: { primary: { main: '{color.primary}', on: '{color.on_primary}' } } },
+        card: { base: { border: { width: 1, color: '{color.secondary}' } } },
+        header: { base: { title: '{typography.caption}' } },
+      },
+      platforms: { mobile_web: { components: { card: { base: { background: '{color.primary}' } } } } },
+    }))
+  })
+})
+
 describe('deriveColors', () => {
   // What api-core's ThemeColors::derive() answers for the same input (PHP 8.3).
   it('derives again what derives from a color derived earlier in the pass', () => {

@@ -1,5 +1,5 @@
 import { isNodes } from './compile.js'
-import { COLORS, FONT_ROLES } from './format.js'
+import { tokenNames } from './format.js'
 import { defaultSections, pageDefaults } from './pages.js'
 import { clone, count, dig, entries, get, has, isArray, isList, type Json, type JsonMap } from './php.js'
 import type { TupleSchema } from './types.js'
@@ -132,8 +132,9 @@ export function propertySpec(schema: TupleSchema, segments: string[]): Json[] | 
 }
 
 /**
- * The kind of the value at a path of the schema's themes: `color`, `font`,
- * `layout_mode`, a component property's kind, `border_color` for the color
+ * The kind of the value at a path of the schema's themes: a token's group
+ * (`color`, `typography`, `radius`…; `layout_mode` for `tokens.layout.mode`)
+ * for a name the schema has, a component property's kind, `border_color` for the color
  * of a border property, `bool` for a visibility key or a page's footer,
  * `image`, `page`, `sections` for a page's list and `section` for one of
  * them (`pages.<page>.sections.<key>`), or null when the path does not exist.
@@ -172,19 +173,14 @@ export function kindAt(schema: TupleSchema, path: string): string | null {
     if (segments.length !== 3) {
       return null
     }
-    if (segments[1] === 'color') {
-      // The schema's own colors, as its themes are validated; the catalog's when it names none.
-      const own = dig(schema, 'tokens', 'color')
-      const colors: readonly string[] = isArray(own) && count(own) > 0 ? entries(own).map(([name]) => name) : COLORS
-      return colors.includes(segments[2]!) ? 'color' : null
+    const [, group, name] = segments as [string, string, string]
+    // The schema's own names, as its themes are validated; the catalog's when it names none.
+    const own = dig(schema, 'tokens', group)
+    const named = isArray(own) && count(own) > 0 ? has(own, name) : tokenNames(group).includes(name)
+    if (!named) {
+      return null
     }
-    if (segments[1] === 'font' && (FONT_ROLES as readonly string[]).includes(segments[2]!)) {
-      return 'font'
-    }
-    if (segments[1] === 'layout' && segments[2] === 'mode') {
-      return 'layout_mode'
-    }
-    return null
+    return group === 'layout' && name === 'mode' ? 'layout_mode' : group
   }
   if (segments[0] !== 'components' || segments.length < 4) {
     return null

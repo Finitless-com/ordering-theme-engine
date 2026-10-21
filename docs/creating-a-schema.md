@@ -221,22 +221,23 @@ earlier ones. The exact rules are in
 | Add a key, a component, an option; change a default | minor |
 | Mark a key `$deprecated` | minor |
 | Remove a key the previous version already marked `$deprecated` | minor |
-| Rename or move a component property, a visibility key, an image, a page or a page's section, with its migration | minor |
+| Rename a token within its group, or rename or move a component property, a visibility key, an image, a page or a page's section, with its migration | minor |
 | Remove a non-deprecated key, change a type or a `dimension`'s scale, remove an option, remove a migration | **breaks**: new base |
 
 Changing a `dimension`'s scale (`size` → `space`) breaks saved themes, which name a level
 of the previous scale: within a base it is rejected just like a type change
 (`<path>.scale_changed`).
 
-**When `co.ordering.migrate` is enough.** To rename or move a component's property, a
-visibility key, an image, a page, a page's footer or one of its sections, within the same
-section and keeping its kind: declare `{ from, to }` at the root and api-core moves the
-value of each saved theme when reading and saving it, on every platform the theme
-overrides too ([schema-format.md §14](schema-format.md#14-migrations-coorderingmigrate)).
+**When `co.ordering.migrate` is enough.** To rename a token within its group (a color, a
+typography style, an opacity), or rename or move a component's property, a visibility
+key, an image, a page, a page's footer or one of its sections, within the same section
+and keeping its kind: declare `{ from, to }` at the root and api-core moves the value of
+each saved theme when reading and saving it, on every platform the theme overrides too,
+and for a token its value in each mode and every alias to it
+([schema-format.md §14](schema-format.md#14-migrations-coorderingmigrate)).
 
 **When a data migration in api-core is needed.** When what changes cannot be declared:
 
-- removing or renaming a token (`tokens.*`), because themes have aliases to it;
 - turning a key of one section into another's (a visibility key that becomes a page
   section), or changing its kind (a footer that becomes a section);
 - changing the meaning of a stored value (a line height in px that becomes a ratio);

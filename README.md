@@ -419,7 +419,7 @@ What the PHP engine answers for them:
   compares the whole answer, errors in order. The cases cover every rule: the original
   as is (out of range, without semver and with the editor errors of 26.0), format, product type, compiler, each
   `check()` failure, each editor rule, the schema's own colors in migrations, the
-  migrations of visibility, images and pages, and the v1 map, `outOfRange()`, semver, version order (equal, lower, two-part, an
+  migrations of tokens (and of a group the schema still has), of visibility, images and pages, and the v1 map, `outOfRange()`, semver, version order (equal, lower, two-part, an
   earlier pre-release) and `diff()` (a patch that changes a default or only editor texts
   and metadata, a minor that adds, removing with and without `$deprecated`,
   `$deprecated: "0"`, migrating (a key, a visibility key, an image and a whole page, and a

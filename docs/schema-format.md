@@ -823,7 +823,9 @@ theme's values:
   paths: a platform's value moves the same way, unless that platform sets `to`.
 - Each migration needs a `from` the schema **no longer has** and a `to` it does have, in
   the same section (the same first segment), and different from each other. Otherwise,
-  `migrate.<index>.invalid`.
+  `migrate.<index>.invalid`. A `from` in `tokens` or `components` that the schema still
+  has as a group (`tokens.color`, `components.button.base`, a variant) is not one it no
+  longer has: moving it would move a group themes still set.
 - Within a base the list only grows (§13).
 
 ### 14.1 Visibility, images and pages
@@ -872,12 +874,15 @@ A path names what a theme stores, with the kind it has:
 - **`components.*`**: renaming or moving a property, also one of a variant or a state (a
   whole variant or state is no path with a kind, and is rejected as `to`).
 - **`visibility.*`, `images.*` and `pages.*`**: as in §14.1.
-- **`tokens.color.*`**: passes when the schema names its own colors (a `from` it no longer
-  names), and moves the token's value; it does not rewrite the aliases to it
-  (`{color.brand}`) a theme stores elsewhere, which are then left out on reading. Other
-  tokens are
-  rejected: the fonts and `layout.mode` are fixed by the catalog, and the rest have no
-  kind.
+- **`tokens.*`**: a token of any group (§4), renamed within its group, by the schema's
+  own names: a `from` the schema no longer names and a `to` it names (the catalog's
+  names when the schema names none in that group). The token's value moves, a color's
+  value in each mode too (`modes.<mode>.color.<name>`, unless the mode sets `to`), and
+  **every alias to it** a theme stores (`{color.brand}` in a component, a border, a
+  platform's override) becomes an alias to `to`, whether or not the theme set the token
+  itself. A token's kind is its group (`color`, `typography`, `opacity`, `radius`…;
+  `layout_mode` for `layout.mode`), so in the groups whose names every schema has whole
+  (§4.1) nothing can be renamed.
 - **`site.*`** passes validation, but site settings are not in the theme and the
   migration does not move them.
 

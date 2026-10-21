@@ -21,6 +21,18 @@ change to the public API.
   `v1` block still takes only tokens, components and site settings.
 - On publish, the `footer` and `sections` of a page a migration moves as a whole are
   `migrated`, not `removed`.
+- `kindAt()` gives every token a kind, its group (`typography`, `opacity`, `radius`…;
+  still `color`, `font` and `layout_mode`), by the schema's own names as it did for
+  colors: a token of any group can be migrated within its group, and a `v1` map may
+  name any token the schema has.
+- **Behavior change:** a migration of a token (`tokens.<group>.<name>`) rewrites every
+  alias to it the theme stores (`{color.brand}` becomes `{color.primary}`), which was
+  left naming a token the schema no longer has and dropped on reading; a color's also
+  moves its value in each mode (`modes.<mode>.color.<name>`).
+- **Behavior change:** `check()` rejects a migration whose `from`, in `tokens` or
+  `components`, is a group the schema still has (`tokens.color`,
+  `components.button.base`, a variant): `migrate.<n>.invalid`. It passed as a key the
+  schema no longer has, and moved a whole group themes still set.
 
 ## 0.5.1 (2026-10-20)
 

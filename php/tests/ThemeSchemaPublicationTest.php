@@ -267,6 +267,87 @@ class ThemeSchemaPublicationTest extends TestCase
     }
 
     /**
+     * Prior behavior: only a color, a font role and the layout's mode had a
+     * kind, so no other token could be migrated.
+     */
+    public function testEveryTokenHasTheKindOfItsGroupByTheSchemasOwnNames(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        unset($schema['tokens']['typography']['overline']);
+        $kinds = fn (array $paths) => array_map(fn (string $path) => ThemeSchemas::kindAt($schema, $path), $paths);
+
+        self::assertSame(
+            [ 'color', 'font', 'layout_mode', 'layout', 'typography', 'opacity', 'radius', 'space', 'shadow_style', 'scrollbar' ],
+            $kinds([ 'tokens.color.primary', 'tokens.font.body', 'tokens.layout.mode', 'tokens.layout.page_gutter', 'tokens.typography.h1', 'tokens.opacity.scrim', 'tokens.radius.md', 'tokens.space.xxxl', 'tokens.shadow_style.color', 'tokens.scrollbar.size' ]),
+        );
+        // A name the schema does not have (one it dropped, though the catalog has it), a group, or no token.
+        self::assertSame(
+            array_fill(0, 5, null),
+            $kinds([ 'tokens.typography.overline', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more' ]),
+        );
+    }
+
+    /**
+     * Prior behavior: a token other than a color had no kind (its
+     * migrations were invalid), and a `from` the schema still has as a
+     * group passed as one it no longer has.
+     */
+    public function testATokenMigratesByItsGroupAndAGroupStillThereIsNoFrom(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        unset($schema['tokens']['typography']['overline']);
+        $schema['migrate'] = [
+            [ 'from' => 'tokens.typography.overline', 'to' => 'tokens.typography.caption' ],
+            [ 'from' => 'tokens.opacity.dim', 'to' => 'tokens.opacity.scrim' ],
+            [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
+            // Invalid from here: groups the schema still has.
+            [ 'from' => 'tokens.color', 'to' => 'tokens.color.primary' ],
+            [ 'from' => 'components.button.base', 'to' => 'components.button.base.radius' ],
+            [ 'from' => 'components.card.variants.default', 'to' => 'components.card.base.radius' ],
+        ];
+
+        self::assertSame([ 'migrate.3.invalid', 'migrate.4.invalid', 'migrate.5.invalid' ], array_column(ThemeSchemas::check($schema), 'code'));
+    }
+
+    /**
+     * Prior behavior: a color's value moved, but not its value in each
+     * mode, and every alias to it was left naming a color the schema no
+     * longer has.
+     */
+    public function testATokenMovesWithItsModesAndEveryAliasToIt(): void
+    {
+        $values = [
+            'tokens' => [ 'color' => [ 'brand' => '#E4002B', 'accent' => '#00AA55', 'secondary' => '#123456' ], 'typography' => [ 'overline' => [ 'size' => 11 ] ] ],
+            'modes' => [ 'dark' => [ 'color' => [ 'brand' => '#FF5A5F', 'accent' => '#33CC77' ] ] ],
+            'components' => [
+                'button' => [ 'colors' => [ 'primary' => [ 'main' => '{color.brand}', 'on' => '{color.on_primary}' ] ] ],
+                'card' => [ 'base' => [ 'border' => [ 'width' => 1, 'color' => '{color.accent}' ] ] ],
+                'header' => [ 'base' => [ 'title' => '{typography.overline}' ] ],
+            ],
+            'platforms' => [ 'mobile_web' => [ 'components' => [ 'card' => [ 'base' => [ 'background' => '{color.brand}' ] ] ] ] ],
+        ];
+
+        self::assertSame(
+            [
+                'tokens' => [ 'color' => [ 'secondary' => '#123456', 'primary' => '#E4002B' ], 'typography' => [ 'caption' => [ 'size' => 11 ] ] ],
+                'modes' => [ 'dark' => [ 'color' => [ 'primary' => '#FF5A5F', 'secondary' => '#33CC77' ] ] ],
+                'components' => [
+                    'button' => [ 'colors' => [ 'primary' => [ 'main' => '{color.primary}', 'on' => '{color.on_primary}' ] ] ],
+                    'card' => [ 'base' => [ 'border' => [ 'width' => 1, 'color' => '{color.secondary}' ] ] ],
+                    'header' => [ 'base' => [ 'title' => '{typography.caption}' ] ],
+                ],
+                'platforms' => [ 'mobile_web' => [ 'components' => [ 'card' => [ 'base' => [ 'background' => '{color.primary}' ] ] ] ] ],
+            ],
+            ThemeMigrations::apply($values, [
+                [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
+                // The theme sets the new color already: its value wins, the aliases go to it.
+                [ 'from' => 'tokens.color.accent', 'to' => 'tokens.color.secondary' ],
+                [ 'from' => 'tokens.typography.overline', 'to' => 'tokens.typography.caption' ],
+            ]),
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function schema(string $version): array

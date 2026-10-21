@@ -523,6 +523,15 @@ $case('migrate-own-colors', "Migrations read the schema's own colors, not the ca
         [ 'from' => 'components.button.base.old_gap', 'to' => 'tokens.color.success_text' ],
     ]),
 ]);
+$case('migrate-tokens', "Migrations of tokens by the schema's own names, of every group: a typography style and an opacity it does not name pass; from a group of tokens, a component's base or a variant the schema still has, it rejects.", [
+    set([ '$extensions', 'co.ordering.migrate' ], [
+        [ 'from' => 'tokens.typography.small', 'to' => 'tokens.typography.caption' ],
+        [ 'from' => 'tokens.opacity.dim', 'to' => 'tokens.opacity.scrim' ],
+        [ 'from' => 'tokens.color', 'to' => 'tokens.color.primary' ],
+        [ 'from' => 'components.button.base', 'to' => 'components.button.base.radius' ],
+        [ 'from' => 'components.card.variants.default', 'to' => 'components.card.base.radius' ],
+    ]),
+]);
 
 $home = $original['pages']['home']['sections']['$value'];
 $hidden_hero = $home;

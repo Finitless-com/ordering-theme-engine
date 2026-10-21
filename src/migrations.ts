@@ -1,3 +1,4 @@
+import { alias } from './format.js'
 import { asMap, entries, get, has, isArray, isEmpty, isList, phpString, values, type Json, type JsonMap, type PhpArray } from './php.js'
 
 /**
@@ -7,7 +8,9 @@ import { asMap, entries, get, has, isArray, isEmpty, isList, phpString, values, 
  * at `from` goes to `to` unless the theme already sets `to`, and `from` is
  * dropped either way. Each also applies under every platform the theme
  * overrides (`platforms.<platform>.…`), which sets its components,
- * visibility and pages by the same paths.
+ * visibility and pages by the same paths. A token's also rewrites every
+ * alias to it (`{color.brand}` becomes `{color.primary}`), and a color's
+ * moves its value in each mode (`modes.<mode>.color.…`) too.
  *
  * Paths are a theme's: the keys of `visibility` and `images` hold dots of
  * their own (`visibility.business.header.info`), any other path is a key
@@ -33,8 +36,38 @@ export function applyMigrations(theme: JsonMap, migrations: Json): JsonMap {
     for (const root of roots) {
       answer = move(answer, [...root, ...from], [...root, ...to], root.length)
     }
+    if (from[0] === 'tokens' && to[0] === 'tokens' && from.length === 3 && to.length === 3) {
+      answer = moveToken(answer, from, to)
+    }
   }
   return answer
+}
+
+/**
+ * What a theme holds of a token besides its value, once it moved: its value
+ * in each mode (a color's, `modes.<mode>.color.<name>`), moved the same
+ * way, and every alias to it, which names the new token.
+ */
+function moveToken(theme: JsonMap, from: string[], to: string[]): JsonMap {
+  let answer = theme
+  if (from[1] === 'color' && to[1] === 'color') {
+    for (const [mode] of entries(get(answer, 'modes'))) {
+      answer = move(answer, ['modes', mode, 'color', from[2]!], ['modes', mode, 'color', to[2]!], 0)
+    }
+  }
+  return realias(answer, from[1]!, from[2]!, `{${to[1]}.${to[2]}}`) as JsonMap
+}
+
+/** $node with every alias to the token `{group.name}` as $alias. */
+function realias(node: Json, group: string, name: string, replacement: string): Json {
+  if (!isArray(node)) {
+    const parts = alias(node)
+    return parts !== null && parts[0] === group && parts[1] === name ? replacement : node
+  }
+  for (const [key, value] of entries(node)) {
+    ;(node as Record<string, Json>)[key] = realias(value, group, name, replacement)
+  }
+  return node
 }
 
 /** $theme with what is at $from moved to $to, both under the same root of $depth segments. */

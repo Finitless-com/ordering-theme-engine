@@ -9,7 +9,10 @@ namespace Ordering\ThemeEngine;
  * a theme is read or saved: a value at `from` goes to `to` unless the theme
  * already sets `to`, and `from` is dropped either way. Each also applies
  * under every platform the theme overrides (`platforms.<platform>.…`),
- * which sets its components, visibility and pages by the same paths.
+ * which sets its components, visibility and pages by the same paths. A
+ * token's also rewrites every alias to it (`{color.brand}` becomes
+ * `{color.primary}`), and a color's moves its value in each mode
+ * (`modes.<mode>.color.…`) too.
  *
  * Paths are a theme's: the keys of `visibility` and `images` hold dots of
  * their own (`visibility.business.header.info`), any other path is a key
@@ -42,9 +45,53 @@ final class ThemeMigrations
             foreach ($roots as $root) {
                 $values = self::move($values, [ ...$root, ...$from ], [ ...$root, ...$to ], count($root));
             }
+            if ($from[0] === 'tokens' && $to[0] === 'tokens' && count($from) === 3 && count($to) === 3) {
+                $values = self::moveToken($values, $from, $to);
+            }
         }
 
         return $values;
+    }
+
+    /**
+     * What a theme holds of a token besides its value, once it moved: its
+     * value in each mode (a color's, `modes.<mode>.color.<name>`), moved
+     * the same way, and every alias to it, which names the new token.
+     *
+     * @param array<string, mixed> $values
+     * @param array{0: string, 1: string, 2: string} $from `tokens, <group>, <name>`
+     * @param array{0: string, 1: string, 2: string} $to
+     * @return array<string, mixed>
+     */
+    private static function moveToken(array $values, array $from, array $to): array
+    {
+        if ($from[1] === 'color' && $to[1] === 'color') {
+            foreach (is_array($values['modes'] ?? null) ? array_keys($values['modes']) : [] as $mode) {
+                $values = self::move($values, [ 'modes', (string) $mode, 'color', $from[2] ], [ 'modes', (string) $mode, 'color', $to[2] ], 0);
+            }
+        }
+
+        return self::realias($values, [ $from[1], $from[2] ], "{{$to[1]}.{$to[2]}}");
+    }
+
+    /**
+     * $node with every alias to the token $old (`[group, name]`) as $alias.
+     *
+     * @param array<string|int, mixed> $node
+     * @param array{0: string, 1: string} $old
+     * @return array<string|int, mixed>
+     */
+    private static function realias(array $node, array $old, string $alias): array
+    {
+        foreach ($node as $key => $value) {
+            if (is_array($value)) {
+                $node[$key] = self::realias($value, $old, $alias);
+            } else if (ThemeFormat::alias($value) === $old) {
+                $node[$key] = $alias;
+            }
+        }
+
+        return $node;
     }
 
     /**
@@ -52,7 +99,9 @@ final class ThemeMigrations
      * no longer has and a `to` it has, of the same section. In visibility,
      * images and pages `from` must also have the shape of a path of the
      * same kind as `to` (ThemeSchemas::kindAt()): a page's footer does not
-     * become one of its sections.
+     * become one of its sections. A `from` of tokens or components the
+     * schema still has as a group (`components.button.base`) is no key it
+     * no longer has: moving it would move a group a theme still sets.
      *
      * @param array<string, mixed> $schema in tuples
      * @return array<int, array{path: string, code: string}>
@@ -69,13 +118,26 @@ final class ThemeMigrations
             $to = is_array($migration) ? ($migration['to'] ?? null) : null;
             if (!is_string($from) || !is_string($to) || $from === $to
                 || explode('.', $from)[0] !== explode('.', $to)[0]
-                || ThemeSchemas::kindAt($schema, $from) !== null || ThemeSchemas::kindAt($schema, $to) === null
+                || ThemeSchemas::kindAt($schema, $from) !== null || ThemeSchemas::kindAt($schema, $to) === null || self::isGroup($schema, $from)
                 || (in_array(explode('.', $from)[0], self::SHAPED, true) && self::shapeKind($from) !== ThemeSchemas::kindAt($schema, $to))) {
                 $errors[] = [ 'path' => "migrate.{$index}", 'code' => "migrate.{$index}.invalid" ];
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * Whether a path of tokens or components names what the schema still
+     * has, though no key (a group of tokens, a component's base, a variant).
+     *
+     * @param array<string, mixed> $schema in tuples
+     */
+    private static function isGroup(array $schema, string $path): bool
+    {
+        $segments = explode('.', $path);
+
+        return in_array($segments[0], [ 'tokens', 'components' ], true) && self::has($schema, $segments);
     }
 
     /**

@@ -594,8 +594,9 @@ class ThemeSchemas
     }
 
     /**
-     * The kind of the value at a version 2 path of the schema's themes:
-     * `color`, `font`, `layout_mode`, a component property's kind,
+     * The kind of the value at a version 2 path of the schema's themes: a
+     * token's group (`color`, `typography`, `radius`…; `layout_mode` for
+     * `tokens.layout.mode`) for a name the schema has, a component property's kind,
      * `border_color` for the color of a border property, `bool` for a
      * visibility key or a page's footer, `image`, `page`, `sections` for a
      * page's list and `section` for one of them (`pages.<page>.sections.<key>`),
@@ -634,20 +635,15 @@ class ThemeSchemas
             if (count($segments) !== 3) {
                 return null;
             }
-            if ($segments[1] === 'color') {
-                // The schema's own colors, as its themes are validated; the catalog's when it names none.
-                $colors = is_array($schema['tokens']['color'] ?? null) && $schema['tokens']['color'] !== [] ? array_keys($schema['tokens']['color']) : ThemeFormat::COLORS;
-
-                return in_array($segments[2], $colors, true) ? 'color' : null;
-            }
-            if ($segments[1] === 'font' && in_array($segments[2], ThemeFormat::FONT_ROLES, true)) {
-                return 'font';
-            }
-            if ($segments[1] === 'layout' && $segments[2] === 'mode') {
-                return 'layout_mode';
+            [ , $group, $name ] = $segments;
+            // The schema's own names, as its themes are validated; the catalog's when it names none.
+            $own = $schema['tokens'][$group] ?? null;
+            $named = is_array($own) && $own !== [] ? array_key_exists($name, $own) : in_array($name, ThemeFormat::tokenNames($group), true);
+            if (!$named) {
+                return null;
             }
 
-            return null;
+            return $group === 'layout' && $name === 'mode' ? 'layout_mode' : $group;
         }
         if ($segments[0] !== 'components' || count($segments) < 4) {
             return null;

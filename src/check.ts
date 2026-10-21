@@ -319,7 +319,9 @@ export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
  * needs a `from` the schema no longer has and a `to` it has, of the same
  * section. In visibility, images and pages `from` must also have the shape
  * of a path of the same kind as `to` (kindAt()): a page's footer does not
- * become one of its sections.
+ * become one of its sections. A `from` of tokens or components the schema
+ * still has as a group (`components.button.base`) is no key it no longer
+ * has: moving it would move a group a theme still sets.
  */
 export function checkMigrations(schema: TupleSchema): SchemaError[] {
   const migrations = get(schema, 'migrate') ?? []
@@ -332,12 +334,31 @@ export function checkMigrations(schema: TupleSchema): SchemaError[] {
     const to = isArray(migration) ? get(migration, 'to') : null
     if (typeof from !== 'string' || typeof to !== 'string' || from === to
       || from.split('.')[0] !== to.split('.')[0]
-      || kindAt(schema, from) !== null || kindAt(schema, to) === null
+      || kindAt(schema, from) !== null || kindAt(schema, to) === null || isGroup(schema, from)
       || (among(['visibility', 'images', 'pages'], from.split('.')[0]) && shapeKind(from) !== kindAt(schema, to))) {
       errors.push({ path: `migrate.${index}`, code: `migrate.${index}.invalid` })
     }
   }
   return errors
+}
+
+/**
+ * Whether a path of tokens or components names what the schema still has,
+ * though no key (a group of tokens, a component's base, a variant).
+ */
+function isGroup(schema: TupleSchema, path: string): boolean {
+  const segments = path.split('.')
+  if (!among(['tokens', 'components'], segments[0])) {
+    return false
+  }
+  let node: Json = schema
+  for (const segment of segments) {
+    if (!isArray(node) || !has(node, segment)) {
+      return false
+    }
+    node = get(node, segment)
+  }
+  return true
 }
 
 /**
