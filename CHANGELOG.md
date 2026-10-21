@@ -5,7 +5,7 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
-## Unreleased
+## 0.7.0 (2026-10-21)
 
 Breaking for api-core and the CLI's users (nothing is launched, so nothing old is kept):
 
