@@ -294,7 +294,9 @@ export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
   const v1Paths = new Set<string>()
   for (const [v2Path, v1Path] of entries(get(schema, 'v1'))) {
     const list = isArray(v1Path) && isList(v1Path) ? values(v1Path) : [v1Path]
-    if (list.length === 0 || !list.every((path) => typeof path === 'string') || kindAt(schema, v2Path) === null) {
+    // Visibility, images and pages carry their version 1 paths in their own entries.
+    if (list.length === 0 || !list.every((path) => typeof path === 'string') || kindAt(schema, v2Path) === null
+      || !among(['tokens', 'components', 'site'], v2Path.split('.')[0])) {
       fail(`v1.${v2Path}`, 'invalid')
       continue
     }
@@ -315,8 +317,9 @@ export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
 /**
  * What a schema's migrations get wrong (ThemeMigrations::check()): each
  * needs a `from` the schema no longer has and a `to` it has, of the same
- * section. Paths go through kindAt(), which knows the tokens, the
- * components and the site.
+ * section. In visibility, images and pages `from` must also have the shape
+ * of a path of the same kind as `to` (kindAt()): a page's footer does not
+ * become one of its sections.
  */
 export function checkMigrations(schema: TupleSchema): SchemaError[] {
   const migrations = get(schema, 'migrate') ?? []
@@ -329,11 +332,38 @@ export function checkMigrations(schema: TupleSchema): SchemaError[] {
     const to = isArray(migration) ? get(migration, 'to') : null
     if (typeof from !== 'string' || typeof to !== 'string' || from === to
       || from.split('.')[0] !== to.split('.')[0]
-      || kindAt(schema, from) !== null || kindAt(schema, to) === null) {
+      || kindAt(schema, from) !== null || kindAt(schema, to) === null
+      || (among(['visibility', 'images', 'pages'], from.split('.')[0]) && shapeKind(from) !== kindAt(schema, to))) {
       errors.push({ path: `migrate.${index}`, code: `migrate.${index}.invalid` })
     }
   }
   return errors
+}
+
+/**
+ * The kind kindAt() would give a path of visibility, images or pages by
+ * its shape alone, whether the schema has it or not; null when no theme
+ * stores such a path.
+ */
+function shapeKind(path: string): string | null {
+  const segments = path.split('.')
+  const name = (segment: string | undefined): boolean => segment !== undefined && NAME.test(segment)
+  if (segments[0] === 'visibility' || segments[0] === 'images') {
+    return segments.length > 1 && KEY.test(segments.slice(1).join('.')) ? (segments[0] === 'visibility' ? 'bool' : 'image') : null
+  }
+  if (segments[0] !== 'pages' || !name(segments[1])) {
+    return null
+  }
+  if (segments.length === 2) {
+    return 'page'
+  }
+  if (segments.length === 3 && segments[2] === 'footer') {
+    return 'bool'
+  }
+  if (segments.length === 3 && segments[2] === 'sections') {
+    return 'sections'
+  }
+  return segments.length === 4 && segments[2] === 'sections' && name(segments[3]) ? 'section' : null
 }
 
 /**

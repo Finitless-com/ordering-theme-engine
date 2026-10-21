@@ -147,6 +147,126 @@ class ThemeSchemaPublicationTest extends TestCase
     }
 
     /**
+     * Prior behavior: kindAt() knew no visibility, image or page path, so
+     * every migration of them was invalid.
+     */
+    public function testVisibilityImagesAndPagesHaveTheKindOfTheSchemasOwnKeys(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        $kinds = fn (array $paths) => array_map(fn (string $path) => ThemeSchemas::kindAt($schema, $path), $paths);
+
+        self::assertSame(
+            [ 'bool', 'bool', 'image', 'image', 'page', 'bool', 'sections', 'section' ],
+            $kinds([ 'visibility.footer', 'visibility.business.header.info', 'images.logo', 'images.empty.not_found', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero' ]),
+        );
+        // What the schema does not have, or no theme stores.
+        self::assertSame(
+            array_fill(0, 9, null),
+            $kinds([ 'visibility', 'visibility.business', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.cards.sections.hero' ]),
+        );
+
+        // A version 1 path is a token's, a component's or a site setting's: the others carry theirs.
+        $schema['v1'] = [ 'visibility.footer' => 'some.hidden', 'images.logo' => 'some.image', 'pages.home.footer' => 'some.footer' ];
+        self::assertSame([ 'v1.visibility.footer.invalid', 'v1.images.logo.invalid', 'v1.pages.home.footer.invalid' ], array_column(ThemeSchemas::check($schema), 'code'));
+    }
+
+    public function testAMigrationOfVisibilityImagesOrPagesKeepsTheKindOfWhatItMoves(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema['migrate'] = [
+            [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+            [ 'from' => 'images.brand_logo', 'to' => 'images.logo' ],
+            [ 'from' => 'pages.shop', 'to' => 'pages.business_listing' ],
+            [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.footer' ],
+            [ 'from' => 'pages.shop.sections', 'to' => 'pages.home.sections' ],
+            [ 'from' => 'pages.home.sections.banner', 'to' => 'pages.home.sections.promo_banners' ],
+            // Invalid from here: a key that is no key, across sections, and kinds that differ.
+            [ 'from' => 'visibility.Header-Brand', 'to' => 'visibility.header.logo' ],
+            [ 'from' => 'images.', 'to' => 'images.logo' ],
+            [ 'from' => 'visibility.home.banner', 'to' => 'pages.home.sections.promo_banners' ],
+            [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.sections.hero' ],
+            [ 'from' => 'pages.shop', 'to' => 'pages.home.footer' ],
+            [ 'from' => 'pages.shop.sections.hero', 'to' => 'pages.home' ],
+            [ 'from' => 'pages.shop.sections.Hero', 'to' => 'pages.home.sections.hero' ],
+            [ 'from' => 'pages.home.sections.hero.visible', 'to' => 'pages.home.sections.hero' ],
+        ];
+
+        self::assertSame(
+            array_map(fn (int $index) => "migrate.{$index}.invalid", range(6, 13)),
+            array_column(ThemeSchemas::check($schema), 'code'),
+        );
+    }
+
+    /**
+     * Prior behavior: a section's path named no value of the theme (its
+     * sections are a list), and a platform's override was left where it was.
+     */
+    public function testASectionMovesAsAnItemOfItsListAndAPlatformFollows(): void
+    {
+        $section = fn (string $key, bool $visible) => [ 'key' => $key, 'visible' => $visible ];
+        $apply = fn (array $values, string $from, string $to) => ThemeMigrations::apply($values, [ [ 'from' => $from, 'to' => $to ] ]);
+        $home = [ 'pages' => [ 'home' => [ 'footer' => false, 'sections' => [ $section('hero', true), $section('banner', false), $section('content', true) ] ] ] ];
+
+        // Within the page: renamed in its place, with its `visible`.
+        self::assertSame(
+            [ 'pages' => [ 'home' => [ 'footer' => false, 'sections' => [ $section('hero', true), $section('promo', false), $section('content', true) ] ] ] ],
+            $apply($home, 'pages.home.sections.banner', 'pages.home.sections.promo'),
+        );
+        // The new key set already: the old one is dropped.
+        self::assertSame(
+            [ 'pages' => [ 'home' => [ 'footer' => false, 'sections' => [ $section('hero', true), $section('content', true) ] ] ] ],
+            $apply($home, 'pages.home.sections.banner', 'pages.home.sections.content'),
+        );
+        // To another page: at the end of its list, created when it has none.
+        self::assertSame(
+            [ 'pages' => [
+                'home' => [ 'footer' => false, 'sections' => [ $section('hero', true), $section('content', true) ] ],
+                'business' => [ 'sections' => [ $section('offers', false) ] ],
+            ] ],
+            $apply($home, 'pages.home.sections.banner', 'pages.business.sections.offers'),
+        );
+        // A list left empty goes, with each map it leaves empty.
+        self::assertSame(
+            [ 'pages' => [ 'business' => [ 'sections' => [ $section('menu', true), $section('hero', true) ] ] ] ],
+            $apply([ 'pages' => [ 'home' => [ 'sections' => [ $section('hero', true) ] ], 'business' => [ 'sections' => [ $section('menu', true) ] ] ] ], 'pages.home.sections.hero', 'pages.business.sections.hero'),
+        );
+        // Every item of the old key goes; the first one moves.
+        self::assertSame(
+            [ 'pages' => [ 'home' => [ 'sections' => [ $section('promo', false), $section('hero', true) ] ] ] ],
+            $apply([ 'pages' => [ 'home' => [ 'sections' => [ $section('banner', false), $section('hero', true), $section('banner', true) ] ] ] ], 'pages.home.sections.banner', 'pages.home.sections.promo'),
+        );
+        // Onto itself, or between a section and anything else, nothing moves.
+        self::assertSame($home, $apply($home, 'pages.home.sections.banner', 'pages.home.sections.banner'));
+        self::assertSame($home, $apply($home, 'pages.home.sections.banner', 'pages.home.footer'));
+        self::assertSame($home, $apply($home, 'pages.home.footer', 'pages.home.sections.banner'));
+
+        // A platform's override moves by the same path: a visibility key, a page, a component property.
+        // Each map left empty goes, and comes back last.
+        self::assertSame(
+            [
+                'platforms' => [ 'mobile_web' => [
+                    'visibility' => [ 'header.logo' => true ],
+                    'pages' => [ 'business_listing' => [ 'footer' => true ] ],
+                    'components' => [ 'card' => [ 'base' => [ 'radius' => '{radius.sm}' ] ] ],
+                ] ],
+                'visibility' => [ 'header.logo' => false ],
+            ],
+            ThemeMigrations::apply([
+                'visibility' => [ 'header.brand' => false ],
+                'platforms' => [ 'mobile_web' => [
+                    'components' => [ 'card' => [ 'base' => [ 'corner' => '{radius.sm}' ] ] ],
+                    'visibility' => [ 'header.brand' => true ],
+                    'pages' => [ 'shop' => [ 'footer' => true ] ],
+                ] ],
+            ], [
+                [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+                [ 'from' => 'pages.shop', 'to' => 'pages.business_listing' ],
+                [ 'from' => 'components.card.base.corner', 'to' => 'components.card.base.radius' ],
+            ]),
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function schema(string $version): array

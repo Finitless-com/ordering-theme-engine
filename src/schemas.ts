@@ -1,6 +1,6 @@
 import { isNodes } from './compile.js'
 import { COLORS, FONT_ROLES } from './format.js'
-import { pageDefaults } from './pages.js'
+import { defaultSections, pageDefaults } from './pages.js'
 import { clone, count, dig, entries, get, has, isArray, isList, type Json, type JsonMap } from './php.js'
 import type { TupleSchema } from './types.js'
 
@@ -134,13 +134,39 @@ export function propertySpec(schema: TupleSchema, segments: string[]): Json[] | 
 /**
  * The kind of the value at a path of the schema's themes: `color`, `font`,
  * `layout_mode`, a component property's kind, `border_color` for the color
- * of a border property, or null when the path does not exist.
+ * of a border property, `bool` for a visibility key or a page's footer,
+ * `image`, `page`, `sections` for a page's list and `section` for one of
+ * them (`pages.<page>.sections.<key>`), or null when the path does not exist.
  */
 export function kindAt(schema: TupleSchema, path: string): string | null {
   const segments = path.split('.')
   if (segments[0] === 'site') {
     const spec = specAt(schema, path)
     return spec === null ? null : (spec[0] as string)
+  }
+  if (segments[0] === 'visibility' || segments[0] === 'images') {
+    // Their keys hold dots of their own; the schema's own keys.
+    return segments.length > 1 && isArray(dig(schema, segments[0], segments.slice(1).join('.')))
+      ? (segments[0] === 'visibility' ? 'bool' : 'image')
+      : null
+  }
+  if (segments[0] === 'pages') {
+    const page = dig(schema, 'pages', segments[1] ?? '')
+    if (segments.length < 2 || !isArray(page)) {
+      return null
+    }
+    if (segments.length === 2) {
+      return 'page'
+    }
+    if (segments.length === 3 && segments[2] === 'footer' && isArray(get(page, 'footer'))) {
+      return 'bool'
+    }
+    if (segments.length === 3 && segments[2] === 'sections' && isArray(get(page, 'sections'))) {
+      return 'sections'
+    }
+    return segments.length === 4 && segments[2] === 'sections' && defaultSections(page).some((section) => get(section, 'key') === segments[3])
+      ? 'section'
+      : null
   }
   if (segments[0] === 'tokens') {
     if (segments.length !== 3) {

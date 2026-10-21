@@ -418,7 +418,9 @@ class ThemeSchemas
         $v1_paths = [];
         foreach ($schema['v1'] ?? [] as $v2_path => $v1_path) {
             $list = is_array($v1_path) && array_is_list($v1_path) ? $v1_path : [ $v1_path ];
-            if ($list === [] || count(array_filter($list, 'is_string')) !== count($list) || self::kindAt($schema, (string) $v2_path) === null) {
+            // Visibility, images and pages carry their version 1 paths in their own entries.
+            if ($list === [] || count(array_filter($list, 'is_string')) !== count($list) || self::kindAt($schema, (string) $v2_path) === null
+                || !in_array(explode('.', (string) $v2_path)[0], [ 'tokens', 'components', 'site' ], true)) {
                 $fail("v1.{$v2_path}", 'invalid');
                 continue;
             }
@@ -594,8 +596,10 @@ class ThemeSchemas
     /**
      * The kind of the value at a version 2 path of the schema's themes:
      * `color`, `font`, `layout_mode`, a component property's kind,
-     * `border_color` for the color of a border property, or null when the
-     * path does not exist.
+     * `border_color` for the color of a border property, `bool` for a
+     * visibility key or a page's footer, `image`, `page`, `sections` for a
+     * page's list and `section` for one of them (`pages.<page>.sections.<key>`),
+     * or null when the path does not exist.
      *
      * @param array<string, mixed> $schema
      */
@@ -604,6 +608,27 @@ class ThemeSchemas
         $segments = explode('.', $path);
         if ($segments[0] === 'site') {
             return self::specAt($schema, $path)[0] ?? null;
+        }
+        if (in_array($segments[0], [ 'visibility', 'images' ], true)) {
+            // Their keys hold dots of their own; the schema's own keys.
+            $key = implode('.', array_slice($segments, 1));
+
+            return count($segments) > 1 && is_array($schema[$segments[0]][$key] ?? null) ? ($segments[0] === 'visibility' ? 'bool' : 'image') : null;
+        }
+        if ($segments[0] === 'pages') {
+            $page = $schema['pages'][$segments[1] ?? ''] ?? null;
+            if (count($segments) < 2 || !is_array($page)) {
+                return null;
+            }
+
+            return match (true) {
+                count($segments) === 2 => 'page',
+                count($segments) === 3 && $segments[2] === 'footer' && is_array($page['footer'] ?? null) => 'bool',
+                count($segments) === 3 && $segments[2] === 'sections' && is_array($page['sections'] ?? null) => 'sections',
+                count($segments) === 4 && $segments[2] === 'sections'
+                    && in_array($segments[3], array_column(ThemePages::defaultSections($page), 'key'), true) => 'section',
+                default => null,
+            };
         }
         if ($segments[0] === 'tokens') {
             if (count($segments) !== 3) {

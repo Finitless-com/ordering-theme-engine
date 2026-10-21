@@ -5,6 +5,23 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+- `co.ordering.migrate` moves `visibility`, `images` and `pages` paths (§14.1 of the
+  schema format): a visibility key, an image, a whole page, a page's footer, its list of
+  sections, or one section, which moves with its `visible`, renamed in its place within
+  the page or to the end of another page's list. They were all `migrate.<n>.invalid`.
+  In those sections `from` must have the shape of a path of the same kind as `to` (a
+  footer does not become a section); otherwise, `migrate.<n>.invalid`.
+- **Behavior change:** each migration also moves the same path under every platform the
+  theme overrides (`platforms.<platform>.…`): a platform's override of a migrated
+  component property, visibility key or page moved nowhere and was left out on reading.
+- `kindAt()` (PHP's `ThemeSchemas::kindAt()`) answers `bool` for a visibility key or a
+  page's footer, `image`, `page`, `sections` and `section` for the schema's own keys. The
+  `v1` block still takes only tokens, components and site settings.
+- On publish, the `footer` and `sections` of a page a migration moves as a whole are
+  `migrated`, not `removed`.
+
 ## 0.5.1 (2026-10-20)
 
 - **Behavior change:** a string's `pattern` rule must be in the subset of regular

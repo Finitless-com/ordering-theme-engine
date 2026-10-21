@@ -3,7 +3,7 @@ import { deriveColors } from '../src/colors.js'
 import { insets, matrices, shades } from '../src/derivations.js'
 import { applyMigrations } from '../src/migrations.js'
 import { applyOverall, follows } from '../src/overall.js'
-import { schemaDefaults } from '../src/schemas.js'
+import { kindAt, schemaDefaults } from '../src/schemas.js'
 import { check, compile, defaults, resolve, siteDefaults, type JsonMap, type NodeSchema, type SchemaError, type V1Map } from '../src/index.js'
 import { cases, differences, goldenSchema, json, schemaFor } from './fixtures.js'
 
@@ -152,6 +152,101 @@ describe('applyMigrations, as the PHP ThemeSchemaPublicationTest::testAThemeTake
     })
     // A map left empty goes; one recreated comes last.
     expect(Object.keys(values.components as JsonMap)).toEqual(['chip', 'card'])
+  })
+})
+
+describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPublicationTest', () => {
+  const schema = (): JsonMap => compile(json<NodeSchema>('schema-26.0.nodes.json'), json<V1Map>('v1-map.json')).schema
+  const codes = (errors: SchemaError[]): string[] => errors.map((error) => error.code)
+
+  // Prior behavior: kindAt() knew no visibility, image or page path.
+  it('gives visibility, images and pages the kind of the schema\'s own keys', () => {
+    const compiled = schema()
+    const kinds = (paths: string[]): Array<string | null> => paths.map((path) => kindAt(compiled, path))
+    expect(kinds(['visibility.footer', 'visibility.business.header.info', 'images.logo', 'images.empty.not_found', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero']))
+      .toEqual(['bool', 'bool', 'image', 'image', 'page', 'bool', 'sections', 'section'])
+    expect(kinds(['visibility', 'visibility.business', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.cards.sections.hero']))
+      .toEqual(Array(9).fill(null))
+
+    // A version 1 path is a token's, a component's or a site setting's: the others carry theirs.
+    compiled.v1 = { 'visibility.footer': 'some.hidden', 'images.logo': 'some.image', 'pages.home.footer': 'some.footer' }
+    expect(codes(check(compiled))).toEqual(['v1.visibility.footer.invalid', 'v1.images.logo.invalid', 'v1.pages.home.footer.invalid'])
+  })
+
+  it('keeps the kind of what a migration moves', () => {
+    const compiled = schema()
+    compiled.migrate = [
+      { from: 'visibility.header.brand', to: 'visibility.header.logo' },
+      { from: 'images.brand_logo', to: 'images.logo' },
+      { from: 'pages.shop', to: 'pages.business_listing' },
+      { from: 'pages.shop.footer', to: 'pages.home.footer' },
+      { from: 'pages.shop.sections', to: 'pages.home.sections' },
+      { from: 'pages.home.sections.banner', to: 'pages.home.sections.promo_banners' },
+      // Invalid from here: a key that is no key, across sections, and kinds that differ.
+      { from: 'visibility.Header-Brand', to: 'visibility.header.logo' },
+      { from: 'images.', to: 'images.logo' },
+      { from: 'visibility.home.banner', to: 'pages.home.sections.promo_banners' },
+      { from: 'pages.shop.footer', to: 'pages.home.sections.hero' },
+      { from: 'pages.shop', to: 'pages.home.footer' },
+      { from: 'pages.shop.sections.hero', to: 'pages.home' },
+      { from: 'pages.shop.sections.Hero', to: 'pages.home.sections.hero' },
+      { from: 'pages.home.sections.hero.visible', to: 'pages.home.sections.hero' },
+    ]
+    expect(codes(check(compiled))).toEqual([6, 7, 8, 9, 10, 11, 12, 13].map((index) => `migrate.${index}.invalid`))
+  })
+
+  // Prior behavior: a section's path named no value of the theme (its
+  // sections are a list), and a platform's override was left where it was.
+  it('moves a section as an item of its list, and a platform follows', () => {
+    const section = (key: string, visible: boolean): JsonMap => ({ key, visible })
+    const apply = (values: JsonMap, from: string, to: string): JsonMap => applyMigrations(structuredClone(values), [{ from, to }])
+    const home: JsonMap = { pages: { home: { footer: false, sections: [section('hero', true), section('banner', false), section('content', true)] } } }
+
+    // Within the page: renamed in its place, with its `visible`.
+    expect(apply(home, 'pages.home.sections.banner', 'pages.home.sections.promo'))
+      .toEqual({ pages: { home: { footer: false, sections: [section('hero', true), section('promo', false), section('content', true)] } } })
+    // The new key set already: the old one is dropped.
+    expect(apply(home, 'pages.home.sections.banner', 'pages.home.sections.content'))
+      .toEqual({ pages: { home: { footer: false, sections: [section('hero', true), section('content', true)] } } })
+    // To another page: at the end of its list, created when it has none.
+    expect(apply(home, 'pages.home.sections.banner', 'pages.business.sections.offers')).toEqual({ pages: {
+      home: { footer: false, sections: [section('hero', true), section('content', true)] },
+      business: { sections: [section('offers', false)] },
+    } })
+    // A list left empty goes, with each map it leaves empty.
+    expect(apply({ pages: { home: { sections: [section('hero', true)] }, business: { sections: [section('menu', true)] } } }, 'pages.home.sections.hero', 'pages.business.sections.hero'))
+      .toEqual({ pages: { business: { sections: [section('menu', true), section('hero', true)] } } })
+    // Every item of the old key goes; the first one moves.
+    expect(apply({ pages: { home: { sections: [section('banner', false), section('hero', true), section('banner', true)] } } }, 'pages.home.sections.banner', 'pages.home.sections.promo'))
+      .toEqual({ pages: { home: { sections: [section('promo', false), section('hero', true)] } } })
+    // Onto itself, or between a section and anything else, nothing moves.
+    expect(apply(home, 'pages.home.sections.banner', 'pages.home.sections.banner')).toEqual(home)
+    expect(apply(home, 'pages.home.sections.banner', 'pages.home.footer')).toEqual(home)
+    expect(apply(home, 'pages.home.footer', 'pages.home.sections.banner')).toEqual(home)
+
+    // A platform's override moves by the same path: a visibility key, a page, a component property.
+    // Each map left empty goes, and comes back last.
+    const moved = applyMigrations({
+      visibility: { 'header.brand': false },
+      platforms: { mobile_web: {
+        components: { card: { base: { corner: '{radius.sm}' } } },
+        visibility: { 'header.brand': true },
+        pages: { shop: { footer: true } },
+      } },
+    }, [
+      { from: 'visibility.header.brand', to: 'visibility.header.logo' },
+      { from: 'pages.shop', to: 'pages.business_listing' },
+      { from: 'components.card.base.corner', to: 'components.card.base.radius' },
+    ])
+    // In the same order as PHP's.
+    expect(JSON.stringify(moved)).toBe(JSON.stringify({
+      platforms: { mobile_web: {
+        visibility: { 'header.logo': true },
+        pages: { business_listing: { footer: true } },
+        components: { card: { base: { radius: '{radius.sm}' } } },
+      } },
+      visibility: { 'header.logo': false },
+    }))
   })
 })
 

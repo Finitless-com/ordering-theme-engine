@@ -133,7 +133,9 @@ final class NodeCompiler
             }
         }
         // The map outlives what a product removes (a layout it no longer has): only what the schema has.
-        $paths = array_filter($paths, fn ($path, $v2_path) => ThemeSchemas::kindAt($tuples, (string) $v2_path) !== null, ARRAY_FILTER_USE_BOTH);
+        // Visibility, images and pages carry theirs in their own entries.
+        $paths = array_filter($paths, fn ($path, $v2_path) => ThemeSchemas::kindAt($tuples, (string) $v2_path) !== null
+            && in_array(explode('.', (string) $v2_path)[0], [ 'tokens', 'components', 'site' ], true), ARRAY_FILTER_USE_BOTH);
         if ($paths !== []) {
             $tuples['v1'] = $paths;
         }

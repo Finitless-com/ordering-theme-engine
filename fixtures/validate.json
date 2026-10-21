@@ -12931,7 +12931,7 @@
         },
         {
             "name": "migrate-invalid",
-            "description": "Migrations from a key the schema has, to one it lacks, across sections, onto themselves, and of visibility (kindAt() knows no visibility key).",
+            "description": "Migrations from a key the schema has, to one it lacks, across sections and onto themselves.",
             "schema": {
                 "from": "base",
                 "ops": [
@@ -12957,10 +12957,133 @@
                             {
                                 "from": "components.button.base.gone",
                                 "to": "components.button.base.gone"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.invalid",
+                "errors": [
+                    {
+                        "path": "migrate.0",
+                        "code": "migrate.0.invalid"
+                    },
+                    {
+                        "path": "migrate.1",
+                        "code": "migrate.1.invalid"
+                    },
+                    {
+                        "path": "migrate.2",
+                        "code": "migrate.2.invalid"
+                    },
+                    {
+                        "path": "migrate.3",
+                        "code": "migrate.3.invalid"
+                    }
+                ],
+                "changes": null
+            }
+        },
+        {
+            "name": "migrate-sections-valid",
+            "description": "Migrations of visibility, images and pages: a key whose own dots name no group, an image, a whole page, a page's footer, its list of sections, and one section within a page and to another.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "visibility.header.brand",
+                                "to": "visibility.header.logo"
                             },
                             {
-                                "from": "visibility.old_footer",
-                                "to": "visibility.footer"
+                                "from": "images.brand_logo",
+                                "to": "images.logo"
+                            },
+                            {
+                                "from": "pages.shop",
+                                "to": "pages.business_listing"
+                            },
+                            {
+                                "from": "pages.shop.footer",
+                                "to": "pages.home.footer"
+                            },
+                            {
+                                "from": "pages.shop.sections",
+                                "to": "pages.business_listing.sections"
+                            },
+                            {
+                                "from": "pages.home.sections.banner",
+                                "to": "pages.home.sections.promo_banners"
+                            },
+                            {
+                                "from": "pages.shop.sections.hero",
+                                "to": "pages.home.sections.hero"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": null
+            }
+        },
+        {
+            "name": "migrate-sections-invalid",
+            "description": "Migrations of visibility, images and pages it rejects: from a key the schema has, to an image it lacks, a visibility key into a page's section, a footer into a section, a section into a page, a page field it has not, a page's sections or a section the schema still has, and a path deeper than a section.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "visibility.footer",
+                                "to": "visibility.pwa_prompt"
+                            },
+                            {
+                                "from": "images.brand_logo",
+                                "to": "images.brand"
+                            },
+                            {
+                                "from": "visibility.home.banner",
+                                "to": "pages.home.sections.promo_banners"
+                            },
+                            {
+                                "from": "pages.shop.footer",
+                                "to": "pages.home.sections.hero"
+                            },
+                            {
+                                "from": "pages.shop.sections.hero",
+                                "to": "pages.home"
+                            },
+                            {
+                                "from": "pages.shop.extra",
+                                "to": "pages.home.footer"
+                            },
+                            {
+                                "from": "pages.home.sections",
+                                "to": "pages.business_listing.sections"
+                            },
+                            {
+                                "from": "pages.home.sections.hero",
+                                "to": "pages.business_listing.sections.hero"
+                            },
+                            {
+                                "from": "pages.shop.sections.hero.more",
+                                "to": "pages.home.sections.hero"
                             }
                         ]
                     ]
@@ -12988,6 +13111,22 @@
                     {
                         "path": "migrate.4",
                         "code": "migrate.4.invalid"
+                    },
+                    {
+                        "path": "migrate.5",
+                        "code": "migrate.5.invalid"
+                    },
+                    {
+                        "path": "migrate.6",
+                        "code": "migrate.6.invalid"
+                    },
+                    {
+                        "path": "migrate.7",
+                        "code": "migrate.7.invalid"
+                    },
+                    {
+                        "path": "migrate.8",
+                        "code": "migrate.8.invalid"
                     }
                 ],
                 "changes": null
@@ -15710,6 +15849,359 @@
                     ],
                     "deprecated": []
                 }
+            }
+        },
+        {
+            "name": "diff-migrated-sections",
+            "description": "A minor that moves a visibility key, an image and a whole page with migrations: the page's footer and sections go with it.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "visibility.header.brand",
+                                "to": "visibility.header.logo"
+                            },
+                            {
+                                "from": "images.brand_logo",
+                                "to": "images.logo"
+                            },
+                            {
+                                "from": "pages.shop",
+                                "to": "pages.business_listing"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "visibility",
+                            "header.brand"
+                        ],
+                        {
+                            "$value": true
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "images",
+                            "brand_logo"
+                        ],
+                        {
+                            "$value": ""
+                        }
+                    ],
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": null,
+                "errors": [],
+                "changes": {
+                    "added": [],
+                    "removed": [],
+                    "migrated": [
+                        "visibility.header.brand",
+                        "images.brand_logo",
+                        "pages.shop.footer",
+                        "pages.shop.sections"
+                    ],
+                    "deprecated": []
+                }
+            }
+        },
+        {
+            "name": "diff-page-partly-migrated",
+            "description": "A minor that drops a page but moves only its footer: its sections are removed.",
+            "schema": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "version"
+                        ],
+                        "26.1.0"
+                    ],
+                    [
+                        "set",
+                        [
+                            "$extensions",
+                            "co.ordering.migrate"
+                        ],
+                        [
+                            {
+                                "from": "pages.shop.footer",
+                                "to": "pages.home.footer"
+                            }
+                        ]
+                    ]
+                ]
+            },
+            "previous": {
+                "from": "base",
+                "ops": [
+                    [
+                        "set",
+                        [
+                            "pages",
+                            "shop"
+                        ],
+                        {
+                            "footer": {
+                                "$type": "boolean",
+                                "$value": null,
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER",
+                                            "default": "Footer"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_FOOTER_HELP",
+                                            "default": "Whether this page ends with the footer. The whole website’s choice is in Visibility."
+                                        },
+                                        "control": "segmented",
+                                        "order": 1,
+                                        "platform": {
+                                            "info": {
+                                                "key": "BUILDER_THEME_PAGE_FOOTER_PLATFORM_HELP",
+                                                "default": "Whether this page ends with the footer on phones."
+                                            }
+                                        },
+                                        "options": [
+                                            {
+                                                "value": null,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_SITE",
+                                                    "default": "As on the whole website (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "label_platform": {
+                                                    "key": "BUILDER_THEME_FOOTER_AS_ALL_SCREENS",
+                                                    "default": "As on all screens (_state_)",
+                                                    "params": {
+                                                        "_state_": [
+                                                            {
+                                                                "key": "BUILDER_THEME_SHOWN",
+                                                                "default": "shown"
+                                                            },
+                                                            {
+                                                                "key": "BUILDER_THEME_HIDDEN",
+                                                                "default": "hidden"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "value": true,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_SHOW",
+                                                    "default": "Show"
+                                                }
+                                            },
+                                            {
+                                                "value": false,
+                                                "label": {
+                                                    "key": "BUILDER_THEME_HIDE",
+                                                    "default": "Hide"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "sections": {
+                                "$type": "sections",
+                                "$value": [],
+                                "$extensions": {
+                                    "co.ordering.editor": {
+                                        "label": {
+                                            "key": "BUILDER_THEME_PAGE_SECTIONS",
+                                            "default": "Sections"
+                                        },
+                                        "info": {
+                                            "key": "BUILDER_THEME_PAGE_NO_SECTIONS",
+                                            "default": "This page has no sections to move or hide."
+                                        },
+                                        "control": "sortable_sections",
+                                        "order": 2
+                                    }
+                                }
+                            },
+                            "$extensions": {
+                                "co.ordering.editor": {
+                                    "label": {
+                                        "key": "BUILDER_THEME_PAGE_MULTI_CART",
+                                        "default": "Carts of several stores"
+                                    },
+                                    "group": "order",
+                                    "order": 3,
+                                    "preview": {
+                                        "page": "multi_cart",
+                                        "path": "/multi-cart"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                ]
+            },
+            "expected": {
+                "code": "schema.incompatible",
+                "errors": [
+                    {
+                        "path": "pages.shop.sections",
+                        "code": "pages.shop.sections.removed"
+                    }
+                ],
+                "changes": null
             }
         },
         {

@@ -10,8 +10,9 @@ namespace Ordering\ThemeEngine\Schema;
  *   editor metadata.
  * - A minor may add keys and options and change defaults. A key it drops
  *   must have been `$deprecated` in the last version, or moved by a
- *   migration; a key keeps its type, its scale and every option it had;
- *   and the migrations of the base are never dropped.
+ *   migration (of the key, or of the page that holds it); a key keeps
+ *   its type, its scale and every option it had; and the migrations of
+ *   the base are never dropped.
  * - A new base is not compared.
  */
 final class SchemaDiff
@@ -46,7 +47,7 @@ final class SchemaDiff
 
         foreach ($before as $path => $leaf) {
             if (!isset($after[$path])) {
-                if (isset($moved[$path])) {
+                if (self::isMoved($path, $moved)) {
                     $changes['migrated'][] = $path;
                 } else {
                     $changes['removed'][] = $path;
@@ -80,6 +81,20 @@ final class SchemaDiff
         }
 
         return [ 'errors' => $errors, 'changes' => $changes ];
+    }
+
+    /**
+     * Whether a migration moves a leaf: the leaf itself, or the page that
+     * holds it (`pages.<page>` moves its footer and its sections). A key of
+     * visibility or images holds dots of its own: only itself.
+     *
+     * @param array<string, mixed> $moved `to` by `from`
+     */
+    private static function isMoved(string $path, array $moved): bool
+    {
+        $segments = explode('.', $path);
+
+        return isset($moved[$path]) || ($segments[0] === 'pages' && count($segments) > 2 && isset($moved["pages.{$segments[1]}"]));
     }
 
     /**

@@ -158,9 +158,10 @@ export function compile(nodes: NodeSchema, v1Map: V1Map = {}): { schema: TupleSc
     }
   }
   // The map outlives what a product removes: only what the schema has.
+  // Visibility, images and pages carry theirs in their own entries.
   const v1: JsonMap = {}
   for (const [path, value] of Object.entries(paths)) {
-    if (kindAt(tuples, path) !== null) {
+    if (kindAt(tuples, path) !== null && ['tokens', 'components', 'site'].includes(path.split('.')[0]!)) {
       v1[path] = value
     }
   }

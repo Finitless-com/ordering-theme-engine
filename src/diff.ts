@@ -10,8 +10,9 @@ import type { Changes, NodeSchema, SchemaError } from './types.js'
  *   editor metadata.
  * - A minor may add keys and options and change defaults. A key it drops
  *   must have been `$deprecated` in the last version, or moved by a
- *   migration; a key keeps its type, its scale and every option it had;
- *   and the migrations of the base are never dropped.
+ *   migration (of the key, or of the page that holds it); a key keeps
+ *   its type, its scale and every option it had; and the migrations of
+ *   the base are never dropped.
  * - A new base is not compared.
  */
 
@@ -54,8 +55,7 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
   for (const [path, leaf] of Object.entries(before)) {
     const now = after[path]
     if (now === undefined) {
-      // isset(): a migration to null moves nothing.
-      if ((moved.get(path) ?? null) !== null) {
+      if (isMoved(path, moved)) {
         changes.migrated.push(path)
       } else {
         changes.removed.push(path)
@@ -90,6 +90,18 @@ export function diff(previous: NodeSchema, next: NodeSchema): { errors: SchemaEr
   }
 
   return { errors, changes }
+}
+
+/**
+ * Whether a migration moves a leaf (SchemaDiff::isMoved()): the leaf
+ * itself, or the page that holds it (`pages.<page>` moves its footer and
+ * its sections). A key of visibility or images holds dots of its own: only
+ * itself. isset(): a migration to null moves nothing.
+ */
+function isMoved(path: string, moved: Map<string, Json>): boolean {
+  const segments = path.split('.')
+  return (moved.get(path) ?? null) !== null
+    || (segments[0] === 'pages' && segments.length > 2 && (moved.get(`pages.${segments[1]}`) ?? null) !== null)
 }
 
 /**

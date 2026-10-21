@@ -1,15 +1,19 @@
-import { asMap, get, has, isArray, isEmpty, phpString, values, type Json, type JsonMap, type PhpArray } from './php.js'
+import { asMap, entries, get, has, isArray, isEmpty, isList, phpString, values, type Json, type JsonMap, type PhpArray } from './php.js'
 
 /**
  * The renames and moves a schema declares (`$extensions["co.ordering.migrate"]`,
  * `[{ from, to }]`, api-core's ThemeMigrations), so that a theme saved
  * before a key changed place keeps its value. They apply in order: a value
  * at `from` goes to `to` unless the theme already sets `to`, and `from` is
- * dropped either way.
+ * dropped either way. Each also applies under every platform the theme
+ * overrides (`platforms.<platform>.…`), which sets its components,
+ * visibility and pages by the same paths.
  *
  * Paths are a theme's: the keys of `visibility` and `images` hold dots of
  * their own (`visibility.business.header.info`), any other path is a key
- * per segment.
+ * per segment. A page's section (`pages.<page>.sections.<key>`) is an item
+ * of its list: it moves with its `visible`, renamed in its place within
+ * the page, or to the end of another page's list.
  *
  * $theme is changed in place: pass a copy.
  */
@@ -18,16 +22,85 @@ export function applyMigrations(theme: JsonMap, migrations: Json): JsonMap {
   for (const migration of values(migrations)) {
     const from = segments(phpString(get(migration, 'from') ?? ''))
     const to = segments(phpString(get(migration, 'to') ?? ''))
-    if (from.length < 2 || to.length < 2 || !hasPath(answer, from)) {
+    if (from.length < 2 || to.length < 2) {
       continue
     }
-    const value = getPath(answer, from)
-    answer = forget(answer, from) as JsonMap
-    if (!hasPath(answer, to)) {
-      answer = put(answer, to, value) as JsonMap
+    const roots: string[][] = [[]]
+    const platforms = get(answer, 'platforms')
+    for (const [platform] of entries(isArray(platforms) ? platforms : [])) {
+      roots.push(['platforms', platform])
+    }
+    for (const root of roots) {
+      answer = move(answer, [...root, ...from], [...root, ...to], root.length)
     }
   }
   return answer
+}
+
+/** $theme with what is at $from moved to $to, both under the same root of $depth segments. */
+function move(theme: JsonMap, from: string[], to: string[], depth: number): JsonMap {
+  const section = (path: string[]): boolean => path.length === depth + 4 && path[depth] === 'pages' && path[depth + 2] === 'sections'
+  if (section(from) || section(to)) {
+    return section(from) && section(to) ? moveSection(theme, from, to) : theme
+  }
+  if (!hasPath(theme, from)) {
+    return theme
+  }
+  const value = getPath(theme, from)
+  let answer = forget(theme, from) as JsonMap
+  if (!hasPath(answer, to)) {
+    answer = put(answer, to, value) as JsonMap
+  }
+  return answer
+}
+
+/**
+ * A section from one page's list to another's (or the same one's): the
+ * first item of the key goes, renamed, to the place it had when the list
+ * is the same and to the end of the other one otherwise, unless that list
+ * has the new key already. Every item of the old key is dropped, and a
+ * list left empty with it.
+ */
+function moveSection(theme: JsonMap, fromPath: string[], toPath: string[]): JsonMap {
+  const from = fromPath.slice(0, -1)
+  const to = toPath.slice(0, -1)
+  const fromKey = fromPath[fromPath.length - 1]!
+  const toKey = toPath[toPath.length - 1]!
+  const list = hasPath(theme, from) ? getPath(theme, from) : null
+  const index = isArray(list) && isList(list) ? find(list, fromKey) : null
+  const same = from.length === to.length && from.every((segment, at) => segment === to[at])
+  if (index === null || (same && fromKey === toKey)) {
+    return theme
+  }
+  const items = values(list)
+  const moved: JsonMap = { key: toKey }
+  for (const [field, value] of entries(items[index])) {
+    if (field !== 'key') {
+      moved[field] = value
+    }
+  }
+  const target = same ? list : hasPath(theme, to) ? getPath(theme, to) : []
+  const taken = !isArray(target) || !isList(target) || find(target, toKey) !== null
+
+  const kept: Json[] = []
+  items.forEach((item, position) => {
+    if (!isArray(item) || get(item, 'key') !== fromKey) {
+      kept.push(item)
+    } else if (same && position === index && !taken) {
+      kept.push(moved)
+    }
+  })
+  let answer = (kept.length === 0 ? forget(theme, from) : put(theme, from, kept)) as JsonMap
+  if (!same && !taken) {
+    answer = put(answer, to, [...values(target), moved]) as JsonMap
+  }
+  return answer
+}
+
+/** The index of the first item of a section list with that key. */
+function find(list: Json, key: string): number | null {
+  const index = values(list).findIndex((item) => isArray(item) && get(item, 'key') === key)
+  return index < 0 ? null : index
 }
 
 function segments(path: string): string[] {

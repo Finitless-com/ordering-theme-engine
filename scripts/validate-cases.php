@@ -485,13 +485,36 @@ $case('migrate-valid', 'Migrations from keys the schema no longer has to keys it
         [ 'from' => 'site.title', 'to' => 'site.name' ],
     ]),
 ]);
-$case('migrate-invalid', "Migrations from a key the schema has, to one it lacks, across sections, onto themselves, and of visibility (kindAt() knows no visibility key).", [
+$case('migrate-invalid', "Migrations from a key the schema has, to one it lacks, across sections and onto themselves.", [
     set([ '$extensions', 'co.ordering.migrate' ], [
         [ 'from' => 'components.button.base.radius', 'to' => 'components.button.base.icon_gap' ],
         [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.new_gap' ],
         [ 'from' => 'components.button.base.old_gap', 'to' => 'tokens.color.primary' ],
         [ 'from' => 'components.button.base.gone', 'to' => 'components.button.base.gone' ],
-        [ 'from' => 'visibility.old_footer', 'to' => 'visibility.footer' ],
+    ]),
+]);
+$case('migrate-sections-valid', "Migrations of visibility, images and pages: a key whose own dots name no group, an image, a whole page, a page's footer, its list of sections, and one section within a page and to another.", [
+    set([ '$extensions', 'co.ordering.migrate' ], [
+        [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+        [ 'from' => 'images.brand_logo', 'to' => 'images.logo' ],
+        [ 'from' => 'pages.shop', 'to' => 'pages.business_listing' ],
+        [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.footer' ],
+        [ 'from' => 'pages.shop.sections', 'to' => 'pages.business_listing.sections' ],
+        [ 'from' => 'pages.home.sections.banner', 'to' => 'pages.home.sections.promo_banners' ],
+        [ 'from' => 'pages.shop.sections.hero', 'to' => 'pages.home.sections.hero' ],
+    ]),
+]);
+$case('migrate-sections-invalid', "Migrations of visibility, images and pages it rejects: from a key the schema has, to an image it lacks, a visibility key into a page's section, a footer into a section, a section into a page, a page field it has not, a page's sections or a section the schema still has, and a path deeper than a section.", [
+    set([ '$extensions', 'co.ordering.migrate' ], [
+        [ 'from' => 'visibility.footer', 'to' => 'visibility.pwa_prompt' ],
+        [ 'from' => 'images.brand_logo', 'to' => 'images.brand' ],
+        [ 'from' => 'visibility.home.banner', 'to' => 'pages.home.sections.promo_banners' ],
+        [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.sections.hero' ],
+        [ 'from' => 'pages.shop.sections.hero', 'to' => 'pages.home' ],
+        [ 'from' => 'pages.shop.extra', 'to' => 'pages.home.footer' ],
+        [ 'from' => 'pages.home.sections', 'to' => 'pages.business_listing.sections' ],
+        [ 'from' => 'pages.home.sections.hero', 'to' => 'pages.business_listing.sections.hero' ],
+        [ 'from' => 'pages.shop.sections.hero.more', 'to' => 'pages.home.sections.hero' ],
     ]),
 ]);
 $case('migrate-own-colors', "Migrations read the schema's own colors, not the catalog: from a catalog color the schema does not name (as one it dropped) passes, to one fails.", [
@@ -719,6 +742,22 @@ $case('diff-migrated', 'A minor that moves a key with a migration.', [
     version('26.1.0'),
     set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ] ]),
 ], [ 'ops' => [ set('components.button.base.old_gap', node('dimension', '{space.sm}', [ 'scale' => 'space' ])) ] ]);
+$case('diff-migrated-sections', "A minor that moves a visibility key, an image and a whole page with migrations: the page's footer and sections go with it.", [
+    version('26.1.0'),
+    set([ '$extensions', 'co.ordering.migrate' ], [
+        [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
+        [ 'from' => 'images.brand_logo', 'to' => 'images.logo' ],
+        [ 'from' => 'pages.shop', 'to' => 'pages.business_listing' ],
+    ]),
+], [ 'ops' => [
+    set([ 'visibility', 'header.brand' ], node(null, true)),
+    set([ 'images', 'brand_logo' ], node(null, '')),
+    set('pages.shop', $original['pages']['multi_cart']),
+] ]);
+$case('diff-page-partly-migrated', "A minor that drops a page but moves only its footer: its sections are removed.", [
+    version('26.1.0'),
+    set([ '$extensions', 'co.ordering.migrate' ], [ [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.footer' ] ]),
+], [ 'ops' => [ set('pages.shop', $original['pages']['multi_cart']) ] ]);
 $case('diff-type-changed', 'A minor that changes the type of a key.', [
     version('26.1.0'),
     set('site.business_slug.$type', 'html'),

@@ -777,7 +777,7 @@ of its base:
 - **A minor** (`26.1.x` → `26.2.0`) can add keys and options and change defaults. It
   cannot:
   - remove a key (`<path>.removed`), unless the previous version marked it
-    `$deprecated` or a migration moves it (§14);
+    `$deprecated` or a migration moves it or the page that holds it (§14);
   - change its `$type` (`<path>.type_changed`);
   - change its `scale` (`<path>.scale_changed`): moving a `dimension` from one scale to
     another, or removing or giving it one, changes the scale in which a saved theme names
@@ -817,20 +817,67 @@ theme's values:
 - api-core applies them in order every time it reads or saves a theme, and this
   package's `resolve()` does too, before anything else (before `inherits`): the value in
   `from` moves to `to` if the theme does not set `to`, and `from` is deleted either way.
+  A map left empty by the move is deleted too.
+- Each migration also applies under every platform the theme overrides
+  (`platforms.<platform>.…`), which sets components, visibility and pages by the same
+  paths: a platform's value moves the same way, unless that platform sets `to`.
 - Each migration needs a `from` the schema **no longer has** and a `to` it does have, in
   the same section (the same first segment), and different from each other. Otherwise,
   `migrate.<index>.invalid`.
 - Within a base the list only grows (§13).
 
-**What works today.** Validation recognizes paths under `components.*`, `site.*` and a
-few tokens, and in practice:
+### 14.1 Visibility, images and pages
 
-- **`components.*`** works: renaming or moving a property, a variant or a state.
-- **`tokens.*`** does not: a `from` of `tokens.color.*` (or `tokens.font.*`,
-  `tokens.layout.mode`) is rejected because the name is still in the catalog, and no
-  other token is recognized as a target.
-- **`visibility.*`, `images.*` and `pages.*`** are rejected: validation does not yet
-  recognize their paths.
+A path names what a theme stores, with the kind it has:
+
+| Path | Kind | What moves |
+|---|---|---|
+| `visibility.<key>` | `bool` | the boolean, and each platform's override of it |
+| `images.<key>` | `image` | the URL, as it is |
+| `pages.<page>` | `page` | the whole page: its `footer` and its `sections` |
+| `pages.<page>.footer` | `bool` | the footer (`true`, `false` or `null`) |
+| `pages.<page>.sections` | `sections` | the page's whole list |
+| `pages.<page>.sections.<key>` | `section` | one section of the list, with its `visible` |
+
+- The key of `visibility` and `images` is the whole rest of the path, dots included
+  (`visibility.business.header.info` is the key `business.header.info`), as in §6 and §7.
+- **Type safety.** In these three sections `from` must also have the shape of a path of
+  that table (a `<key>` as in §6, a page or section name `[a-z0-9_]+`), **of the same
+  kind as `to`**: a footer does not become a section, a section does not become a page,
+  and a path deeper than a section names nothing. Otherwise, `migrate.<index>.invalid`.
+  Moving across sections is rejected like any other (a visibility key that becomes a
+  page's section, an image that becomes a visibility key): its value changes type, and
+  needs a data migration in api-core.
+- **A section is an item of its page's list**, not a key. Its migration takes the first
+  item with the `from` key: within the same page it is renamed **in its place**; to
+  another page it goes **to the end** of that page's list (the list is created if the
+  theme has none), so it lands last among its `group` there until the theme reorders
+  it. "The theme sets `to`" means that list already has an item with the `to` key: then
+  nothing moves. Every item with the `from` key is deleted either way, and a list left
+  empty is deleted (the page then shows its default sections).
+- **An image** moves as it is: the new key's `formats` and `hints` only apply to the
+  next upload, as with any stored image.
+- What a theme stores but the destination does not take (a moved section that cannot be
+  hidden there with `visible: false`, a page with sections the new page lacks) is left
+  out on reading, as any invalid value is, and the default shows.
+- On publish (§13), a key a migration moves is not `removed`; neither are the `footer` and
+  `sections` of a page when a migration moves the whole page. A section that disappears
+  from a page's list is not a removed key (the list is one node), with or without a
+  migration: the migration only keeps what themes chose for it.
+- `kindAt()` reads the schema's own keys: a key, image, page or section the schema does
+  not have has no kind.
+
+### 14.2 What works today
+
+- **`components.*`**: renaming or moving a property, also one of a variant or a state (a
+  whole variant or state is no path with a kind, and is rejected as `to`).
+- **`visibility.*`, `images.*` and `pages.*`**: as in §14.1.
+- **`tokens.color.*`**: passes when the schema names its own colors (a `from` it no longer
+  names), and moves the token's value; it does not rewrite the aliases to it
+  (`{color.brand}`) a theme stores elsewhere, which are then left out on reading. Other
+  tokens are
+  rejected: the fonts and `layout.mode` are fixed by the catalog, and the rest have no
+  kind.
 - **`site.*`** passes validation, but site settings are not in the theme and the
   migration does not move them.
 
