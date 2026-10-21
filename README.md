@@ -96,6 +96,12 @@ alone.
   control (`<path>.default_out_of_range`).
 - `diff(previous, next)`: `SchemaDiff::compare()`, `{ errors, changes }` with
   `changes: { added, removed, migrated, deprecated }`.
+- `valid(values, schema)`: what of a stored theme fits its schema
+  (`ThemeResolver::valid()`): what the schema migrates moved first, then every value the
+  schema does not have or that is not valid left out, so its default shows. The schema
+  in nodes or compiled; the theme is not changed. `themeErrors(values, compiled)` and
+  `settingsErrors(settings, compiled)` are `ThemeValidator::validate()` and
+  `::settings()`: each problem `{ path, code }`, in the API's order.
 - The format's meta-schema, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), the same file the PHP engine reads.
 - Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`, `ResolveOptions`,
@@ -315,11 +321,11 @@ resolves nothing with them, and `check()` validates them, given the nodes.
 
 ## What the TypeScript engine leaves out
 
-- **It does not validate themes.** It assumes a valid theme: the Ordering.co API validates it on
-  save and, when serving it, drops whatever no longer fits the schema
+- **`resolve()` does not validate themes.** It assumes a valid theme: the Ordering.co API
+  validates it on save and, when serving it, drops whatever no longer fits the schema
   (`ThemeResolver::valid()`). A theme the API would not accept may resolve differently
-  here. Like `valid()`, it does first move what the schema migrates
-  (`co.ordering.migrate`).
+  here unless it goes through `valid()` first. Like `valid()`, it does first move what
+  the schema migrates (`co.ordering.migrate`).
 - `resolve()` does not validate the schema (that is `validateFull()`'s job), nor does
   `validate()` check the meta-schema (see above).
 - It does not convert or project v1 themes (`ThemeV1Bridge`), optimize images or fetch
@@ -409,6 +415,11 @@ What the PHP engine answers for them:
 - `fixtures/php-round.json`: PHP's `round()` over the values the engine rounds
   (`scripts/php-round.php`), and `fixtures/php-strings.json`, its `version_compare()`
   and `(string)` cast of a float (`scripts/php-strings.php`);
+- `fixtures/valid.json`: what `ThemeValidator::validate()` and `ThemeResolver::valid()`
+  answer for themes that break every rule of each section (unknown, invalid, alias,
+  alpha, duplicate), and `ThemeValidator::settings()` for site settings, over the
+  compiled current schema (`scripts/valid-cases.php`); `themeErrors()`, `valid()` and
+  `settingsErrors()` must answer the same;
 - `fixtures/validate.json`: the golden cases of `validate()`
   (`scripts/validate-cases.php`). It starts from the current schema (with version
   `26.0.0`, the two `signup_page` paddings inside their control and the editor

@@ -258,6 +258,31 @@ const COLOR_HEX = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\n?$/
 const COLOR_RGB = /^rgba?\([ \t\n\v\f\r]*\d{1,3}[ \t\n\v\f\r]*,[ \t\n\v\f\r]*\d{1,3}[ \t\n\v\f\r]*,[ \t\n\v\f\r]*\d{1,3}[ \t\n\v\f\r]*(,[ \t\n\v\f\r]*(0|1|0?\.\d+)[ \t\n\v\f\r]*)?\)\n?$/
 const IMAGE_URL = /^https?:\/\/[^ \t\n\v\f\r]+\n?$/
 
+/** The modes a theme may set colors for (`modes.<mode>.color`). */
+export const MODES = ['dark'] as const
+
+/**
+ * Whether a color lets what is under it show (ThemeFormat::isTranslucent()):
+ * `transparent`, or an alpha below the full one (`#RGBA`, `#RRGGBBAA`,
+ * `rgba()`).
+ */
+export function isTranslucent(value: unknown): boolean {
+  if (!isColor(value)) {
+    return false
+  }
+  const color = value as string
+  if (color === 'transparent') {
+    return true
+  }
+  const hex = /^#([0-9a-fA-F]{4}|[0-9a-fA-F]{8})\n?$/.exec(color)
+  if (hex !== null) {
+    const digits = hex[1]!
+    return (digits.length === 4 ? digits.slice(3) : digits.slice(6)).toLowerCase() !== (digits.length === 4 ? 'f' : 'ff')
+  }
+  const alpha = /,[ \t\n\v\f\r]*(0|1|0?\.\d+)[ \t\n\v\f\r]*\)\n?$/.exec(color)
+  return alpha !== null && color.startsWith('rgba') && Number(alpha[1]) < 1
+}
+
 /** A hex color, rgb() / rgba(), or `transparent`. */
 export function isColor(value: unknown): boolean {
   return typeof value === 'string' && (value === 'transparent' || COLOR_HEX.test(value) || COLOR_RGB.test(value))

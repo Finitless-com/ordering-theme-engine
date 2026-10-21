@@ -1,0 +1,869 @@
+{
+    "description": "What ThemeValidator::validate() and ThemeResolver::valid() answer for each theme, and ThemeValidator::settings() for each site's settings, over marketplace_website@26.0.",
+    "php": "8.3.35",
+    "cases": [
+        {
+            "name": "list",
+            "description": "A list is no theme: nothing of it is kept.",
+            "values": [
+                {
+                    "tokens": {}
+                }
+            ],
+            "errors": [
+                {
+                    "path": "",
+                    "code": "invalid"
+                }
+            ],
+            "valid": []
+        },
+        {
+            "name": "empty",
+            "description": "The empty theme: nothing is wrong.",
+            "values": {},
+            "errors": [],
+            "valid": []
+        },
+        {
+            "name": "sections",
+            "description": "A section a theme has not, and sections that are not maps.",
+            "values": {
+                "theme": {},
+                "tokens": [
+                    1,
+                    2
+                ],
+                "components": "button",
+                "visibility": {
+                    "footer": false
+                },
+                "pages": []
+            },
+            "errors": [
+                {
+                    "path": "theme",
+                    "code": "theme.unknown"
+                },
+                {
+                    "path": "tokens",
+                    "code": "tokens.invalid"
+                },
+                {
+                    "path": "components",
+                    "code": "components.invalid"
+                }
+            ],
+            "valid": {
+                "visibility": {
+                    "footer": false
+                },
+                "pages": []
+            }
+        },
+        {
+            "name": "tokens",
+            "description": "Tokens: an unknown group and name, invalid values of each kind, a catalog color and a typography style the schema does not name, an alias to one, and a translucent color where the schema keeps it opaque (and one where it does not).",
+            "values": {
+                "tokens": {
+                    "color": {
+                        "primary": "#E4002B",
+                        "secondary": "red",
+                        "danger_text": "#B02A3E",
+                        "background": "rgba(0, 0, 0, 0.5)",
+                        "overlay": "#00000080",
+                        "surface": "#FFFFFF80"
+                    },
+                    "typography": {
+                        "h1": {
+                            "size": 30,
+                            "line": 1.2,
+                            "weight": 700
+                        },
+                        "h2": {
+                            "size": 30,
+                            "line": 9,
+                            "weight": 700
+                        },
+                        "small": {
+                            "size": 10,
+                            "line": 1.2,
+                            "weight": 400
+                        }
+                    },
+                    "radius": {
+                        "md": 8,
+                        "huge": 40,
+                        "lg": -1
+                    },
+                    "shadow_style": {
+                        "style": "soft",
+                        "direction": "up",
+                        "color": "#000000"
+                    },
+                    "border_style": {
+                        "width": "none",
+                        "radius": "round"
+                    },
+                    "focus_ring": {
+                        "color": "primary",
+                        "offset": "huge"
+                    },
+                    "layout": {
+                        "mode": "appointments",
+                        "page_gutter": "16"
+                    },
+                    "font": {
+                        "body": "inter",
+                        "heading": "comic_sans"
+                    },
+                    "weird": {
+                        "x": 1
+                    },
+                    "opacity": "half"
+                }
+            },
+            "errors": [
+                {
+                    "path": "tokens.color.secondary",
+                    "code": "tokens.color.secondary.invalid"
+                },
+                {
+                    "path": "tokens.typography.h2",
+                    "code": "tokens.typography.h2.invalid"
+                },
+                {
+                    "path": "tokens.typography.small",
+                    "code": "tokens.typography.small.unknown"
+                },
+                {
+                    "path": "tokens.radius.huge",
+                    "code": "tokens.radius.huge.unknown"
+                },
+                {
+                    "path": "tokens.radius.lg",
+                    "code": "tokens.radius.lg.invalid"
+                },
+                {
+                    "path": "tokens.shadow_style.direction",
+                    "code": "tokens.shadow_style.direction.invalid"
+                },
+                {
+                    "path": "tokens.border_style.radius",
+                    "code": "tokens.border_style.radius.invalid"
+                },
+                {
+                    "path": "tokens.focus_ring.offset",
+                    "code": "tokens.focus_ring.offset.invalid"
+                },
+                {
+                    "path": "tokens.layout.page_gutter",
+                    "code": "tokens.layout.page_gutter.invalid"
+                },
+                {
+                    "path": "tokens.font.heading",
+                    "code": "tokens.font.heading.invalid"
+                },
+                {
+                    "path": "tokens.weird",
+                    "code": "tokens.weird.unknown"
+                },
+                {
+                    "path": "tokens.opacity",
+                    "code": "tokens.opacity.invalid"
+                },
+                {
+                    "path": "tokens.color.danger_text",
+                    "code": "tokens.color.danger_text.unknown"
+                },
+                {
+                    "path": "tokens.color.background",
+                    "code": "tokens.color.background.alpha"
+                },
+                {
+                    "path": "tokens.color.surface",
+                    "code": "tokens.color.surface.alpha"
+                }
+            ],
+            "valid": {
+                "tokens": {
+                    "color": {
+                        "primary": "#E4002B",
+                        "overlay": "#00000080"
+                    },
+                    "typography": {
+                        "h1": {
+                            "size": 30,
+                            "line": 1.2,
+                            "weight": 700
+                        }
+                    },
+                    "radius": {
+                        "md": 8
+                    },
+                    "shadow_style": {
+                        "style": "soft",
+                        "color": "#000000"
+                    },
+                    "border_style": {
+                        "width": "none"
+                    },
+                    "focus_ring": {
+                        "color": "primary"
+                    },
+                    "layout": {
+                        "mode": "appointments"
+                    },
+                    "font": {
+                        "body": "inter"
+                    }
+                }
+            }
+        },
+        {
+            "name": "components",
+            "description": "Components: an unknown component, section, variant, state and property, values of the wrong kind, an alias of another group, a level a property leaves out, a color without a default set to null, a button's colors and appearances, its sizes, a scope and slots, and colors made translucent where the schema keeps them opaque, by the node that declares them.",
+            "values": {
+                "components": {
+                    "nope": {
+                        "base": {
+                            "radius": "{radius.md}"
+                        }
+                    },
+                    "card": {
+                        "base": {
+                            "background": "{color.surface}",
+                            "radius": "{space.md}",
+                            "padding": 12,
+                            "shadow": "big",
+                            "glow": "#FFFFFF",
+                            "border": {
+                                "width": 1,
+                                "color": "#00000080"
+                            }
+                        },
+                        "variants": {
+                            "default": {
+                                "background": "#FFFFFF80",
+                                "states": {
+                                    "hover": {
+                                        "shadow": "{shadow.lg}",
+                                        "background": "#ffffff"
+                                    },
+                                    "pressed": {
+                                        "shadow": "{shadow.lg}"
+                                    }
+                                }
+                            },
+                            "fancy": {}
+                        },
+                        "extra": {}
+                    },
+                    "button": {
+                        "base": {
+                            "radius": "{radius.full}",
+                            "mobile_full_width": "yes"
+                        },
+                        "colors": {
+                            "primary": {
+                                "main": "#00AA55",
+                                "ink": "#003311",
+                                "glow": "#FFFFFF"
+                            },
+                            "nope": {
+                                "main": "#000000"
+                            }
+                        },
+                        "appearances": {
+                            "solid": {
+                                "background": "{on}",
+                                "states": {
+                                    "hover": {
+                                        "background": null,
+                                        "color": "#FFFFFF80"
+                                    },
+                                    "focus": {
+                                        "background": "{main}"
+                                    }
+                                }
+                            }
+                        },
+                        "sizes": {
+                            "sm": {
+                                "height": "{size.lg}",
+                                "padding_x": "{size.lg}",
+                                "states": {
+                                    "hover": {}
+                                }
+                            }
+                        }
+                    },
+                    "auth_form": {
+                        "scope": {
+                            "button": {
+                                "base": {
+                                    "radius": "{radius.sm}",
+                                    "speed": "fast"
+                                }
+                            },
+                            "card": {
+                                "base": {}
+                            }
+                        },
+                        "slots": {
+                            "submit": {
+                                "size": "md",
+                                "appearance": "glossy",
+                                "component": "button"
+                            },
+                            "cancel": {
+                                "component": "link",
+                                "variant": "default"
+                            },
+                            "nope": {
+                                "size": "md"
+                            },
+                            "resend": "link"
+                        }
+                    },
+                    "modal": {
+                        "base": {
+                            "background": "#00000080"
+                        }
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "components.nope",
+                    "code": "components.nope.unknown"
+                },
+                {
+                    "path": "components.card.base.radius",
+                    "code": "components.card.base.radius.alias"
+                },
+                {
+                    "path": "components.card.base.shadow",
+                    "code": "components.card.base.shadow.invalid"
+                },
+                {
+                    "path": "components.card.base.glow",
+                    "code": "components.card.base.glow.unknown"
+                },
+                {
+                    "path": "components.card.variants.default.states.pressed",
+                    "code": "components.card.variants.default.states.pressed.unknown"
+                },
+                {
+                    "path": "components.card.variants.fancy",
+                    "code": "components.card.variants.fancy.unknown"
+                },
+                {
+                    "path": "components.card.extra",
+                    "code": "components.card.extra.unknown"
+                },
+                {
+                    "path": "components.button.base.mobile_full_width",
+                    "code": "components.button.base.mobile_full_width.invalid"
+                },
+                {
+                    "path": "components.button.colors.primary.glow",
+                    "code": "components.button.colors.primary.glow.unknown"
+                },
+                {
+                    "path": "components.button.colors.nope",
+                    "code": "components.button.colors.nope.unknown"
+                },
+                {
+                    "path": "components.button.appearances.solid.states.focus",
+                    "code": "components.button.appearances.solid.states.focus.unknown"
+                },
+                {
+                    "path": "components.button.sizes.sm.padding_x",
+                    "code": "components.button.sizes.sm.padding_x.alias"
+                },
+                {
+                    "path": "components.auth_form.scope.button.base.speed",
+                    "code": "components.auth_form.scope.button.base.speed.invalid"
+                },
+                {
+                    "path": "components.auth_form.scope.card",
+                    "code": "components.auth_form.scope.card.unknown"
+                },
+                {
+                    "path": "components.auth_form.slots.submit.appearance",
+                    "code": "components.auth_form.slots.submit.appearance.invalid"
+                },
+                {
+                    "path": "components.auth_form.slots.cancel.component",
+                    "code": "components.auth_form.slots.cancel.component.unknown"
+                },
+                {
+                    "path": "components.auth_form.slots.cancel.variant",
+                    "code": "components.auth_form.slots.cancel.variant.unknown"
+                },
+                {
+                    "path": "components.auth_form.slots.nope",
+                    "code": "components.auth_form.slots.nope.unknown"
+                },
+                {
+                    "path": "components.auth_form.slots.resend",
+                    "code": "components.auth_form.slots.resend.unknown"
+                },
+                {
+                    "path": "components.card.base.border.color",
+                    "code": "components.card.base.border.color.alpha"
+                },
+                {
+                    "path": "components.card.variants.default.background",
+                    "code": "components.card.variants.default.background.alpha"
+                },
+                {
+                    "path": "components.button.appearances.solid.states.hover.color",
+                    "code": "components.button.appearances.solid.states.hover.color.alpha"
+                }
+            ],
+            "valid": {
+                "components": {
+                    "card": {
+                        "base": {
+                            "background": "{color.surface}",
+                            "padding": 12,
+                            "border": {
+                                "width": 1
+                            }
+                        },
+                        "variants": {
+                            "default": {
+                                "states": {
+                                    "hover": {
+                                        "shadow": "{shadow.lg}",
+                                        "background": "#ffffff"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "button": {
+                        "base": {
+                            "radius": "{radius.full}"
+                        },
+                        "colors": {
+                            "primary": {
+                                "main": "#00AA55",
+                                "ink": "#003311"
+                            }
+                        },
+                        "appearances": {
+                            "solid": {
+                                "background": "{on}",
+                                "states": {
+                                    "hover": {
+                                        "background": null
+                                    }
+                                }
+                            }
+                        },
+                        "sizes": {
+                            "sm": {
+                                "height": "{size.lg}",
+                                "states": {
+                                    "hover": []
+                                }
+                            }
+                        }
+                    },
+                    "auth_form": {
+                        "scope": {
+                            "button": {
+                                "base": {
+                                    "radius": "{radius.sm}"
+                                }
+                            }
+                        },
+                        "slots": {
+                            "submit": {
+                                "size": "md",
+                                "component": "button"
+                            },
+                            "cancel": []
+                        }
+                    },
+                    "modal": {
+                        "base": {
+                            "background": "#00000080"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "visibility-images-pages",
+            "description": "Visibility, images and pages: unknown keys, values of the wrong kind, an unknown page and field, a footer that is no bool, sections that are no list, a section unknown, repeated, hidden that cannot be, and not `{ key, visible }`.",
+            "values": {
+                "visibility": {
+                    "footer": false,
+                    "header.logo": "no",
+                    "header.nope": true
+                },
+                "images": {
+                    "logo": "https://example.com/logo.png",
+                    "favicon": "ftp://example.com/x.ico",
+                    "nope": ""
+                },
+                "pages": {
+                    "home": {
+                        "footer": "yes",
+                        "sections": [
+                            {
+                                "key": "hero",
+                                "visible": false
+                            },
+                            {
+                                "key": "content",
+                                "visible": false
+                            },
+                            {
+                                "key": "content",
+                                "visible": true
+                            },
+                            {
+                                "key": "nope",
+                                "visible": true
+                            },
+                            {
+                                "key": "promo_banners"
+                            },
+                            {
+                                "key": "login_account",
+                                "visible": true,
+                                "extra": 1
+                            }
+                        ],
+                        "extra": true
+                    },
+                    "business_listing": {
+                        "sections": {
+                            "key": "hero"
+                        }
+                    },
+                    "nope": {
+                        "footer": true
+                    },
+                    "orders": []
+                }
+            },
+            "errors": [
+                {
+                    "path": "visibility.header.logo",
+                    "code": "visibility.header.logo.invalid"
+                },
+                {
+                    "path": "visibility.header.nope",
+                    "code": "visibility.header.nope.unknown"
+                },
+                {
+                    "path": "images.favicon",
+                    "code": "images.favicon.invalid"
+                },
+                {
+                    "path": "images.nope",
+                    "code": "images.nope.unknown"
+                },
+                {
+                    "path": "pages.home.footer",
+                    "code": "pages.home.footer.invalid"
+                },
+                {
+                    "path": "pages.home.sections.0",
+                    "code": "pages.home.sections.0.invalid"
+                },
+                {
+                    "path": "pages.home.sections.2",
+                    "code": "pages.home.sections.2.duplicate"
+                },
+                {
+                    "path": "pages.home.sections.3",
+                    "code": "pages.home.sections.3.unknown"
+                },
+                {
+                    "path": "pages.home.sections.4",
+                    "code": "pages.home.sections.4.invalid"
+                },
+                {
+                    "path": "pages.home.sections.5",
+                    "code": "pages.home.sections.5.invalid"
+                },
+                {
+                    "path": "pages.home.extra",
+                    "code": "pages.home.extra.unknown"
+                },
+                {
+                    "path": "pages.business_listing.sections",
+                    "code": "pages.business_listing.sections.invalid"
+                },
+                {
+                    "path": "pages.nope",
+                    "code": "pages.nope.unknown"
+                }
+            ],
+            "valid": {
+                "visibility": {
+                    "footer": false
+                },
+                "images": {
+                    "logo": "https://example.com/logo.png"
+                },
+                "pages": {
+                    "home": {
+                        "sections": {
+                            "1": {
+                                "key": "content",
+                                "visible": false
+                            }
+                        }
+                    },
+                    "business_listing": [],
+                    "orders": []
+                }
+            }
+        },
+        {
+            "name": "modes-platforms",
+            "description": "Modes and platforms: an unknown mode and group, a color invalid in a mode, a translucent one where the schema keeps it opaque, an unknown platform and part, a platform's component, visibility and pages, each with what is wrong in them, and an alias to a color the schema does not name.",
+            "values": {
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "primary": "#111111",
+                            "secondary": "nope",
+                            "surface": "#11111180",
+                            "overlay": "#11111180"
+                        },
+                        "typography": {}
+                    },
+                    "light": {
+                        "color": {}
+                    }
+                },
+                "platforms": {
+                    "tv": {
+                        "components": {}
+                    },
+                    "mobile_web": {
+                        "components": {
+                            "card": {
+                                "base": {
+                                    "radius": "{radius.xl}",
+                                    "background": "{color.danger_text}"
+                                },
+                                "scope": {}
+                            },
+                            "modal": {
+                                "base": {
+                                    "background": "#00000080"
+                                }
+                            }
+                        },
+                        "visibility": {
+                            "footer": true,
+                            "header.logo": 1,
+                            "nope": false
+                        },
+                        "pages": {
+                            "home": {
+                                "footer": false,
+                                "sections": [
+                                    {
+                                        "key": "hero",
+                                        "visible": false
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "modes.dark.color.secondary",
+                    "code": "modes.dark.color.secondary.invalid"
+                },
+                {
+                    "path": "modes.dark.typography",
+                    "code": "modes.dark.typography.unknown"
+                },
+                {
+                    "path": "modes.light",
+                    "code": "modes.light.unknown"
+                },
+                {
+                    "path": "platforms.tv",
+                    "code": "platforms.tv.unknown"
+                },
+                {
+                    "path": "platforms.mobile_web.components.card.scope",
+                    "code": "platforms.mobile_web.components.card.scope.unknown"
+                },
+                {
+                    "path": "platforms.mobile_web.pages.home.sections.0",
+                    "code": "platforms.mobile_web.pages.home.sections.0.invalid"
+                },
+                {
+                    "path": "platforms.mobile_web.visibility.header.logo",
+                    "code": "platforms.mobile_web.visibility.header.logo.invalid"
+                },
+                {
+                    "path": "platforms.mobile_web.visibility.nope",
+                    "code": "platforms.mobile_web.visibility.nope.unknown"
+                },
+                {
+                    "path": "platforms.mobile_web.components.card.base.background",
+                    "code": "platforms.mobile_web.components.card.base.background.alias"
+                },
+                {
+                    "path": "modes.dark.color.surface",
+                    "code": "modes.dark.color.surface.alpha"
+                }
+            ],
+            "valid": {
+                "modes": {
+                    "dark": {
+                        "color": {
+                            "primary": "#111111",
+                            "overlay": "#11111180"
+                        }
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "components": {
+                            "card": {
+                                "base": {
+                                    "radius": "{radius.xl}"
+                                }
+                            },
+                            "modal": {
+                                "base": {
+                                    "background": "#00000080"
+                                }
+                            }
+                        },
+                        "visibility": {
+                            "footer": true
+                        },
+                        "pages": {
+                            "home": {
+                                "footer": false,
+                                "sections": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "platform-parts",
+            "description": "A platform's part that is no map, and one it has not.",
+            "values": {
+                "platforms": {
+                    "mobile_web": {
+                        "visibility": [
+                            true
+                        ],
+                        "pages": "home",
+                        "tokens": {}
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "path": "platforms.mobile_web",
+                    "code": "platforms.mobile_web.unknown"
+                }
+            ],
+            "valid": {
+                "platforms": []
+            }
+        },
+        {
+            "name": "settings-valid",
+            "description": "Valid settings.",
+            "settings": {
+                "mode": "single_store",
+                "name": "Shop",
+                "third_party_code": {
+                    "head": "<script></script>"
+                },
+                "franchise_id": 12
+            },
+            "errors": []
+        },
+        {
+            "name": "settings-invalid",
+            "description": "Settings: an unknown key and group, values of the wrong kind, an option it does not have, a group that is a value and a value that is a group.",
+            "settings": {
+                "mode": "kiosk",
+                "name": 12,
+                "nope": true,
+                "tracking_only": "yes",
+                "third_party_code": "x",
+                "smart_banner": {
+                    "apple_id": "123",
+                    "nope": "x"
+                },
+                "franchise_id": -1,
+                "business_slug": {
+                    "x": 1
+                }
+            },
+            "errors": [
+                {
+                    "path": "site.mode",
+                    "code": "site.mode.invalid"
+                },
+                {
+                    "path": "site.name",
+                    "code": "site.name.invalid"
+                },
+                {
+                    "path": "site.nope",
+                    "code": "site.nope.unknown"
+                },
+                {
+                    "path": "site.tracking_only",
+                    "code": "site.tracking_only.invalid"
+                },
+                {
+                    "path": "site.third_party_code",
+                    "code": "site.third_party_code.invalid"
+                },
+                {
+                    "path": "site.smart_banner.nope",
+                    "code": "site.smart_banner.nope.unknown"
+                },
+                {
+                    "path": "site.franchise_id",
+                    "code": "site.franchise_id.invalid"
+                },
+                {
+                    "path": "site.business_slug",
+                    "code": "site.business_slug.invalid"
+                }
+            ]
+        },
+        {
+            "name": "settings-list",
+            "description": "A list is no settings.",
+            "settings": [
+                "x"
+            ],
+            "errors": [
+                {
+                    "path": "site",
+                    "code": "site.invalid"
+                }
+            ]
+        }
+    ]
+}

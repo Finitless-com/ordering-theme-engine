@@ -7,6 +7,10 @@ change to the public API.
 
 ## Unreleased
 
+- **API:** `valid(values, schema)` in TypeScript, `ThemeResolver::valid()`: what of a
+  stored theme fits its schema, migrations applied, the rest left out; and
+  `themeErrors()` and `settingsErrors()`, `ThemeValidator::validate()` and
+  `::settings()`. Golden cases in `fixtures/valid.json`.
 - `co.ordering.migrate` moves `visibility`, `images` and `pages` paths (§14.1 of the
   schema format): a visibility key, an image, a whole page, a page's footer, its list of
   sections, or one section, which moves with its `visible`, renamed in its place within

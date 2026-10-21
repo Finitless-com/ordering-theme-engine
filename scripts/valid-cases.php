@@ -1,0 +1,149 @@
+<?php
+
+/*
+ * The golden cases of what of a theme fits its schema: for each theme,
+ * what ThemeValidator::validate() answers (its errors, in order) and what
+ * ThemeResolver::valid() keeps of it, over the product's current schema as
+ * NodeCompiler compiles it with its version 1 map and the colors the
+ * editor may make translucent (fixtures/schema-26.0.compiled.json); and for
+ * site settings, what ThemeValidator::settings() answers. JSON on stdout;
+ * scripts/sync-fixtures.sh runs it in PHP 8.3, after compile-schema.php:
+ *
+ *   php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
+ *
+ * The values are written here as JSON and read back as objects for the
+ * fixture, so `{}` stays `{}`.
+ */
+
+declare(strict_types=1);
+
+use Ordering\ThemeEngine\ThemeResolver;
+use Ordering\ThemeEngine\ThemeValidator;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+set_error_handler(function (int $severity, string $message, string $file, int $line) {
+    throw new \ErrorException($message, 0, $severity, $file, $line);
+});
+
+[ , $schema_path ] = $argv + [ null, null ];
+if (!is_string($schema_path) || !is_file($schema_path)) {
+    fwrite(STDERR, "Usage: php scripts/valid-cases.php <compiled schema fixture>\n");
+    exit(1);
+}
+$compiled = json_decode((string) file_get_contents($schema_path), true, 512, JSON_THROW_ON_ERROR);
+if ($compiled['errors'] !== [] || !is_array($compiled['schema']['alpha'] ?? null)) {
+    fwrite(STDERR, "The schema does not compile, or marks no translucent color.\n");
+    exit(1);
+}
+$schema = $compiled['schema'];
+
+$themes = [
+    'list' => [ 'A list is no theme: nothing of it is kept.', '[{"tokens": {}}]' ],
+    'empty' => [ 'The empty theme: nothing is wrong.', '{}' ],
+    'sections' => [ 'A section a theme has not, and sections that are not maps.', <<<'JSON'
+        { "theme": {}, "tokens": [1, 2], "components": "button", "visibility": { "footer": false }, "pages": [] }
+        JSON ],
+    'tokens' => [ "Tokens: an unknown group and name, invalid values of each kind, a catalog color and a typography style the schema does not name, an alias to one, and a translucent color where the schema keeps it opaque (and one where it does not).", <<<'JSON'
+        {
+            "tokens": {
+                "color": { "primary": "#E4002B", "secondary": "red", "danger_text": "#B02A3E", "background": "rgba(0, 0, 0, 0.5)", "overlay": "#00000080", "surface": "#FFFFFF80" },
+                "typography": { "h1": { "size": 30, "line": 1.2, "weight": 700 }, "h2": { "size": 30, "line": 9, "weight": 700 }, "small": { "size": 10, "line": 1.2, "weight": 400 } },
+                "radius": { "md": 8, "huge": 40, "lg": -1 },
+                "shadow_style": { "style": "soft", "direction": "up", "color": "#000000" },
+                "border_style": { "width": "none", "radius": "round" },
+                "focus_ring": { "color": "primary", "offset": "huge" },
+                "layout": { "mode": "appointments", "page_gutter": "16" },
+                "font": { "body": "inter", "heading": "comic_sans" },
+                "weird": { "x": 1 },
+                "opacity": "half"
+            }
+        }
+        JSON ],
+    'components' => [ "Components: an unknown component, section, variant, state and property, values of the wrong kind, an alias of another group, a level a property leaves out, a color without a default set to null, a button's colors and appearances, its sizes, a scope and slots, and colors made translucent where the schema keeps them opaque, by the node that declares them.", <<<'JSON'
+        {
+            "components": {
+                "nope": { "base": { "radius": "{radius.md}" } },
+                "card": {
+                    "base": { "background": "{color.surface}", "radius": "{space.md}", "padding": 12, "shadow": "big", "glow": "#FFFFFF", "border": { "width": 1, "color": "#00000080" } },
+                    "variants": { "default": { "background": "#FFFFFF80", "states": { "hover": { "shadow": "{shadow.lg}", "background": "#ffffff" }, "pressed": { "shadow": "{shadow.lg}" } } }, "fancy": {} },
+                    "extra": {}
+                },
+                "button": {
+                    "base": { "radius": "{radius.full}", "mobile_full_width": "yes" },
+                    "colors": { "primary": { "main": "#00AA55", "ink": "#003311", "glow": "#FFFFFF" }, "nope": { "main": "#000000" } },
+                    "appearances": { "solid": { "background": "{on}", "states": { "hover": { "background": null, "color": "#FFFFFF80" }, "focus": { "background": "{main}" } } } },
+                    "sizes": { "sm": { "height": "{size.lg}", "padding_x": "{size.lg}", "states": { "hover": {} } } }
+                },
+                "auth_form": {
+                    "scope": { "button": { "base": { "radius": "{radius.sm}", "speed": "fast" } }, "card": { "base": {} } },
+                    "slots": { "submit": { "size": "md", "appearance": "glossy", "component": "button" }, "cancel": { "component": "link", "variant": "default" }, "nope": { "size": "md" }, "resend": "link" }
+                },
+                "modal": { "base": { "background": "#00000080" } }
+            }
+        }
+        JSON ],
+    'visibility-images-pages' => [ 'Visibility, images and pages: unknown keys, values of the wrong kind, an unknown page and field, a footer that is no bool, sections that are no list, a section unknown, repeated, hidden that cannot be, and not `{ key, visible }`.', <<<'JSON'
+        {
+            "visibility": { "footer": false, "header.logo": "no", "header.nope": true },
+            "images": { "logo": "https://example.com/logo.png", "favicon": "ftp://example.com/x.ico", "nope": "" },
+            "pages": {
+                "home": { "footer": "yes", "sections": [ { "key": "hero", "visible": false }, { "key": "content", "visible": false }, { "key": "content", "visible": true }, { "key": "nope", "visible": true }, { "key": "promo_banners" }, { "key": "login_account", "visible": true, "extra": 1 } ], "extra": true },
+                "business_listing": { "sections": { "key": "hero" } },
+                "nope": { "footer": true },
+                "orders": []
+            }
+        }
+        JSON ],
+    'modes-platforms' => [ "Modes and platforms: an unknown mode and group, a color invalid in a mode, a translucent one where the schema keeps it opaque, an unknown platform and part, a platform's component, visibility and pages, each with what is wrong in them, and an alias to a color the schema does not name.", <<<'JSON'
+        {
+            "modes": { "dark": { "color": { "primary": "#111111", "secondary": "nope", "surface": "#11111180", "overlay": "#11111180" }, "typography": {} }, "light": { "color": {} } },
+            "platforms": {
+                "tv": { "components": {} },
+                "mobile_web": {
+                    "components": { "card": { "base": { "radius": "{radius.xl}", "background": "{color.danger_text}" }, "scope": {} }, "modal": { "base": { "background": "#00000080" } } },
+                    "visibility": { "footer": true, "header.logo": 1, "nope": false },
+                    "pages": { "home": { "footer": false, "sections": [ { "key": "hero", "visible": false } ] } }
+                }
+            }
+        }
+        JSON ],
+    'platform-parts' => [ "A platform's part that is no map, and one it has not.", <<<'JSON'
+        { "platforms": { "mobile_web": { "visibility": [ true ], "pages": "home", "tokens": {} } } }
+        JSON ],
+];
+
+$settings = [
+    'settings-valid' => [ 'Valid settings.', '{ "mode": "single_store", "name": "Shop", "third_party_code": { "head": "<script></script>" }, "franchise_id": 12 }' ],
+    'settings-invalid' => [ 'Settings: an unknown key and group, values of the wrong kind, an option it does not have, a group that is a value and a value that is a group.', <<<'JSON'
+        { "mode": "kiosk", "name": 12, "nope": true, "tracking_only": "yes", "third_party_code": "x", "smart_banner": { "apple_id": "123", "nope": "x" }, "franchise_id": -1, "business_slug": { "x": 1 } }
+        JSON ],
+    'settings-list' => [ 'A list is no settings.', '[ "x" ]' ],
+];
+
+$flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR;
+$cases = [];
+foreach ($themes as $name => [ $description, $json ]) {
+    $values = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+    $cases[] = [
+        'name' => $name,
+        'description' => $description,
+        'values' => json_decode($json, false, 512, JSON_THROW_ON_ERROR),
+        'errors' => ThemeValidator::validate($values, $schema),
+        'valid' => ThemeResolver::valid($values, $schema),
+    ];
+}
+foreach ($settings as $name => [ $description, $json ]) {
+    $cases[] = [
+        'name' => $name,
+        'description' => $description,
+        'settings' => json_decode($json, false, 512, JSON_THROW_ON_ERROR),
+        'errors' => ThemeValidator::settings(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $schema),
+    ];
+}
+
+echo json_encode([
+    'description' => "What ThemeValidator::validate() and ThemeResolver::valid() answer for each theme, and ThemeValidator::settings() for each site's settings, over {$schema['product_type']}@{$schema['version']}.",
+    'php' => PHP_VERSION,
+    'cases' => $cases,
+], JSON_PRETTY_PRINT | $flags) . "\n";

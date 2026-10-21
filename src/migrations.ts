@@ -206,7 +206,7 @@ function withKey(array: PhpArray, key: string, value: Json): PhpArray {
 }
 
 /** PHP's unset($array[$key]): a list without its last index stays one. */
-function withoutKey(array: PhpArray, key: string): PhpArray {
+export function withoutKey(array: PhpArray, key: string): PhpArray {
   if (!has(array, key)) {
     return array
   }
