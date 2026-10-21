@@ -106,3 +106,15 @@ describe('checkEditor', () => {
     ])
   })
 })
+
+describe('the editor metadata the format no longer has, as the PHP ThemeSchemaNodesTest', () => {
+  // Prior behavior: `preview` ({ page, path }) passed the meta-schema.
+  it('refuses a `preview`, as any key the editor does not read', async () => {
+    const { validateShape } = await import('../src/index.js')
+    const nodes = json<NodeSchema>('schema-26.0.nodes.json')
+    expect(validateShape(nodes)).toEqual([])
+    const home = (nodes.pages as JsonMap).home as JsonMap
+    ;((home.$extensions as JsonMap)[EDITOR] as JsonMap).preview = { page: 'home', path: '/' }
+    expect(validateShape(nodes).map((error) => error.code)).toEqual(['pages.home.$extensions.co.ordering.editor.schema'])
+  })
+})

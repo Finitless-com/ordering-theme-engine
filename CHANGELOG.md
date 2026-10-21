@@ -7,6 +7,11 @@ change to the public API.
 
 ## Unreleased
 
+- **Removed:** `co.ordering.editor.preview` (`{ page, path }`), the data of an editor
+  preview no product uses. The editor's metadata takes no unknown key, so a schema that
+  still carries it fails the meta-schema:
+  `<path>.$extensions.co.ordering.editor.schema`, `schema.invalid`.
+  `fixtures/schema-26.0.nodes.json` no longer has it.
 - **API:** a base declares how a theme of the previous base takes its values, the root's
   `$extensions["co.ordering.upgrade"]`: `{ from, moves: [{ from, to, map? }], drop,
   rewrite?: { id, paths } }` (§15 of the schema format). The meta-schema takes it,

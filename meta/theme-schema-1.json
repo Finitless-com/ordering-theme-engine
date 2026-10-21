@@ -719,18 +719,6 @@
             "type": "string"
           }
         },
-        "preview": {
-          "type": "object",
-          "properties": {
-            "page": {
-              "$ref": "#/$defs/name"
-            },
-            "path": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
         "disabled_if": {
           "$ref": "#/$defs/condition"
         },

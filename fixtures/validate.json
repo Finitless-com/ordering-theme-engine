@@ -16073,11 +16073,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -16238,11 +16234,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -16992,11 +16984,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -17352,11 +17340,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -17640,11 +17624,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -17993,11 +17973,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -18346,11 +18322,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }
@@ -18694,11 +18666,7 @@
                                         "default": "Carts of several stores"
                                     },
                                     "group": "order",
-                                    "order": 3,
-                                    "preview": {
-                                        "page": "multi_cart",
-                                        "path": "/multi-cart"
-                                    }
+                                    "order": 3
                                 }
                             }
                         }

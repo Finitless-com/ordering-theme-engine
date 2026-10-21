@@ -38824,11 +38824,7 @@
                         "default": "Home"
                     },
                     "group": "shop",
-                    "order": 1,
-                    "preview": {
-                        "page": "home",
-                        "path": "/"
-                    }
+                    "order": 1
                 }
             }
         },
@@ -39079,11 +39075,7 @@
                         "default": "Store list"
                     },
                     "group": "shop",
-                    "order": 2,
-                    "preview": {
-                        "page": "business_listing",
-                        "path": "/search"
-                    }
+                    "order": 2
                 }
             }
         },
@@ -39269,11 +39261,7 @@
                         "default": "Store search"
                     },
                     "group": "shop",
-                    "order": 3,
-                    "preview": {
-                        "page": "business_search",
-                        "path": "/business_search"
-                    }
+                    "order": 3
                 }
             }
         },
@@ -39420,11 +39408,7 @@
                         "default": "Promotions"
                     },
                     "group": "shop",
-                    "order": 4,
-                    "preview": {
-                        "page": "promotions",
-                        "path": "/promotions"
-                    }
+                    "order": 4
                 }
             }
         },
@@ -39662,11 +39646,7 @@
                         "default": "Store page"
                     },
                     "group": "shop",
-                    "order": 5,
-                    "preview": {
-                        "page": "business",
-                        "path": "/store/…"
-                    }
+                    "order": 5
                 }
             }
         },
@@ -39969,11 +39949,7 @@
                         "default": "Checkout"
                     },
                     "group": "order",
-                    "order": 1,
-                    "preview": {
-                        "page": "checkout",
-                        "path": "/checkout"
-                    }
+                    "order": 1
                 }
             }
         },
@@ -40211,11 +40187,7 @@
                         "default": "Checkout of several stores"
                     },
                     "group": "order",
-                    "order": 2,
-                    "preview": {
-                        "page": "multi_checkout",
-                        "path": "/multi-checkout"
-                    }
+                    "order": 2
                 }
             }
         },
@@ -40320,11 +40292,7 @@
                         "default": "Carts of several stores"
                     },
                     "group": "order",
-                    "order": 3,
-                    "preview": {
-                        "page": "multi_cart",
-                        "path": "/multi-cart"
-                    }
+                    "order": 3
                 }
             }
         },
@@ -40627,11 +40595,7 @@
                         "default": "Order details"
                     },
                     "group": "order",
-                    "order": 4,
-                    "preview": {
-                        "page": "order_details",
-                        "path": "/orders/…"
-                    }
+                    "order": 4
                 }
             }
         },
@@ -40791,11 +40755,7 @@
                         "default": "Orders of several stores"
                     },
                     "group": "order",
-                    "order": 5,
-                    "preview": {
-                        "page": "multi_orders",
-                        "path": "/multi-orders/…"
-                    }
+                    "order": 5
                 }
             }
         },
@@ -40916,11 +40876,7 @@
                         "default": "Profile"
                     },
                     "group": "account",
-                    "order": 1,
-                    "preview": {
-                        "page": "profile",
-                        "path": "/profile"
-                    }
+                    "order": 1
                 }
             }
         },
@@ -41093,11 +41049,7 @@
                         "default": "My orders"
                     },
                     "group": "account",
-                    "order": 2,
-                    "preview": {
-                        "page": "orders",
-                        "path": "/profile/orders"
-                    }
+                    "order": 2
                 }
             }
         },
@@ -41231,11 +41183,7 @@
                         "default": "Addresses"
                     },
                     "group": "account",
-                    "order": 3,
-                    "preview": {
-                        "page": "addresses",
-                        "path": "/profile/addresses"
-                    }
+                    "order": 3
                 }
             }
         },
@@ -41340,11 +41288,7 @@
                         "default": "Cards"
                     },
                     "group": "account",
-                    "order": 4,
-                    "preview": {
-                        "page": "cards",
-                        "path": "/profile/cards"
-                    }
+                    "order": 4
                 }
             }
         },
@@ -41530,11 +41474,7 @@
                         "default": "Wallets"
                     },
                     "group": "account",
-                    "order": 5,
-                    "preview": {
-                        "page": "wallets",
-                        "path": "/wallets"
-                    }
+                    "order": 5
                 }
             }
         },
@@ -41639,11 +41579,7 @@
                         "default": "Favorites"
                     },
                     "group": "account",
-                    "order": 6,
-                    "preview": {
-                        "page": "favorites",
-                        "path": "/favorite"
-                    }
+                    "order": 6
                 }
             }
         },
@@ -41748,11 +41684,7 @@
                         "default": "Sessions"
                     },
                     "group": "account",
-                    "order": 7,
-                    "preview": {
-                        "page": "sessions",
-                        "path": "/sessions"
-                    }
+                    "order": 7
                 }
             }
         },
@@ -41857,11 +41789,7 @@
                         "default": "Messages"
                     },
                     "group": "account",
-                    "order": 8,
-                    "preview": {
-                        "page": "messages",
-                        "path": "/messages"
-                    }
+                    "order": 8
                 }
             }
         },
@@ -41995,11 +41923,7 @@
                         "default": "Help"
                     },
                     "group": "account",
-                    "order": 9,
-                    "preview": {
-                        "page": "help",
-                        "path": "/help"
-                    }
+                    "order": 9
                 }
             }
         },
@@ -42104,11 +42028,7 @@
                         "default": "Verification"
                     },
                     "group": "access",
-                    "order": 1,
-                    "preview": {
-                        "page": "verify",
-                        "path": "/verify"
-                    }
+                    "order": 1
                 }
             }
         },
@@ -42242,11 +42162,7 @@
                         "default": "New password"
                     },
                     "group": "access",
-                    "order": 2,
-                    "preview": {
-                        "page": "reset_password",
-                        "path": "/password/reset"
-                    }
+                    "order": 2
                 }
             }
         },
@@ -42393,11 +42309,7 @@
                         "default": "Store sign-up"
                     },
                     "group": "access",
-                    "order": 3,
-                    "preview": {
-                        "page": "signup_business",
-                        "path": "/signup_business"
-                    }
+                    "order": 3
                 }
             }
         },
@@ -42544,11 +42456,7 @@
                         "default": "Driver sign-up"
                     },
                     "group": "access",
-                    "order": 4,
-                    "preview": {
-                        "page": "signup_driver",
-                        "path": "/signup-driver"
-                    }
+                    "order": 4
                 }
             }
         },
@@ -42653,11 +42561,7 @@
                         "default": "List of pages"
                     },
                     "group": "other",
-                    "order": 1,
-                    "preview": {
-                        "page": "pages_list",
-                        "path": "/pages"
-                    }
+                    "order": 1
                 }
             }
         },
@@ -42762,11 +42666,7 @@
                         "default": "Custom page"
                     },
                     "group": "other",
-                    "order": 2,
-                    "preview": {
-                        "page": "cms_page",
-                        "path": "/pages/…"
-                    }
+                    "order": 2
                 }
             }
         },
@@ -42871,10 +42771,7 @@
                         "default": "Page not found"
                     },
                     "group": "other",
-                    "order": 3,
-                    "preview": {
-                        "page": "not_found"
-                    }
+                    "order": 3
                 }
             }
         }
@@ -43013,11 +42910,7 @@
                     },
                     "control": "html",
                     "group": "content",
-                    "order": 1,
-                    "preview": {
-                        "page": "home",
-                        "path": "/"
-                    }
+                    "order": 1
                 }
             }
         },

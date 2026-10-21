@@ -637,8 +637,11 @@ cannot say is checked on publish too (§12.3).
   tabs.
 - **On a `sections` node, `section_groups`:** `[{ key, label, info? }]`, the blocks
   within which its sections move (the `group` of §8), in page order.
-- **`advanced`**, **`related`** (paths shown next to the node) and **`preview`**
-  `{ page, path }`.
+- **`advanced`** and **`related`** (paths shown next to the node).
+
+`co.ordering.editor` takes only the keys of this section: any other (a `preview` the
+format no longer has, a typo) fails the meta-schema,
+`<path>.$extensions.co.ordering.editor.schema`, and the schema is `schema.invalid`.
 
 ### 12.2 The root `editor` block
 

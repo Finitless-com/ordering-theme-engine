@@ -422,4 +422,16 @@ class ThemeSchemaNodesTest extends TestCase
             'site.description.rules.invalid',
         ], array_column(ThemeSchemas::check($schema), 'code'));
     }
+
+    /**
+     * Prior behavior: `preview` ({ page, path }) passed the meta-schema.
+     */
+    public function testTheMetaSchemaRefusesAPreviewAsAnyKeyTheEditorDoesNotRead(): void
+    {
+        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        self::assertSame([], ThemeSchemas::meta($nodes));
+
+        $nodes['pages']['home']['$extensions']['co.ordering.editor']['preview'] = [ 'page' => 'home', 'path' => '/' ];
+        self::assertSame([ 'pages.home.$extensions.co.ordering.editor.schema' ], array_column(ThemeSchemas::meta($nodes), 'code'));
+    }
 }
