@@ -5,6 +5,104 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+Breaking for api-core and the CLI's users (nothing is launched, so nothing old is kept):
+
+- **API:** `cutDown(values, schemas)` and `cutDownSettings(settings, schemas)`
+  (`ThemeUpgrades::cutDown(array $values, array $schemas)`, `::cutDownSettings(array
+  $settings, array $schemas)`) take the schemas from the version the values are of down
+  to the client's, with the last version of each base between them, instead of
+  `(values, from, to)`; they read the values with the first one (`valid()`) themselves.
+- **API:** `validate()`/`validateFull()` (`ThemeSchemaPublisher::validate()`) answer
+  `{ code, errors, warnings, changes, unchanged }`. Given the same version as
+  `previous`, the same content is valid and `unchanged`, another content is
+  `schema.version_exists` (it was `schema.version_order`).
+- **API:** `changes` also carries `options_added`, `defaults_changed`, `rules_changed`
+  and `sections_changed`.
+- **API:** the compiled schema carries `limits` (the editor's numeric `min` and `max`,
+  and those of its `fields`, by path): `ThemeSchemas::COMPILED` is 6.
+- **Behavior change:** a page's sections are a key each for SchemaDiff
+  (`pages.<page>.sections.<key>`, of type `section`), in `added`, `removed`, `migrated`
+  and in the upgrade block's `unaccounted`: removing one in a minor is
+  `<path>.removed` unless its list or page was `$deprecated` or a migration moves it,
+  and a new base accounts for each.
+- **Behavior change:** what of the editor's metadata validates a value is a rule:
+  changing `alpha`, `custom` or the `min`/`max` of a control or of its `fields` in a
+  patch is `schema.patch_changes_values`, and a minor that takes `alpha` or `custom`
+  away is `<path>.alpha_removed` / `<path>.custom_removed` (`schema.incompatible`). A
+  minor may still tighten the limits, `max_length` and `pattern`, add `alpha`, and change
+  a section's `hideable` and `group`.
+- **Behavior change:** a theme (`ThemeValidator::validate()`, `themeErrors()`) refuses a
+  number outside its editor's `min`/`max` (`<path>.out_of_range`) and a typography's
+  field outside its `fields` (`<path>.<field>.out_of_range`: a token's own, else the
+  `tokens.typography` group's, which a component's custom style takes too), and an image
+  whose URL ends in the extension of a format its key does not take
+  (`images.<key>.format`); a site's settings (`ThemeValidator::settings()`,
+  `settingsErrors()`) their numbers out of range. `valid()` leaves them out on reading.
+- **Behavior change:** a mode's colors (`modes.<mode>.color.<name>`) are the schema's
+  own, as `tokens.color`: one it does not name is `.unknown`, and `valid()` and
+  `cutDown()` leave it out.
+- **Behavior change:** publishing refuses a version 1 map that names what the schema
+  does not have: `v1_map.v1.<path>.unknown`, `v1_map.visibility.<key>.unknown`,
+  `v1_map.images.<key>.unknown`, `v1_map.pages.<page>.unknown`,
+  `v1_map.pages.<page>.<section>.unknown`, `v1_map.site.<setting>.unknown`
+  (`schema.invalid`; `ThemeSchemaPublisher::v1MapErrors()`, `v1MapErrors()`). The
+  compiler still leaves such paths out of the tuples.
+- **CLI:** `validate --previous` answers `unchanged` for the same version with the same
+  content and `schema.version_exists` for another, as the API does; warnings print on
+  stderr as `warning: <code>`.
+- `fixtures/schema-26.0.nodes.json`: its typography's line height fields are ratios (1 to
+  2, unit `x`), as the editor's rules ask; they were px (8 to 120), which every saved
+  line height broke once limits bind.
+
+Fixed:
+
+- `valid()` and `cutDown()` (`ThemeResolver::valid()`, `ThemeUpgrades::cutDown()`) keep a
+  page's sections a list when they leave out a section that is not the last one: the
+  list became a map (`{"1": …}`), which the next validation refused whole
+  (`pages.<page>.sections.invalid`), so the editor could not save the theme.
+- A migration of `site.*` within a base moves the site's setting: `validSettings()`
+  (**API**, `ThemeResolver::validSettings(array $settings, array $schema)`) applies the
+  schema's `site.` migrations and leaves out what does not fit, as `valid()` a theme;
+  `upgradeSettingsChain()` with one schema runs it. It was reported `migrated` and the
+  value was lost.
+- A property with a default of its own on a platform
+  (`components.<c>.platforms.<p>.<prop>`) can be migrated and moved: the platform's
+  default goes with its property, `migrated` in a minor and accounted for in a new
+  base, and covered by the property's `$deprecated`. It was `.removed` /
+  `upgrade.<path>.unaccounted`.
+- A `map` translates a boolean, by the keys `"true"` and `"false"`, and its values may be
+  booleans for a boolean destination (the meta-schema takes them): a boolean was dropped
+  whatever the map said. A map from a boolean with another key, or to a boolean with a
+  value that is no boolean, is `upgrade.moves.<n>.map.invalid`.
+- A client of an older version keeps what a newer version renamed or moved: `cutDown()`
+  undoes, newer to older, the migrations the older version lacks and, from the next
+  base, that base's migrations and its upgrade block's moves (a one-to-one `map`
+  inverted). A move into a key the older version already has, and a map that is not one
+  to one, are not undone: the client's default shows there, as before. Values a newer
+  version added still go away.
+
+Added:
+
+- **CLI:** `validate --against <api>` reads from the API what publishing compares the
+  schema with (`GET {api}/system/theme_schemas/{product_type}` and `…/{version}`, with
+  `THEME_PUBLISH_KEY`): the same version (the same content is `unchanged`), the latest of
+  its base and the latest of the previous base; `--development` checks as an API in
+  development mode. `publish` prints the API's `warnings`.
+- In development `validate()` answers what production would refuse in `warnings`
+  (`schema.version_exists`, `schema.version_order` and SchemaDiff's errors) instead of
+  nothing.
+- **API:** `SchemaDiff::editorRules()`, `::platformBase()`, `::canonical()`;
+  `NodeFormat::limits()`; `ThemeMigrations::mapKey()`; `editorLimits()` (compile.ts) and
+  `editorRules()`, `platformBase()`, `canonical()` (diff.ts). `NodeConverter::convert()`
+  writes a compiled schema's `alpha` and `limits` back into the editor metadata.
+- Docs: `schema-format.md` §7 (an image's format), §12 (what of the editor validates a
+  value), §13 (patch and minor rules, `changes`, development warnings), §14 (platforms'
+  defaults, site settings), §15 (boolean maps, cutting down to an older client, a
+  platform's default in `unaccounted`), §16 (the new codes and a theme's own);
+  `creating-a-schema.md` §4 and §6; the README.
+
 ## 0.6.0 (2026-10-21)
 
 - Docs: `schema-format.md` §13–15 are the whole story of versions for a schema author:

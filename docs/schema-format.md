@@ -339,7 +339,11 @@ nothing changes.
 - `formats`: the formats it accepts, a non-empty list without repeats of `jpg`, `png`,
   `webp`, `avif`, `ico` and `svg`. Without `formats` (or with `null`), api-core accepts
   `jpg`, `png`, `webp` and `avif`. SVG and ICO are served as uploaded; the rest can be
-  resized or converted. Otherwise, `images.<key>.formats.invalid`.
+  resized or converted. Otherwise, `images.<key>.formats.invalid`. An upload is checked
+  by its content; a theme that saves a URL, by its extension: one whose path ends in the
+  extension of a format the engine knows (`jpeg` counts as `jpg`, in any case, the query
+  aside) that is not among the key's is `images.<key>.format`, and is left out on
+  reading. A URL without such an extension says nothing of its format and is taken.
 - `hints`: what the editor recommends on upload. All optional:
   - `size`: `[width, height]` in px, integers from 1 to 10 000;
   - `ratio`: the aspect ratio, `"w:h"` (integers from 1 to 9999);
@@ -587,10 +591,11 @@ schema had. A new schema should declare its own:
 
 ## 12. `$extensions["co.ordering.editor"]` and `editor`: what the editor reads
 
-None of this changes how a theme is resolved, with three exceptions: `custom` (§3),
-`min`/`max` (a numeric default outside them is rejected with
-`<path>.default_out_of_range`, in `tokens`, `components`, `pages` and `site`) and `alpha`
-(below). Everything is optional: when it is missing, the editor follows its usual rule.
+None of this changes how a theme is resolved, with three exceptions, which validate a
+value and so are rules of the schema like any other (§13): `custom` (§3), `min`/`max`
+(below) and `alpha` (below). Everything is optional: when it is missing, the editor
+follows its usual rule. Texts, `step`, `unit`, a font's `weights` and the rest validate
+nothing: a patch may change them.
 The meta-schema validates the shape; keys not in this list are rejected. What the shape
 cannot say is checked on publish too (§12.3).
 
@@ -607,11 +612,20 @@ cannot say is checked on publish too (§12.3).
   `sortable_sections`, `text`, `html`, `matrix`, `cards` and `scope`.
 - **Ranges:** `min`, `max`, `step` (> 0) and `unit` (`px`, `ms`, `%` or `x`). On a
   `level` they are the range of the custom value. An opacity is stored from 0 to 1 with
-  `unit` `%`: the editor shows it ×100.
+  `unit` `%`: the editor shows it ×100. `min` and `max`, in the stored unit, bind the
+  value, not only the editor: a numeric default outside them is rejected on publish
+  (`<path>.default_out_of_range`, in `tokens`, `components`, `pages` and `site`), and a
+  number a theme or a site's settings save outside them is `<path>.out_of_range` (an
+  alias names a level and is not checked). The compiled schema carries them as
+  `limits`, by path. The node that declares a property decides: a variant's or a
+  platform's own node, else its base's.
 - **Options:** `options` as `[{ value, label?, info?, drawing?, label_platform?,
   weights? }]`. `weights`, on an option of a `font` control, are the weights the font has.
 - **Fields of a compound value:** `fields`, `{ field: { label, info, control, min,
   max, step, unit, options } }`: the fields of a typography style or the axes of a slot.
+  A typography style a theme saves has each numeric field within its node's `fields`
+  (`<path>.<field>.out_of_range`, at the style's path); a component's custom style, and
+  a token without `fields` of its own, take those of the `tokens.typography` group.
 - **Conditions:** `visible_if` (hides) and `disabled_if` (disables), as
   `{ path, op, value? }`, with `op` among `eq`, `neq`, `in`, `not_in`, `truthy` and
   `falsy`. The client evaluates them over the resolved values.
@@ -783,22 +797,35 @@ whatever version the theme was saved with:
 On publish, the API compares the schema with the latest version of its base:
 
 - **Order:** the version is greater than the latest of its base (`26.0` counts as
-  `26.0.0`). Otherwise, `schema.version_order`.
+  `26.0.0`). A lower one is `schema.version_order`; the same one, below.
 - **An already published version** does not change: publishing it with different content
-  is `schema.version_exists`; with the same, `unchanged`.
-- **A patch** (`26.1.0` → `26.1.1`) only changes texts (`$description`) and editor
-  metadata (`co.ordering.editor`, the `editor` block). Changing a key, a type, an option,
-  a default, a rule, a `$deprecated`, a migration or the upgrade block is
-  `schema.patch_changes_values`.
-- **A minor** (`26.1.x` → `26.2.0`) can add keys and options and change defaults. It
-  cannot:
+  is `schema.version_exists`; with the same (every key, the editor's included, in any
+  order), `unchanged`. `validate()` answers both when `previous` is that version.
+- **A patch** (`26.1.0` → `26.1.1`) only changes texts (`$description`) and the editor
+  metadata that validates no value (§12). Changing a key, a type, an option, a default,
+  a rule (`max_length`, `pattern`, and of the editor's `alpha`, `custom`, `min` and
+  `max` of a control or of its `fields`), a `$deprecated`, a page's sections, a
+  migration or the upgrade block is `schema.patch_changes_values`.
+- **A minor** (`26.1.x` → `26.2.0`) can add keys, options and a page's sections, change
+  defaults, and tune the rules a product tunes: a string's `max_length` and `pattern`,
+  the editor's `min` and `max`, a section's `hideable` and `group`, and add `alpha`. A
+  value saved before that no longer fits is left out on reading (§14.3), and its default
+  shows. It cannot:
   - remove a key (`<path>.removed`), unless the previous version marked it
-    `$deprecated` or a migration moves it or the page that holds it (§14);
+    `$deprecated` or a migration moves it or the page that holds it (§14). Each section
+    of a page is a key (`pages.<page>.sections.<key>`), which the `$deprecated` of its
+    `sections` node or of its page covers, and a migration of the section, of the list
+    or of the page moves. A property's default on a platform
+    (`components.<c>.platforms.<p>.<prop>`) goes with the property: its migration moves
+    it and its `$deprecated` covers it;
   - change its `$type` (`<path>.type_changed`);
   - change its `scale` (`<path>.scale_changed`): moving a `dimension` from one scale to
     another, or removing or giving it one, changes the scale in which a saved theme names
     its level;
   - remove one of its options (`<path>.option_removed`);
+  - take `alpha` from a color (`<path>.alpha_removed`) or `custom` from a typography
+    (`<path>.custom_removed`): like an option, a whole kind of value saved with it would
+    no longer fit;
   - remove a migration that was already there (`schema.migration_removed`): within a
     base the list only grows;
   - remove anything of the base's upgrade block (`schema.upgrade_removed`, §15.4).
@@ -811,24 +838,32 @@ The compared paths are those of each node (`tokens.color.primary`,
 `components.button.base.radius`, `visibility.header.logo`…), with the `$type` of the node
 or its group and the node's own `scale` (a group does not inherit it).
 
-Every valid response carries `changes`: `{ added, removed, migrated, deprecated }`, with
-paths.
+Every valid response carries `changes`, lists of paths: `added`, `removed`, `migrated`
+and `deprecated` keys (a page's section among them), `options_added` (a key with an
+option it did not have), `defaults_changed` (a key with another default; a section,
+another `visible`), `rules_changed` (a key with another `max_length`, `pattern`,
+`alpha`, `custom` or limits) and `sections_changed` (a section with another `hideable`
+or `group`, and `pages.<page>.sections` when the sections both versions have come in
+another order). Within a base only; a new base answers `added` and `deprecated`.
 
 **Development mode.** An api-core environment with `THEME_SCHEMA_DEVELOPMENT=true` (local
 and staging while no site uses v2 themes) replaces an already published version
-(`replaced`) and does not reject for order or compatibility, though it still reports
-`changes`. Everything else is validated the same way. `validate(schema, { previous,
-development: true })` does the same.
+(`replaced`) and does not reject for the version or compatibility: what production would
+refuse there (`schema.version_exists`, `schema.version_order` and the incompatibilities)
+comes back in `warnings`, each `{ path, code }`, with `changes`. Everything else is
+validated the same way. `validate(schema, { previous, development: true })` does the
+same.
 
 ### 13.1 Which tool for which change
 
 | Change | Version | How saved themes follow it |
 |---|---|---|
-| Texts, labels, editor metadata | patch | nothing to do |
-| Add a key, a component, an option; change a default | minor | a theme that does not set it gets the default |
+| Texts, labels, editor metadata that validates no value | patch | nothing to do |
+| Add a key, a component, an option, a page's section; change a default | minor | a theme that does not set it gets the default |
+| Tighten `max_length`, `pattern`, `min`/`max`; make a section not `hideable` | minor | what no longer fits is left out on reading: the default shows |
 | Mark a key `$deprecated`; later remove it | minor | its value is left out on reading |
 | Rename or move a key, keeping its section and kind | minor | `co.ordering.migrate` (§14) |
-| Remove a key that is not deprecated, change a type or a scale, remove an option, turn a key into one of another section, change what a stored value means | major: a new base | `co.ordering.upgrade` (§15) |
+| Remove a key that is not deprecated, change a type or a scale, remove an option, `alpha` or `custom`, turn a key into one of another section, change what a stored value means | major: a new base | `co.ordering.upgrade` (§15) |
 
 ## 14. Migrations within a base (`co.ordering.migrate`)
 
@@ -870,14 +905,14 @@ A path names what a theme stores, with the kind it has:
 | Path | Kind | What moves |
 |---|---|---|
 | `tokens.<group>.<name>` | the token's group (`color`, `typography`, `opacity`…; `layout_mode` for `layout.mode`) | the token's value, a color's value in each mode, and every alias to it |
-| `components.<component>.<section>….<property>` | the property's (its `$type` and `scale`) | the value, and each platform's override of it |
+| `components.<component>.<section>….<property>` | the property's (its `$type` and `scale`) | the value, and each platform's override of it; the schema's own default of it on a platform (`components.<c>.platforms.<p>.<prop>`) is renamed with it |
 | `visibility.<key>` | `bool` | the boolean, and each platform's override of it |
 | `images.<key>` | `image` | the URL, as it is |
 | `pages.<page>` | `page` | the whole page: its `footer` and its `sections` |
 | `pages.<page>.footer` | `bool` | the footer (`true`, `false` or `null`) |
 | `pages.<page>.sections` | `sections` | the page's whole list |
 | `pages.<page>.sections.<key>` | `section` | one section of the list, with its `visible` |
-| `site.<setting>` | the setting's | nothing in the theme (§14.4) |
+| `site.<setting>` | the setting's | the site's setting (§14.4) |
 
 - **Tokens** are named by the schema's own names (the catalog's, §4.1, in a group where
   the schema names none). A token can only be renamed within its group: in the groups
@@ -929,9 +964,12 @@ the API saves the moved values the next time the theme is saved.
 
 ### 14.4 Site settings
 
-A migration of `site.*` passes validation and counts on publish (the key is `migrated`),
-but site settings are not part of the theme: within a base the API does not move them.
-Between bases the upgrade block does (§15).
+A migration of `site.*` moves a site's setting the same way, whenever the API reads or
+saves the site's settings: `validSettings(settings, schema)`
+(`ThemeResolver::validSettings()`) applies the schema's migrations of `site.` paths and
+then leaves out what does not fit, as `valid()` a theme; the API runs it on the settings
+it serves and on those it merges a change into before saving. Between bases the upgrade
+block moves them (§15).
 
 ### 14.5 Example: a minor that renames a property and a visibility key
 
@@ -1009,9 +1047,12 @@ At the root, beside `co.ordering.migrate`:
   `from` may equal `to`: a key that stays where it is but whose values change, with a
   `map`.
 - **`map`** (optional): `{ "<old value>": <new value> }`, translating an option
-  (`"original": "classic"`) or a level (`"{size.lg}": "{space.lg}"`). Its keys are the
-  stored values as strings; a stored value that is no string or integer, or has no entry,
-  is **dropped**. Its values are strings or integers.
+  (`"original": "classic"`) or a level (`"{size.lg}": "{space.lg}"`), or a boolean. Its
+  keys are the stored values as strings, a boolean's `"true"` and `"false"` (a map from
+  a boolean with any other key is `.map.invalid`); a stored value that is no string,
+  integer or boolean, or has no entry, is **dropped**. Its values are strings or
+  integers, and booleans for a boolean destination (which takes nothing else): `{
+  "true": false, "false": true }` turns a key around.
 - **`drop`** (required, may be empty): paths of the previous base whose values are lost
   on purpose. A path may name a group (`tokens.typography`, `pages.shop`): everything
   under it is dropped. In `visibility` and `images` a path is exactly one key.
@@ -1058,10 +1099,25 @@ step from the one before, and each step uses the last published version of its b
 
 **Clients of an older version.** Each client says which schema version it reads. One
 older than the current version (between publishing and deploying, or after rolling a
-build back) gets the theme resolved with the current version and **cut down** to its
-own: a value survives only if it has the same path and the same kind in both versions
-and its version takes it; anything else takes that version's default. A client that
-says nothing, an unknown version or a newer one gets the current version.
+build back) gets the theme **cut down** to its own (`cutDown(values, schemas)`, from the
+version the theme is read with down to the client's, with the last version of each base
+between them), step by step, newer to older:
+
+1. what the newer version renamed or moved is undone, in reverse order: within a base,
+   the migrations the older version does not have; from the next base, all of that
+   base's migrations and then its upgrade block's moves. A move is undone only when the
+   older version has no key at its `to` (a rename, not a merge into a key it already
+   had; there the client keeps its own value and the moved one takes its default), or
+   when it stays at its own path. A `map` is inverted when it is one to one; otherwise
+   the value takes the client's default. Token aliases, modes, platforms' overrides and
+   sections follow as in §14.3;
+2. a value whose kind is another in the older version at the same path is dropped,
+   unless an undone move put it there;
+3. what the client's version does not take (what a newer version added, a value it
+   does not accept) is left out, and its default shows.
+
+A site's settings take the same steps (`cutDownSettings()`). A client that says
+nothing, an unknown version or a newer one gets the current version.
 
 ### 15.3 What publishing checks
 
@@ -1076,10 +1132,10 @@ With the last version of the previous base (the API looks it up; the CLI takes
 | `upgrade.moves.<n>.from.unknown` | the previous base has no such key (`kindAt()`) |
 | `upgrade.moves.<n>.to.unknown` | the new base has no such key, also once its own migrations move it (a 27.1 may rename a move's `to`) |
 | `upgrade.moves.<n>.kind` | `from` and `to` are in different sections, or of different kinds without a `map` |
-| `upgrade.moves.<n>.map.invalid` | a `map` value is not an option or a level of the destination: an option of an `option` or `layout` property or of a token with options, or an alias to a level the property takes (of its scale, its options, and of the schema's own colors, styles and opacities) |
+| `upgrade.moves.<n>.map.invalid` | a `map` value is not an option or a level of the destination: an option of an `option` or `layout` property or of a token with options, an alias to a level the property takes (of its scale, its options, and of the schema's own colors, styles and opacities), or a boolean for a boolean destination; or a key other than `true` and `false` from a boolean |
 | `upgrade.moves.<n>.duplicate` | a `from` an earlier move already has |
 | `upgrade.drop.<n>.unknown` | a path the previous base does not have, as a key or a group |
-| `upgrade.<path>.unaccounted` | a key of the previous base that neither arrives at the same path with the same kind (where the new version's own migrations take it) nor is covered by a move's `from`, a `drop` or a `rewrite.paths` |
+| `upgrade.<path>.unaccounted` | a key of the previous base that neither arrives at the same path with the same kind (where the new version's own migrations take it) nor is covered by a move's `from`, a `drop` or a `rewrite.paths`. A property's default on a platform is accounted for with its property, whose move also takes the theme's override |
 | `upgrade.rewrite.unknown` | the API has no transformation registered under `rewrite.id` (the API only) |
 | `upgrade.invalid` | a compiled schema whose `upgrade` is not `{ from: integer, moves: [], drop: [] }` (in nodes, the meta-schema answers first, `$extensions.co.ordering.upgrade.schema`) |
 
@@ -1157,9 +1213,10 @@ and the API saves it like that the next time the theme is written. The typograph
 Leaving `components.modal.base.padding` out of `drop` would be
 `upgrade.components.modal.base.padding.unaccounted`; a map value `"{size.lg}"` for the
 card's padding, now on `space`, would be `upgrade.moves.2.map.invalid`. A 26 client
-asking while 27 is current gets this theme cut down to 26: `icon_gap`, `always` and the
-card's `{space.lg}` do not exist or have another kind in 26, so it sees 26's defaults
-there.
+asking while 27 is current gets this theme cut down to 26: `icon_gap` is `old_gap`
+again, `always` is `underlined` and the card's `{space.lg}` is `{size.lg}` (both maps are
+one to one); `primary`, a key 26 already has, keeps the value the theme gives it, and
+`brand` takes 26's default.
 
 ## 16. Errors
 
@@ -1171,8 +1228,8 @@ stage that fails gives the overall `code`:
 |---|---|---|
 | `schema.format` | 422 | `$schema` is not `urn:ordering:theme-schema:1` |
 | `schema.invalid` | 422 | the meta-schema, the compiler, the rules or the semver |
-| `schema.version_exists` | 409 | the version is already published with different content (api-core only) |
-| `schema.version_order` | 409 | the version is not greater than the latest of its base |
+| `schema.version_exists` | 409 | the version is already published with different content (`validate()` too, given that version as `previous`) |
+| `schema.version_order` | 409 | the version is lower than the latest of its base |
 | `schema.incompatible` | 422 | it would break the themes of the latest version of its base |
 
 The upgrade block's errors against the previous base (§15.3) are `schema.invalid`.
@@ -1195,6 +1252,7 @@ Rules of each error:
 | `token_options.<token>.invalid` | §4.2 |
 | `inherits.<c>.invalid`, `follows.<path>.invalid`, `derive.<color>.invalid`, `component_derive.<c>.<path>.invalid`, `matrix.<c>.invalid` | §5.1, §11 |
 | `migrate.<n>.invalid` | §14 |
+| `v1_map.v1.<path>.unknown`, `v1_map.visibility.<key>.unknown`, `v1_map.images.<key>.unknown`, `v1_map.pages.<page>.unknown`, `v1_map.pages.<page>.<section>.unknown`, `v1_map.site.<setting>.unknown` | a version 2 path of the version 1 map published with the schema that the schema does not have (in `v1`, only tokens, component properties and settings) |
 | `upgrade.required`, `upgrade.from.invalid`, `upgrade.moves.<n>.from.unknown`, `.to.unknown`, `.kind`, `.map.invalid`, `.duplicate`, `upgrade.drop.<n>.unknown`, `upgrade.<path>.unaccounted`, `upgrade.rewrite.unknown`, `upgrade.invalid` | §15.3 |
 | `.default_out_of_range` | a numeric default outside its editor's `min`/`max` |
 | `.alpha_required`, `.alpha_not_color` | §12.3, `alpha` |
@@ -1213,7 +1271,15 @@ Rules of each error:
 | `.alone_in_group`, `.not_snake_case` | §12.3, a page's sections |
 | `.not_boolean` | §12.3, visibility keys |
 | `version.semver` | the version is not `base.minor.patch` |
-| `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `schema.patch_changes_values`, `schema.migration_removed`, `schema.upgrade_removed` | §13, §15.4 |
+| `.removed`, `.type_changed`, `.scale_changed`, `.option_removed`, `.alpha_removed`, `.custom_removed`, `schema.patch_changes_values`, `schema.migration_removed`, `schema.upgrade_removed` | §13, §15.4 |
+
+A theme or a site's settings saved against a schema (`themeErrors()`,
+`settingsErrors()`; api-core's `ThemeValidator`) answer the same way, each error
+`<path>.<rule>` at the value's path: `unknown`, `invalid`, `alias`, `duplicate` (a
+page's section), `alpha` (§12.1), `out_of_range` (a number outside its editor's limits;
+`<path>.<field>.out_of_range` for a typography's field, §12.1) and `format` (an image of
+a format its key does not take, §7). `valid()` and `validSettings()` leave out what has
+one; a page's list of sections stays a list.
 
 The paths of compiler and rule errors are those of the compiled tuple: the same as the
 schema's, plus `.default`, `.options` or `.rules` at the end; those of the editor's rules,

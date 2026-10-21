@@ -118,6 +118,7 @@ pnpm add -D --save-exact @orderingco/ordering-theme-engine
 ```sh
 pnpm exec ordering-theme validate theme.schema.json                     # meta-schema + rules, like api-core
 pnpm exec ordering-theme validate theme.schema.json --previous prev.json # and against the latest version of your base (§6)
+pnpm exec ordering-theme validate theme.schema.json --v1-map v1-map.json --against "$THEME_PUBLISH_API"  # in CI: against what the API publishes
 pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json
 pnpm exec ordering-theme defaults theme.schema.json --out src/theme.defaults.json --check  # in CI: is it up to date?
 ```
@@ -128,6 +129,13 @@ metadata's ([§12.3](schema-format.md#123-rules)): every path a group lists exis
 visibility key is in one group, the orders, limits, scales and fonts agree; a product
 repository needs no script of its own for them. `ordering-theme --help` lists all
 the options.
+
+`--against <api>` reads from the API, with `THEME_PUBLISH_KEY`, what publishing compares
+the schema with: the same version if it is published (the same content is `unchanged`,
+another is `schema.version_exists`), the latest version of your base and the latest of
+the previous base (for the upgrade block). A pull request runs it without keeping the
+published versions as files. With `--development` it checks as a development API does
+and prints what production would refuse as `warning:` lines.
 
 ### From code
 
@@ -146,8 +154,9 @@ const { code, errors } = validateFull(schema)
 if (code !== null) throw new Error(`${code}: ${errors.map((e) => e.code).join(', ')}`)
 ```
 
-What only api-core can tell is whether the version is already published with different
-content (`schema.version_exists`); that is what `publish --dry-run` is for.
+Given the published version itself as `previous`, it answers `unchanged` for the same
+content and `schema.version_exists` for another, as api-core does; `validate --against`
+looks it up for you, and `publish --dry-run` asks api-core everything.
 
 ## 5. Publish
 
@@ -220,24 +229,27 @@ In short:
 
 | Change | Version | What you declare |
 |---|---|---|
-| Texts, labels and editor metadata | patch | nothing |
-| Add a key, a component, an option; change a default | minor | nothing: themes that do not set it get the default |
+| Texts, labels and editor metadata that validates no value (not `alpha`, `custom`, `min`, `max`) | patch | nothing |
+| Add a key, a component, an option, a page's section; change a default | minor | nothing: themes that do not set it get the default |
+| Tighten a `max_length`, a `pattern` or an editor's `min`/`max`; make a section not `hideable`, or move it to another `group` | minor | nothing: a saved value that no longer fits is left out, and its default shows |
 | Mark a key `$deprecated`; remove one the previous version already marked | minor | nothing: its value is left out |
 | Rename or move a token (within its group), a component property, a visibility key, an image, a page or one of its sections, keeping its section and kind | minor | a migration, `co.ordering.migrate` ([§14](schema-format.md#14-migrations-within-a-base-coorderingmigrate)) |
-| Remove a key that is not deprecated, change a type or a `dimension`'s scale, remove an option, turn a key into another section's, change what a stored value means | **new base** (`27.0.0`) | the upgrade block, `co.ordering.upgrade` ([§15](schema-format.md#15-a-new-base-coorderingupgrade)) |
+| Remove a key (a page's section too) that is not deprecated, change a type or a `dimension`'s scale, remove an option, `alpha` or `custom`, turn a key into another section's, change what a stored value means | **new base** (`27.0.0`) | the upgrade block, `co.ordering.upgrade` ([§15](schema-format.md#15-a-new-base-coorderingupgrade)) |
 
 **Within a base: migrations.** Declare `{ from, to }` at the root, in
 `$extensions["co.ordering.migrate"]`: `from` is the key the schema no longer has, `to`
 the one it has, in the same section and of the same kind. The API moves each saved
 theme's value when it reads or saves it, unless the theme already sets `to`; on every
 platform the theme overrides too, and for a token its value in each mode and every
-alias to it. The list only grows: every later version of the base keeps it. Example:
+alias to it. A property's default on a platform goes with it, and a `site.*` migration
+moves the site's setting. The list only grows: every later version of the base keeps
+it. Example:
 [§14.5](schema-format.md#145-example-a-minor-that-renames-a-property-and-a-visibility-key).
 
 **A new base: the upgrade block.** `27.0.0` may change anything, and declares at the
 root, in `$extensions["co.ordering.upgrade"]`, how a theme of 26 takes its values:
-`from: 26`, the `moves` (each `{ from, to }`, with a `map` that translates options or
-levels), the paths it `drop`s on purpose, and, for what cannot be declared (a value
+`from: 26`, the `moves` (each `{ from, to }`, with a `map` that translates options,
+levels or booleans, by `"true"` and `"false"`), the paths it `drop`s on purpose, and, for what cannot be declared (a value
 whose meaning changes), a `rewrite` that names a transformation the API team registers
 and deploys first. Every key of 26 must arrive at the same path with the same kind or be
 moved, dropped or rewritten: publishing refuses the rest
@@ -245,13 +257,19 @@ moved, dropped or rewritten: publishing refuses the rest
 `ordering-theme validate theme.schema.json --previous-base <the last 26 schema>`.
 Stored themes are not migrated in the database: the API converts each one when it reads
 it and saves it converted on its next write, and a client still on 26 gets the theme cut
-down to 26. Example:
+down to 26, with every rename and one-to-one map undone (a merge into a key 26 already
+had, or a map that is not one to one, takes 26's default). Example:
 [§15.5](schema-format.md#155-example-2700).
 
 **While the product is in development.** An api-core with
 `THEME_SCHEMA_DEVELOPMENT=true` (local and staging until v2 themes launch) replaces an
-already published version and does not reject for order or compatibility. In production
-it is off: there the rules apply from the first version.
+already published version and does not reject for order or compatibility: what
+production would refuse comes back as `warnings`. In production it is off: there the
+rules apply from the first version.
+
+**The version 1 map** names only what the schema has: when a version renames or removes
+a key the map names, update the map in the same change, or publishing refuses it
+(`v1_map.<section>.<path>.unknown`).
 
 ## 7. Using the result: `resolve()` and `defaults()`
 
