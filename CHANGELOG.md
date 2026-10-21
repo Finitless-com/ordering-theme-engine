@@ -5,7 +5,7 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
-## Unreleased
+## 0.6.0 (2026-10-21)
 
 - Docs: `schema-format.md` §13–15 are the whole story of versions for a schema author:
   which change needs which tool, migrations within a base (§14: paths and kinds, what

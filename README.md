@@ -29,7 +29,7 @@ version: [`CHANGELOG.md`](https://github.com/Finitless-com/ordering-theme-engine
 pnpm add -E @orderingco/ordering-theme-engine   # or npm i -E, yarn add -E
 ```
 
-Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.5.1"`):
+Pin an exact version in `package.json` (`"@orderingco/ordering-theme-engine": "0.6.0"`):
 a minor can change what it resolves, because it follows the Ordering.co API.
 
 ## Usage
