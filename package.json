@@ -39,6 +39,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    },
     "./meta/theme-schema-1.json": "./meta/theme-schema-1.json"
   },
   "files": [
@@ -52,6 +56,7 @@
     "build": "rm -rf dist && node scripts/build-shape-validator.mjs && tsc -p tsconfig.build.json && tsc -p tsconfig.cli.json && cp src/shape-validator.js dist/ && chmod +x dist/bin.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "size": "node scripts/runtime-size.mjs",
     "sync-fixtures": "bash scripts/sync-fixtures.sh",
     "prepack": "pnpm run build"
   },

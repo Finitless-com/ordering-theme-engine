@@ -28,6 +28,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # The runtime entry as a website bundles it: within its budget, minified
+      # and gzipped, and without the rest of the engine (scripts/runtime-size.mjs).
+      - run: pnpm size
 
   # The PHP engine (php/src) in docker, and the parity contract: the
   # fixtures the TypeScript tests compare with are exactly what this PHP

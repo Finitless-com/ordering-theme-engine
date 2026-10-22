@@ -5,9 +5,9 @@ import { compile, isNodes } from './compile.js'
 import { canonical } from './diff.js'
 import { versionCompare } from './php.js'
 import { defaults } from './resolver.js'
-import { runtimeRules, serializeRules } from './rules.js'
+import { compileRuntime, runtimeRules, serializeRules, serializeRuntime } from './rules.js'
 import { siteDefaults } from './schemas.js'
-import { validateFull } from './validate.js'
+import { v1MapErrors, validateFull } from './validate.js'
 import type { Changes, Json, NodeSchema, SchemaError, V1Map, ValidationResult } from './types.js'
 
 /**
@@ -21,6 +21,8 @@ import type { Changes, Json, NodeSchema, SchemaError, V1Map, ValidationResult } 
  *   when no theme arrives, written or checked;
  * - `rules`: runtimeRules(), what a product checks a theme it is served
  *   with without bundling the schema, written or checked;
+ * - `compile`: compileRuntime(), the defaults and the rules in the form
+ *   the `runtime` entry's complete() reads, written or checked;
  * - `publish`: the schema to api-core's `POST {api}/system/theme_schemas`,
  *   after validating it here.
  *
@@ -57,6 +59,15 @@ Commands:
                            the schema: each value's options, range or kind, as
                            JSON with one rule per line.
       --out <file>         Write them to <file> instead of printing them.
+      --check              Exit 1 when <file> (--out) is not up to date.
+
+  compile <schema.json>    What @orderingco/ordering-theme-engine/runtime reads to
+                           complete a served theme: the defaults (the site's
+                           settings included) with each value's rule, as compact
+                           JSON, without the editor's metadata.
+      --v1-map <file>      The version 1 map published with the schema: it fails
+                           when the map names what the schema does not have.
+      --out <file>         Write it to <file> instead of printing it.
       --check              Exit 1 when <file> (--out) is not up to date.
 
   publish <schema.json>    Validate the schema, then publish it to the API.
@@ -120,6 +131,8 @@ export async function run(args: string[], io: Io = processIo()): Promise<number>
         return defaultsCommand(rest, io)
       case 'rules':
         return rulesCommand(rest, io)
+      case 'compile':
+        return compileCommand(rest, io)
       case 'publish':
         return await publishCommand(rest, io)
       case undefined:
@@ -324,9 +337,18 @@ function rulesCommand(args: string[], io: Io): number {
   return generatedCommand('rules', args, io, {}, (schema) => serializeRules(runtimeRules(schema)))
 }
 
+function compileCommand(args: string[], io: Io): number {
+  return generatedCommand('compile', args, io, { 'v1-map': { type: 'string' } }, (schema) => serializeRuntime(compileRuntime(schema)), (schema, values) => {
+    // The runtime form carries no version 1 paths; the map is the one published with the schema.
+    const map = optionalJson(io, values['v1-map'] as string | undefined) as V1Map | null
+    return map === null ? [] : v1MapErrors(compile(schema, map).schema, map)
+  })
+}
+
 /**
- * A file a product generates from its schema (`defaults`, `rules`):
- * printed, written to `--out`, or compared with it (`--check`).
+ * A file a product generates from its schema (`defaults`, `rules`,
+ * `compile`): printed, written to `--out`, or compared with it (`--check`).
+ * `errors` adds what else makes the schema fail, after it compiles.
  */
 function generatedCommand(
   command: string,
@@ -334,6 +356,7 @@ function generatedCommand(
   io: Io,
   options: ParseArgsConfig['options'],
   generate: (schema: NodeSchema, values: Record<string, unknown>) => string,
+  errors: (schema: NodeSchema, values: Record<string, unknown>) => SchemaError[] = () => [],
 ): number {
   const { values, file } = parse(args, {
     out: { type: 'string' },
@@ -359,6 +382,12 @@ function generatedCommand(
     io.stderr(`${file}: does not compile (${compiled.errors.length} error(s)), run ordering-theme validate ${file}\n`)
     return 1
   }
+  const failed = errors(schema, values)
+  if (failed.length > 0) {
+    failed.forEach((error) => io.stderr(`${describeError(error)}\n`))
+    io.stderr(`${file}: ${failed.length} error(s), run ordering-theme validate ${file}${values['v1-map'] ? ` --v1-map ${values['v1-map']}` : ''}\n`)
+    return 1
+  }
   const output = generate(schema, values)
   if (out === undefined) {
     io.stdout(output)
@@ -373,7 +402,7 @@ function generatedCommand(
       // A missing file is out of date.
     }
     if (current !== output) {
-      io.stderr(`${out} is out of date: run ordering-theme ${command} ${file} --out ${out}${values.site ? ' --site' : ''}\n`)
+      io.stderr(`${out} is out of date: run ordering-theme ${command} ${file}${values['v1-map'] ? ` --v1-map ${values['v1-map']}` : ''} --out ${out}${values.site ? ' --site' : ''}\n`)
       return 1
     }
     io.stdout(`${out} is up to date\n`)

@@ -1,7 +1,10 @@
 import { compile, isNodes } from './compile.js'
 import { FONT_ROLES, STRING_MAX_LENGTH, TOKENS, WEIGHTS, tokenType } from './format.js'
 import { TYPOGRAPHY_RANGES, fieldRanges, filled, formatRange, nodeRange, numberKind, tokenNumberKind, type Range } from './limits.js'
-import { dig, entries, get, isArray, isList, phpString, values, type Json, type JsonMap } from './php.js'
+import { dig, entries, get, isArray, isList, isMap, phpString, values, type Json, type JsonMap } from './php.js'
+import { defaults } from './resolver.js'
+import { RUNTIME_FORMAT, type RuntimeSchema } from './runtime.js'
+import { siteDefaults } from './schemas.js'
 import type { NodeSchema, TupleSchema } from './types.js'
 
 /**
@@ -110,6 +113,61 @@ export function runtimeRules(schema: NodeSchema | TupleSchema): JsonMap {
     },
     platform_values: platformValues,
   }
+}
+
+/**
+ * The compiled form `@orderingco/ordering-theme-engine/runtime` reads
+ * (complete(); `ordering-theme compile` writes it): the empty theme
+ * resolved with the site's settings' defaults (`ordering-theme defaults
+ * --site`), each value runtimeRules() has a rule for written
+ * `{ "$value": default, "$rule": rule }`, and the rest of runtimeRules()
+ * under `rules`. The rules live next to their defaults rather than in a
+ * tree of their own, which would repeat every path: one file a client
+ * bundles, smaller once compressed than the defaults and the rules apart.
+ * Without the editor's metadata and the version 1 paths: a served theme is
+ * already resolved. Throws a TypeError if the schema is not in nodes.
+ */
+export function compileRuntime(schema: NodeSchema): RuntimeSchema {
+  if (!isNodes(schema)) {
+    throw new TypeError('compileRuntime() reads a schema in nodes ($schema urn:ordering:theme-schema:1).')
+  }
+  const tuples = compile(schema).schema
+  const { values: rules, ...rest } = runtimeRules(tuples)
+  const theme = defaults(schema) as JsonMap
+  const site = siteDefaults(tuples)
+  const answer: JsonMap = Object.keys(site).length > 0 ? { ...theme, site } : { ...theme }
+  for (const block of ['tokens', 'components', 'site']) {
+    if (isArray(answer[block])) {
+      answer[block] = withRules(answer[block]!, get(rules, block))
+    }
+  }
+  return {
+    runtime: RUNTIME_FORMAT,
+    product_type: phpString(schema.product_type),
+    version: phpString(schema.version),
+    rules: rest as unknown as RuntimeSchema['rules'],
+    values: answer,
+  }
+}
+
+/** The compiled form as the file a product versions: compact JSON with a final newline. */
+export function serializeRuntime(compiled: RuntimeSchema): string {
+  return `${JSON.stringify(compiled)}\n`
+}
+
+/** $value with each value $rules has a rule for written `{ $value, $rule }` (`*` stands for any key). */
+function withRules(value: Json, rules: Json): Json {
+  if (typeof rules === 'string' || Array.isArray(rules)) {
+    return { $value: value, $rule: rules }
+  }
+  if (!isMap(rules) || !isMap(value)) {
+    return value
+  }
+  const answer: JsonMap = {}
+  for (const [key, child] of Object.entries(value)) {
+    answer[key] = withRules(child, get(rules, key) ?? get(rules, '*'))
+  }
+  return answer
 }
 
 /** The rules as the file a product versions: each rule on one line, the maps that hold them indented. */

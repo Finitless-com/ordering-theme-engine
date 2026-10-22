@@ -5,6 +5,30 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+TypeScript only (like `runtimeRules()`); nothing changes in what is resolved or validated,
+and nothing in PHP.
+
+- **API:** a new entry, `@orderingco/ordering-theme-engine/runtime` (ESM, no
+  dependencies, no `node:` imports, `sideEffects: false`): `complete(compiled, values)`
+  completes and checks the values of a theme as api-core serves them (null, partial, of
+  another version or broken) for a client that does not bundle the schema: every key of
+  the schema, a value it does not understand replaced by its default, numbers clamped to
+  their rule's range, text styles, borders and shadows field by field, and the open
+  blocks (platforms, scopes, sections, slots, images, site, modes) by what they hold.
+  `complete(compiled, null)` is the defaults. It replaces a client's own reading of the
+  format (the marketplace web's `themeMerge.js`) with the engine's rules and checks.
+  Types `RuntimeSchema` and `CompleteValues`, and `RUNTIME_FORMAT`.
+- **API:** `compileRuntime(schema)` and `serializeRuntime(compiled)`, and the CLI's
+  `compile <schema> [--v1-map <file>] [--out <file>] [--check]`: the compiled form
+  `complete()` reads, the defaults with the site's settings and each value's rule
+  (`runtimeRules()`) next to its default, without the editor's metadata
+  (schema-format.md §12.4). For the marketplace website's schema, 11.5 KB gzipped.
+- CI: `pnpm size` (`scripts/runtime-size.mjs`) bundles the `runtime` entry for the
+  browser and fails over 6 KB minified and gzipped (it is about 4 KB) or when it takes a
+  module of the engine beyond the few it needs.
+
 ## 0.7.0 (2026-10-21)
 
 Breaking for api-core and the CLI's users (nothing is launched, so nothing old is kept):

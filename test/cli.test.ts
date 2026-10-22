@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { run, serializeDefaults, type Io } from '../src/cli.js'
-import { compile, defaults, runtimeRules, serializeRules, siteDefaults, type JsonMap, type NodeSchema } from '../src/index.js'
+import { compile, compileRuntime, defaults, runtimeRules, serializeRules, serializeRuntime, siteDefaults, type JsonMap, type NodeSchema } from '../src/index.js'
 import { json } from './fixtures.js'
 
 /**
@@ -103,9 +103,9 @@ describe('ordering-theme', () => {
     expect(await cli([])).toMatchObject({ code: 2, stdout: '', stderr: expect.stringContaining('Usage: ordering-theme <command>') })
     expect(await cli(['help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: ordering-theme <command>') })
     expect(await cli(['defaults', '--help'])).toMatchObject({ code: 0, stdout: expect.stringContaining('Usage: ordering-theme <command>') })
-    const unknown = await cli(['compile', 'valid.json'])
+    const unknown = await cli(['convert', 'valid.json'])
     expect(unknown.code).toBe(2)
-    expect(unknown.stderr).toContain('unknown command compile')
+    expect(unknown.stderr).toContain('unknown command convert')
   })
 
   it('prints the package version', async () => {
@@ -272,6 +272,40 @@ describe('ordering-theme rules', () => {
     expect((await cli(['rules', 'uncompiled.json'])).code).toBe(1)
     expect((await cli(['rules', 'tuples.json'])).stderr).toContain('not a schema in nodes')
     expect((await cli(['rules', 'valid.json', '--site'])).code).toBe(2)
+  })
+})
+
+describe('ordering-theme compile', () => {
+  const expected = serializeRuntime(compileRuntime(base))
+
+  it('prints, writes and checks the compiled form the runtime entry reads, as one line of JSON', async () => {
+    expect(expected.endsWith('}\n') && !expected.slice(0, -1).includes('\n')).toBe(true)
+    expect(await cli(['compile', 'valid.json'])).toEqual({ code: 0, stdout: expected, stderr: '' })
+    expect(await cli(['compile', 'valid.json', '--v1-map', 'v1-map-current.json', '--out', 'theme.runtime.json'])).toMatchObject({ code: 0, stdout: 'wrote theme.runtime.json\n' })
+    expect(readFileSync(join(directory, 'theme.runtime.json'), 'utf8')).toBe(expected)
+    expect(await cli(['compile', 'valid.json', '--out', 'theme.runtime.json', '--check'])).toMatchObject({ code: 0, stdout: 'theme.runtime.json is up to date\n' })
+
+    write('theme.runtime.json', '{}\n')
+    const stale = await cli(['compile', 'valid.json', '--v1-map', 'v1-map-current.json', '--out', 'theme.runtime.json', '--check'])
+    expect(stale.code).toBe(1)
+    expect(stale.stderr).toBe('theme.runtime.json is out of date: run ordering-theme compile valid.json --v1-map v1-map-current.json --out theme.runtime.json\n')
+    expect(readFileSync(join(directory, 'theme.runtime.json'), 'utf8')).toBe('{}\n')
+  })
+
+  it('fails on a version 1 map that names what the schema does not have', async () => {
+    const answer = await cli(['compile', 'valid.json', '--v1-map', 'v1-map.json', '--out', 'stale-map.runtime.json'])
+    expect(answer.code).toBe(1)
+    expect(answer.stderr).toContain('v1_map.v1.components.header.base.layout.unknown\n')
+    expect(answer.stderr).toContain('valid.json: 5 error(s), run ordering-theme validate valid.json --v1-map v1-map.json\n')
+    expect(() => readFileSync(join(directory, 'stale-map.runtime.json'))).toThrow()
+    expect((await cli(['compile', 'valid.json', '--v1-map', 'broken.json'])).stderr).toContain('broken.json is not JSON')
+  })
+
+  it('fails as defaults does on a schema that does not compile or is not in nodes', async () => {
+    expect((await cli(['compile', 'uncompiled.json'])).code).toBe(1)
+    expect((await cli(['compile', 'tuples.json'])).stderr).toContain('not a schema in nodes')
+    expect((await cli(['compile', 'valid.json', '--site'])).code).toBe(2)
+    expect((await cli(['compile', 'valid.json', '--check'])).code).toBe(2)
   })
 })
 

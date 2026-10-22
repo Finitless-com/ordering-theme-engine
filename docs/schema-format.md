@@ -838,6 +838,33 @@ scale's levels may have (each level's own limits, or its default when it has non
 it may resolve to. That widening is the rules' only: a saved theme is checked, and read,
 against the node's limits alone.
 
+The engine's `runtime` entry (`@orderingco/ordering-theme-engine/runtime`, TypeScript
+only) applies these rules: `complete(compiled, values)` completes a served theme over
+the defaults and takes the default for what a rule refuses. It reads them compiled with
+the defaults (`ordering-theme compile`, `compileRuntime()`), each value's rule next to
+its default instead of in a tree of its own, which would repeat every path:
+
+```json
+{
+  "runtime": 1,
+  "product_type": "marketplace_website",
+  "version": "26.1.0",
+  "rules": { "platforms": ["mobile_web"], "scopes": {}, "text": {}, "platform_values": {} },
+  "values": {
+    "tokens": { "color": { "primary": { "$value": "#2C7BE5", "$rule": "c" } } },
+    "components": { "button": { "base": { "icon_gap": { "$value": 8, "$rule": [0, 96] } } } },
+    "visibility": { "footer": true },
+    "site": { "name": { "$value": "", "$rule": ["x", 60] } }
+  }
+}
+```
+
+`rules` is `runtimeRules()` but its `values`; `values` is the empty theme resolved with
+the site's settings (`ordering-theme defaults --site`), a value with a rule written
+`{ "$value": default, "$rule": rule }` (a matrix component's variants each take their
+appearance's rules, which `"*"` stands for in `runtimeRules()`). The editor's metadata
+and the version 1 paths are left out.
+
 ## 13. Versions and compatibility
 
 `version` is `base.minor.patch`. The **base** is the product's major version (26). A

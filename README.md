@@ -11,7 +11,9 @@ The v2 theme engine, in two implementations that answer the same:
   preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
   `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and the
-  rules a client checks a served theme with, and publishes it.
+  rules a client checks a served theme with, and publishes it; and a browser entry,
+  `@orderingco/ordering-theme-engine/runtime`, that completes a served theme with
+  them ([Runtime](#runtime-browser)).
 
 Both live here and are checked against each other in one CI
 ([parity](#parity-between-php-and-typescript)).
@@ -74,6 +76,13 @@ alone.
   it. TypeScript only: api-core validates with the compiled schema itself
   (`ThemeValidator`). The format is documented in `src/rules.ts` and in
   [schema-format.md §12.4](docs/schema-format.md#124-runtime-rules).
+- `compileRuntime(schema)` and `serializeRuntime(compiled)`: the compiled form the
+  `runtime` entry reads (below), from the schema in nodes, and the file a product
+  versions with it; `ordering-theme compile` writes it. `complete(compiled, values)` is
+  also exported here.
+- `@orderingco/ordering-theme-engine/runtime`: `complete(compiled, values)`, a served
+  theme completed and checked for a client, without the schema
+  ([below](#runtime-browser)).
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads
   (`NodeCompiler`), with its errors: `{ schema, errors }`. `resolve` uses it and caches
   the result per object.
@@ -131,7 +140,8 @@ alone.
 - The format's meta-schema, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), the same file the PHP engine reads.
 - Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`,
-  `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`…
+  `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`,
+  `RuntimeSchema`, `CompleteValues`…
 
 Every map comes out as an object, an empty one too (`{}`), as api-core serves it (its
 `ThemeMaps`): `modes`, and `platforms` or `images` when the schema has none. A page's
@@ -142,6 +152,59 @@ the colors a client uses instead of `tokens.color.<name>` in that mode, as the t
 stores them (the engine neither derives nor resolves them). The only mode is `dark`
 (`ThemeFormat::MODES`). A schema declares no modes, so `defaults()` always gives it
 empty: `{}`.
+
+### Runtime (browser)
+
+A website reads the theme the Ordering.co API serves (`theme.values`, already resolved)
+without bundling the schema or the engine: `@orderingco/ordering-theme-engine/runtime`
+holds only what reading a served theme needs. ESM, no dependencies, no `node:` imports,
+`sideEffects: false`; about 4 KB minified and gzipped (CI fails it over 6 KB, or if it
+takes any other module of the engine: `pnpm size`, `scripts/runtime-size.mjs`).
+
+```ts
+import { complete, type RuntimeSchema } from '@orderingco/ordering-theme-engine/runtime'
+import compiled from './theme.runtime.json' // ordering-theme compile theme.schema.json --out src/theme.runtime.json
+
+const values = complete(compiled as RuntimeSchema, served.values) // complete and understood
+const first = complete(compiled as RuntimeSchema, null)          // the defaults, to paint before it arrives
+```
+
+`complete(compiled, values)` answers every key of the schema, each one a value the
+client understands, whatever it is served: nothing, a partial theme (a version 1 theme
+converted, `complete: false`), one of another version of the schema, or broken values.
+
+- A key the schema lacks is dropped; one the theme leaves out takes its default.
+- A value that is not understood takes its default: of another kind than the default,
+  an option the schema does not list, an invalid color (an alias that was not resolved
+  is one), a null where the default is not null (a border and a shadow may always be
+  null: none).
+- A number is clamped to its rule's range: its editor's `min` and `max`, a level
+  control's widened to its scale's levels (as `runtimeRules()` does), else the format's.
+- A text style, a border and a shadow are checked field by field: an invalid or missing
+  field is the default's (a text style without a `family` keeps none).
+- The open blocks are checked by what they hold: `platforms.<platform>` by the rules of
+  the component property, visibility key or page it changes; a group's `scope` by the
+  rules of each component it may change, completed from the theme's own component
+  (already checked); a page's `sections` in the theme's order with only the page's
+  sections, once each; a slot's axes, those its schema declares, by its component's
+  parts; `images`, an `http(s)` URL of up to 2048 bytes or `''`; `site`, each setting by
+  its options, `max_length` and `pattern`; `modes`, the colors of the schema's own.
+
+Neither argument is changed, and the answer shares no object with them (a copy per
+call: changing it is safe). It throws a `TypeError` given anything but the compiled
+form (the schema in nodes, the tuples, the rules). A value's rule is the one
+`runtimeRules()` gives it and each check is the engine's own (the same colors, lengths
+and patterns as the Ordering.co API), but it does not replace `valid()`: api-core already
+validated the theme when it was saved and when it served it; this protects the client
+from what it does not expect.
+
+The compiled form (`ordering-theme compile`, `compileRuntime()`) is the empty theme
+with the site's settings (`defaults --site`), each value that has a rule written
+`{ "$value": default, "$rule": rule }`, and the rest of `runtimeRules()` under
+`rules`; without the editor's metadata and the version 1 paths. For the marketplace
+website's schema it is about 97 KB, 11.5 KB gzipped, against 110 KB gzipped for the
+schema. The format is documented in `src/runtime.ts` and in
+[schema-format.md §12.4](docs/schema-format.md#124-runtime-rules).
 
 ## PHP
 
@@ -223,6 +286,7 @@ ordering-theme validate theme.schema.json [--v1-map v1-map.json] [--previous las
 ordering-theme validate theme.schema.json [--v1-map v1-map.json] --against "$THEME_PUBLISH_API" [--development]
 ordering-theme defaults theme.schema.json [--out src/theme.defaults.json] [--check] [--site]
 ordering-theme rules    theme.schema.json [--out src/theme.rules.json] [--check]
+ordering-theme compile  theme.schema.json [--v1-map v1-map.json] [--out src/theme.runtime.json] [--check]
 ordering-theme publish  theme.schema.json [--v1-map v1-map.json] [--previous-base last-of-26.json] [--dry-run] [--required]
 ordering-theme --help      # -h
 ordering-theme --version   # -v
@@ -258,6 +322,13 @@ ordering-theme --version   # -v
   that hold them indented, with a trailing newline: what a product checks a theme it is
   served with, at runtime, without bundling the schema. `--out` and `--check` work as
   for `defaults`, and so do the schemas it refuses.
+- `compile`: `compileRuntime()` written by `serializeRuntime()`, one line of JSON with a
+  trailing newline: what the `runtime` entry's `complete()` reads
+  ([Runtime](#runtime-browser)). `--out` and `--check` work as for `defaults`, and so do
+  the schemas it refuses. `--v1-map` takes the version 1 map published with the schema
+  and fails when it names what the schema does not have (`v1_map.<section>.<path>.unknown`,
+  printed as `validate` prints them); the compiled form does not carry it, since a
+  served theme is already version 2.
 - `publish`: validates the schema locally and, if it passes, sends it to the Ordering.co API:
   `POST {THEME_PUBLISH_API}/system/theme_schemas` with `{ schema, v1_map?, dry_run? }`
   and the key in `X-Theme-Publish-Key-X`. Product type and version come from the schema
@@ -292,8 +363,9 @@ on stdout and exit 0; `--version` or `-v` as the command prints the version.
 Exit codes:
 
 - 0: done (valid, written, up to date, published or skipped);
-- 1: the schema fails (`validate`, `publish`'s local check, a `defaults` or `rules`
-  schema not in nodes or that does not compile), `--check` finds the file out of date, the Ordering.co
+- 1: the schema fails (`validate`, `publish`'s local check, a `defaults`, `rules` or
+  `compile` schema not in nodes or that does not compile, a `compile` version 1 map that
+  names what the schema lacks), `--check` finds the file out of date, the Ordering.co
   API rejects or cannot be reached, a `--required` publish lacks its environment, or a
   file cannot be read or is not JSON;
 - 2: a usage error, with the reason on stderr: no command (the usage is printed on
@@ -305,6 +377,7 @@ In CI, for example:
 ```sh
 ordering-theme defaults theme.schema.json --out src/theme.defaults.json --site --check
 ordering-theme rules theme.schema.json --out src/theme.rules.json --check
+ordering-theme compile theme.schema.json --v1-map v1-map.json --out src/theme.runtime.json --check
 ordering-theme validate theme.schema.json --v1-map v1-map.json --against "$THEME_PUBLISH_API"   # on the PR
 ordering-theme publish theme.schema.json --v1-map v1-map.json --dry-run   # on the PR
 ordering-theme publish theme.schema.json --v1-map v1-map.json --required  # on deploy
@@ -424,7 +497,7 @@ GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
 environment, publish directly allowed). The repo keeps no npm token.
 
 `.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
-and build of the TypeScript engine; `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
+and build of the TypeScript engine, and the `runtime` entry's size budget (`pnpm size`); `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
 the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
 
 ### Migrating from GitHub Packages
