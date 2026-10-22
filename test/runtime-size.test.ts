@@ -26,7 +26,16 @@ describe('the browser entries', () => {
     expect(problems).toEqual([])
     expect(gzipped).toBeLessThanOrEqual(ENTRIES.css.budget)
     expect(modules).toEqual(expect.arrayContaining(['src/css.ts']))
-    for (const module of [...ENGINE, 'runtime', 'limits', 'pattern']) {
+    for (const module of [...ENGINE, 'runtime', 'limits', 'pattern', 'palette']) {
+      expect(modules).not.toContain(`src/${module}.ts`)
+    }
+  })
+
+  it('colors stays within its budget, with only the color operations', async () => {
+    const { gzipped, modules, problems } = await measureEntry('colors', fileURLToPath(new URL('../src/palette.ts', import.meta.url)))
+    expect(problems).toEqual([])
+    expect(gzipped).toBeLessThanOrEqual(ENTRIES.colors.budget)
+    for (const module of [...ENGINE, 'runtime', 'css', 'limits', 'pattern']) {
       expect(modules).not.toContain(`src/${module}.ts`)
     }
   })

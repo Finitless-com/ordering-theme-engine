@@ -171,8 +171,37 @@ export function rgb(color: Json): Rgb | null {
   return null
 }
 
+const HEX = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i
+const RGB = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0|1|0?\.\d+)\s*)?\)$/
+
+/**
+ * `[r, g, b, a]` of a color of the format (hex of 3, 4, 6 or 8 digits,
+ * rgb(), rgba()), or null: unlike rgb(), its alpha too, and nothing after it.
+ */
+export function channels(color: unknown): [number, number, number, number] | null {
+  if (typeof color !== 'string') {
+    return null
+  }
+  const text = color.trim()
+  const hex = HEX.exec(text)
+  if (hex !== null) {
+    let digits = hex[1]!
+    if (digits.length <= 4) {
+      digits = digits.replace(/./g, '$&$&')
+    }
+    const byte = (index: number): number => parseInt(digits.slice(index, index + 2), 16)
+    return [byte(0), byte(2), byte(4), digits.length === 8 ? Math.round((byte(6) / 255) * 1000) / 1000 : 1]
+  }
+  const match = RGB.exec(text)
+  if (match === null) {
+    return null
+  }
+  const channel = (index: number): number => Math.min(255, Number(match[index]))
+  return [channel(1), channel(2), channel(3), match[4] === undefined ? 1 : Number(match[4])]
+}
+
 /** The WCAG contrast ratio between two colors (1–21). */
-function ratio(a: Rgb, b: Rgb): number {
+export function ratio(a: Rgb, b: Rgb): number {
   const luminance = (channels: Rgb): number => {
     const [r, g, b] = channels.map((value) => {
       const channel = value / 255

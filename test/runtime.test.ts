@@ -414,7 +414,7 @@ describe('complete(): the open blocks', () => {
 })
 
 describe('complete(): inputs', () => {
-  it('leaves the compiled form and the theme untouched, and answers objects of its own', () => {
+  it('leaves the compiled form and the theme untouched, sharing the defaults it does not change', () => {
     const before = JSON.stringify(C)
     const theme = { tokens: { typography: { body: { size: -4 } } }, platforms: { mobile_web: { components: { button: { base: { radius: 4 } } } } } }
     const copy = JSON.stringify(theme)
@@ -422,10 +422,34 @@ describe('complete(): inputs', () => {
     expect(JSON.stringify(C)).toBe(before)
     expect(JSON.stringify(theme)).toBe(copy)
     expect(merge(D)).toEqual(D)
-    // Changing an answer changes neither the next one nor the compiled form.
-    answer.tokens.color.primary = '#000000'
-    merge(null).components.button.base.radius = 99
+    // What the theme leaves out is the defaults, shared by every answer; each answer is an object of its own.
+    expect(merge(null).tokens).toBe(merge(null).tokens)
+    expect(answer.components).toBe(D.components)
+    expect(merge(null)).not.toBe(merge(null))
     expect(merge(null)).toEqual(themeDefaults(nodes as NodeSchema, true))
-    expect(JSON.stringify(C)).toBe(before)
+  })
+
+  it('never writes into the compiled form or what it shares', () => {
+    const freeze = (value: unknown): unknown => {
+      if (value !== null && typeof value === 'object') {
+        Object.values(value).forEach(freeze)
+        Object.freeze(value)
+      }
+      return value
+    }
+    const frozen = freeze(JSON.parse(JSON.stringify(C))) as RuntimeSchema
+    const defaults = freeze(complete(frozen, null)) as Tree
+    const served = [
+      defaults,
+      { tokens: { color: { primary: '#000000' }, typography: { body: { size: 999 } } } },
+      { components: { button: { base: { radius: 4 }, slots: {} }, category_tabs: { scope: { tabs: { base: { icon_gap: 2 } } } } } },
+      { platforms: { mobile_web: { components: { product_section: { base: { columns: 9 } } }, visibility: { footer: true }, pages: { home: { footer: null } } } } },
+      { visibility: { footer: false }, pages: { home: { sections: [] } }, modes: { dark: { color: { primary: '#000000' } } }, images: { logo: 'https://x.test/a.png' } },
+    ]
+    for (const values of served) {
+      const answer = complete(frozen, values) as Tree
+      answer.images = {}
+      expect(answer.images).toEqual({})
+    }
   })
 })

@@ -5,6 +5,24 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+TypeScript only; nothing changes in what is resolved or validated, and nothing in PHP.
+
+- **API:** `complete()` reads the compiled form in place instead of splitting it into
+  defaults and rules and copying the defaults on every call: what the served theme
+  leaves out is the compiled form's defaults, built once and shared by every answer. The
+  answer is still an object of its own (a key of it may be replaced), but what it holds
+  must not be changed. It answers the same as 0.9.0. For the marketplace website's schema,
+  in Chromium on a new page, it takes 2.1 ms instead of 4.3 ms (9.8 ms instead of 15.7 ms
+  with the CPU slowed 4×).
+- **API:** a new entry, `@orderingco/ordering-theme-engine/colors`, with the engine's
+  color operations for colors a client gets at run time and not from the theme:
+  `rgbOf()`, `contrast()` (WCAG), `isLight()`, `onColor(background, light?, dark?)`, and
+  `derive`'s `shade()`, `mix()` and `legible()`, which answer what the schema's rules
+  derive. Apart from `css`, so only the code that uses them loads them; about 1.5 KB
+  minified and gzipped (CI fails it over 2 KB).
+
 ## 0.9.0 (2026-10-22)
 
 TypeScript only; nothing changes in what is resolved or validated, and nothing in PHP.

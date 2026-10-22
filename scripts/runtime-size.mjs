@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The size of each browser entry (ENTRIES: `runtime`, `css`) as a website
+ * The size of each browser entry (ENTRIES: `runtime`, `css`, `colors`) as a website
  * bundles it: esbuild bundles it for the browser, minified, and the result
  * is gzipped. It fails when that is over the entry's budget, when the
  * bundle takes a module outside the entry's allowed ones (the validator,
@@ -20,14 +20,15 @@ import { build } from 'esbuild'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-/** Each entry's budget (the most it may weigh, minified and gzipped, in bytes) and the modules it may take, by name without extension. */
+/** Each entry's budget (the most it may weigh, minified and gzipped, in bytes), the modules it may take, by name without extension, and its file when it is not its name. */
 export const ENTRIES = {
   runtime: { budget: 6 * 1024, allowed: ['runtime', 'format', 'limits', 'pattern', 'php'] },
-  css: { budget: 5 * 1024, allowed: ['css', 'format', 'php'] },
+  css: { budget: 5 * 1024, allowed: ['css', 'colors', 'format', 'php'] },
+  colors: { file: 'palette', budget: 2 * 1024, allowed: ['palette', 'colors', 'format', 'php'] },
 }
 
 /** `{ minified, gzipped, modules, problems }` of an entry bundled for the browser. */
-export async function measureEntry(name, entry = resolve(ROOT, `dist/${name}.js`)) {
+export async function measureEntry(name, entry = resolve(ROOT, `dist/${ENTRIES[name].file ?? name}.js`)) {
   const { budget, allowed } = ENTRIES[name]
   const result = await build({
     entryPoints: [entry],

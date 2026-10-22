@@ -47,6 +47,10 @@
       "types": "./dist/css.d.ts",
       "import": "./dist/css.js"
     },
+    "./colors": {
+      "types": "./dist/palette.d.ts",
+      "import": "./dist/palette.js"
+    },
     "./meta/theme-schema-1.json": "./meta/theme-schema-1.json"
   },
   "files": [

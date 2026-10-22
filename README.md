@@ -11,10 +11,12 @@ The v2 theme engine, in two implementations that answer the same:
   preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
   `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and the
-  rules a client checks a served theme with, and publishes it; and two browser entries:
+  rules a client checks a served theme with, and publishes it; and three browser entries:
   `@orderingco/ordering-theme-engine/runtime`, that completes a served theme with
   them ([Runtime](#runtime-browser)), and `@orderingco/ordering-theme-engine/css`, that
-  turns it into CSS once per theme ([CSS](#css-browser)).
+  turns it into CSS once per theme ([CSS](#css-browser)), and
+  `@orderingco/ordering-theme-engine/colors`, its color operations for colors a client
+  gets at run time ([Colors](#colors-browser)).
 
 Both live here and are checked against each other in one CI
 ([parity](#parity-between-php-and-typescript)).
@@ -87,6 +89,8 @@ alone.
 - `@orderingco/ordering-theme-engine/css`: `toCss(compiled, values)`, a completed theme
   as CSS, `fonts(view, extra?)`, its Google Fonts stylesheets, `transition()` and the
   conversions apart ([below](#css-browser)).
+- `@orderingco/ordering-theme-engine/colors`: `rgbOf()`, `contrast()`, `isLight()`,
+  `onColor()`, `shade()`, `mix()`, `legible()` ([below](#colors-browser)).
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads
   (`NodeCompiler`), with its errors: `{ schema, errors }`. `resolve` uses it and caches
   the result per object.
@@ -194,8 +198,9 @@ converted, `complete: false`), one of another version of the schema, or broken v
   parts; `images`, an `http(s)` URL of up to 2048 bytes or `''`; `site`, each setting by
   its options, `max_length` and `pattern`; `modes`, the colors of the schema's own.
 
-Neither argument is changed, and the answer shares no object with them (a copy per
-call: changing it is safe). It throws a `TypeError` given anything but the compiled
+Neither argument is changed. What the theme leaves out is the compiled form's defaults,
+built once and shared by every answer, so the answer is an object of its own (a key of
+it may be replaced, `values.images = …`) but what it holds must not be changed. It throws a `TypeError` given anything but the compiled
 form (the schema in nodes, the tuples, the rules). A value's rule is the one
 `runtimeRules()` gives it and each check is the engine's own (the same colors, lengths
 and patterns as the Ordering.co API), but it does not replace `valid()`: api-core already
@@ -217,7 +222,7 @@ also carries its CSS unit, which the `css` entry reads.
 CSS a web client paints with, once per theme: the tokens, `identity` and `fonts` at
 once, each component (a scope's and a platform's too) the first time it is read; after
 that, reading a value is a property access. ESM, no dependencies, `sideEffects: false`, without the runtime or the rest of
-the engine; about 4 KB minified and gzipped (CI fails it over 5 KB: `pnpm size`).
+the engine; about 4.5 KB minified and gzipped (CI fails it over 5 KB: `pnpm size`).
 
 ```ts
 import { complete } from '@orderingco/ordering-theme-engine/runtime'
@@ -264,7 +269,20 @@ a comment or a control character (such as a role, `{main}`, left in a matrix's
 appearances) is null. The only quotes and semicolons are the engine's own, in a family
 and in a `CssText`'s `css`. The conversions are also exported for the CSS a client
 writes itself: `cssBorder()`, `cssShadow()`, `cssText()`, `alpha(color, a)`,
-`isTransparent()`, `snapWeight(font, weight)`. The fonts' family names and weights
+`isTransparent()`, `snapWeight(font, weight)`.
+
+### Colors (browser)
+
+For a color a client gets at run time and not from the theme (a business's ribbon, a
+map marker), `@orderingco/ordering-theme-engine/colors` holds the engine's own color
+operations, apart from `css` so only the code that uses them loads them (about 1.5 KB
+minified and gzipped; CI fails it over 2 KB): `rgbOf(color)` (`{ r, g, b, a }` of a
+hex, rgb(), rgba() or `transparent`, else null), `contrast(a, b)` (WCAG, 1–21),
+`isLight(color)` (it contrasts at least as much with black as with white),
+`onColor(background, light?, dark?)` (the text color over it by that rule, white or
+black by default), and `derive`'s operations, the same as the theme's colors are
+derived with: `shade(color, amount)`, `mix(color, over, amount)` and
+`legible(color, background, ratio = 4.5, step = 0.01)`. The fonts' family names and weights
 (`range` for a variable one) are the format's (`FONT_FACES` in `src/format.ts`).
 
 ## PHP
@@ -558,7 +576,7 @@ GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
 environment, publish directly allowed). The repo keeps no npm token.
 
 `.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
-and build of the TypeScript engine, and the size budgets of the `runtime` and `css` entries (`pnpm size`); `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
+and build of the TypeScript engine, and the size budgets of the `runtime`, `css` and `colors` entries (`pnpm size`); `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
 the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
 
 ### Migrating from GitHub Packages

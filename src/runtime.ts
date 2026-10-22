@@ -91,39 +91,54 @@ const childRule = (rules: Rule, key: string): Rule => (isMap(rules) ? (at(rules,
 const clamp = (value: number, [min, max]: Pair): number => Math.min(max, Math.max(min, value))
 const size = (map: JsonMap): number => Object.keys(map).length
 
-/** A deep copy: what complete() answers shares nothing with the compiled form. */
-function copy<T extends Json | undefined>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map(copy) as T
+const unwrapped = new WeakMap<object, Json>()
+const ruled = new WeakMap<object, Rule>()
+
+/**
+ * The defaults of a node of the compiled form's `values`: a value with a
+ * rule is its `$value`. Built once per node and shared: by every answer
+ * that leaves that part of the theme out.
+ */
+function unwrap(node: Json): Json {
+  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+    return node
   }
-  if (isMap(value)) {
-    const answer: JsonMap = {}
-    for (const key of Object.keys(value)) {
-      answer[key] = copy(value[key]!)
+  if (hasOwn.call(node, '$rule')) {
+    return node.$value ?? null
+  }
+  let answer = unwrapped.get(node)
+  if (answer === undefined) {
+    const map: JsonMap = {}
+    for (const key in node) {
+      map[key] = unwrap(node[key]!)
     }
-    return answer as T
+    unwrapped.set(node, answer = map)
   }
-  return value
+  return answer
 }
 
-/** The defaults and the rules of the compiled form's `values`, apart. */
-function split(node: Json): [Json, Rule] {
-  if (!isMap(node)) {
-    return [node, undefined]
+/** The rules of a node of the compiled form's `values`, without the defaults (once per node). */
+function rulesOf(node: Json | undefined): Rule {
+  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+    return undefined
   }
-  if (own(node, '$rule')) {
-    return [node.$value ?? null, node.$rule]
+  if (hasOwn.call(node, '$rule')) {
+    return node.$rule
   }
-  const values: JsonMap = {}
+  if (ruled.has(node)) {
+    return ruled.get(node)
+  }
   const rules: JsonMap = {}
-  for (const [key, child] of Object.entries(node)) {
-    const [value, rule] = split(child)
-    values[key] = value
+  let any = false
+  for (const key in node) {
+    const rule = rulesOf(node[key])
     if (rule !== undefined) {
       rules[key] = rule
+      any = true
     }
   }
-  return [values, size(rules) > 0 ? rules : undefined]
+  ruled.set(node, any ? rules : undefined)
+  return any ? rules : undefined
 }
 
 type Reader = (served: unknown) => CompleteValues
@@ -159,9 +174,12 @@ const readers = new WeakMap<object, Reader>()
  *   colors, of the schema's own colors.
  *
  * `complete(compiled, null)` is the defaults (`ordering-theme defaults
- * --site`), to paint with before a theme arrives. Neither argument is
- * changed, and the answer shares no object with them. Throws a TypeError
- * when `compiled` is not the compiled form (`ordering-theme compile`).
+ * --site`), to paint with before a theme arrives. It reads the compiled
+ * form in place: neither argument is changed, and what the theme leaves
+ * out is the compiled form's defaults, built once and shared by every
+ * answer. The answer is an object of its own (a key of it may be
+ * replaced), but do not change what it holds. Throws a TypeError when
+ * `compiled` is not the compiled form (`ordering-theme compile`).
  */
 export function complete(compiled: RuntimeSchema, served: unknown): CompleteValues {
   if (!isMap(compiled) || compiled.runtime !== RUNTIME_FORMAT || !isMap(compiled.values) || !isMap(compiled.rules)) {
@@ -176,13 +194,14 @@ export function complete(compiled: RuntimeSchema, served: unknown): CompleteValu
 }
 
 function createReader(compiled: RuntimeSchema): Reader {
-  const [defaultValues, valueRules] = split(compiled.values as unknown as Json) as [JsonMap, JsonMap | undefined]
+  const nodes = compiled.values as JsonMap
+  const componentNodes = (isMap(nodes.components) ? nodes.components : {}) as JsonMap
   const meta = compiled.rules as unknown as JsonMap
   const textRules = isMap(meta.text) ? meta.text : {}
   const platforms = Array.isArray(meta.platforms) ? meta.platforms : []
   const scopes = isMap(meta.scopes) ? meta.scopes : {}
   const platformValues = isMap(meta.platform_values) ? meta.platform_values : {}
-  const fontRule = childRule(childRule(childRule(valueRules, 'tokens'), 'font'), 'body')
+  const fontRule = rulesOf(at(at(at(nodes, 'tokens'), 'font'), 'body'))
   const fonts: Json[] = Array.isArray(fontRule) ? fontRule.slice(1) : [...FONTS]
 
   /** A field of a text style or a shadow: the value checked by its rule (clamped), or undefined. */
@@ -331,9 +350,35 @@ function createReader(compiled: RuntimeSchema): Reader {
     return isMap(fallback) ? mergeMap(fallback, value, rule) : sameKind(fallback, value)
   }
 
+  /**
+   * mergeValue() reading the compiled form's node itself (a default with
+   * its rule) instead of a default and a rule apart: what the theme leaves
+   * out is the node's defaults, shared.
+   */
+  const mergeNode = (node: Json, value: Json | undefined): Json | undefined => {
+    if (value === undefined) {
+      return unwrap(node)
+    }
+    if (isMap(node)) {
+      return hasOwn.call(node, '$rule') ? leaf(node.$rule, node.$value ?? null, value) : mergeNodeMap(node, value)
+    }
+    return sameKind(node, value)
+  }
+
+  const mergeNodeMap = (node: JsonMap, value: Json | undefined, skip?: string[]): JsonMap => {
+    if (!isMap(value)) {
+      return unwrap(node) as JsonMap
+    }
+    const answer: JsonMap = {}
+    for (const key in node) {
+      answer[key] = (skip !== undefined && skip.includes(key)) || !hasOwn.call(value, key) ? unwrap(node[key]!) : mergeNode(node[key]!, value[key])!
+    }
+    return answer
+  }
+
   // Components
 
-  const componentRules = (name: string): Rule => childRule(childRule(valueRules, 'components'), name)
+  const componentRules = (name: string): Rule => rulesOf(at(componentNodes, name))
 
   /** A slot: the axes it declares, each null or one of its component's keys of that part. */
   const mergeSlot = (fallback: Json, value: Json | undefined, components: JsonMap): Json => {
@@ -370,6 +415,22 @@ function createReader(compiled: RuntimeSchema): Reader {
     return answer
   }
 
+  /** Component `name` read from its node of the compiled form. */
+  const mergeComponentNode = (name: string, node: JsonMap, value: Json | undefined): JsonMap => {
+    if (!isMap(value)) {
+      return unwrap(node) as JsonMap
+    }
+    const answer = mergeNodeMap(node, value, COMPONENT_OWN)
+    if (isMap(node.slots) && isMap(value.slots)) {
+      const slots: JsonMap = {}
+      for (const slot of Object.keys(node.slots)) {
+        slots[slot] = mergeSlot(unwrap(node.slots[slot]!), at(value.slots, slot), componentNodes)
+      }
+      answer.slots = slots
+    }
+    return answer
+  }
+
   /**
    * A group's `scope`: each component its rule lists, as the API serves it
    * (the theme's whole component with the group's changes), checked as
@@ -391,21 +452,19 @@ function createReader(compiled: RuntimeSchema): Reader {
   }
 
   /** Every component, then each group's scope over the components already merged (a scoped component has no scope of its own). */
-  const mergeComponents = (defaults: JsonMap, theme: Json): JsonMap => {
+  const mergeComponents = (theme: Json): JsonMap => {
     if (!isMap(theme)) {
-      return defaults
+      return unwrap(componentNodes) as JsonMap
     }
-    const answer: JsonMap = { ...defaults }
-    for (const name of Object.keys(defaults)) {
-      if (own(theme, name)) {
-        answer[name] = mergeComponent(name, defaults[name] as JsonMap, theme[name], defaults)
-      }
+    const answer: JsonMap = {}
+    for (const name in componentNodes) {
+      answer[name] = hasOwn.call(theme, name) ? mergeComponentNode(name, componentNodes[name] as JsonMap, theme[name]) : unwrap(componentNodes[name]!)
     }
-    for (const name of Object.keys(defaults)) {
+    for (const name in componentNodes) {
       const allowed = at(scopes, name)
       const ownScope = at(at(theme, name), 'scope')
       if (Array.isArray(allowed) && isMap(ownScope)) {
-        const scope = mergeScope(at(defaults[name], 'scope'), ownScope, allowed, defaults, answer)
+        const scope = mergeScope(unwrap(at(componentNodes[name], 'scope') ?? null), ownScope, allowed, componentNodes, answer)
         if (size(scope) > 0) {
           answer[name] = { ...(answer[name] as JsonMap), scope }
         }
@@ -429,14 +488,15 @@ function createReader(compiled: RuntimeSchema): Reader {
         continue
       }
       const ownValue = value[key]!
+      const node = component[key]!
       const rule = childRule(rules, key)
       const platformDefault = answer[key]
-      const base = platformDefault !== undefined ? platformDefault : component[key]
+      const base = platformDefault !== undefined ? platformDefault : unwrap(node)
       let merged: Json | undefined
       if (isLeafRule(rule)) {
         merged = leaf(rule, platformDefault, ownValue, base)
-      } else if (isMap(component[key])) {
-        merged = isMap(ownValue) ? mergeOverrides(platformDefault, ownValue, component[key] as JsonMap, rule) : platformDefault
+      } else if (isMap(node) && !hasOwn.call(node, '$rule')) {
+        merged = isMap(ownValue) ? mergeOverrides(platformDefault, ownValue, node, rule) : platformDefault
       } else {
         merged = sameKind(platformDefault, ownValue, base)
       }
@@ -459,19 +519,6 @@ function createReader(compiled: RuntimeSchema): Reader {
   }
 
   // Visibility, pages, platforms, modes
-
-  const mergeVisibility = (defaults: JsonMap, theme: Json): JsonMap => {
-    if (!isMap(theme)) {
-      return defaults
-    }
-    const answer: JsonMap = { ...defaults }
-    for (const key of Object.keys(defaults)) {
-      if (typeof theme[key] === 'boolean' && own(theme, key)) {
-        answer[key] = theme[key]!
-      }
-    }
-    return answer
-  }
 
   /** A page's sections in the theme's order: the page's own, once each, with a boolean `visible`. */
   const mergeSections = (defaults: Json[], list: Json[]): Json[] => {
@@ -522,7 +569,7 @@ function createReader(compiled: RuntimeSchema): Reader {
 
   const mergePlatform = (fallback: Json | undefined, value: JsonMap, platform: string, values: JsonMap): JsonMap => {
     const answer: JsonMap = isMap(fallback) ? { ...fallback } : {}
-    const components = values.components as JsonMap
+    const components = componentNodes
     if (isMap(value.components)) {
       const overrides: JsonMap = isMap(answer.components) ? { ...answer.components } : {}
       for (const [name, ownValue] of Object.entries(value.components)) {
@@ -592,41 +639,52 @@ function createReader(compiled: RuntimeSchema): Reader {
     return answer
   }
 
-  return (served) => {
-    const defaults = copy(defaultValues)
-    if (!isMap(served)) {
-      return defaults as CompleteValues
+  const visibilityNode = (isMap(nodes.visibility) ? nodes.visibility : {}) as JsonMap
+  const mergeVisibility = (theme: Json): JsonMap => {
+    if (!isMap(theme)) {
+      return visibilityNode
     }
-    const answer: JsonMap = { ...defaults }
-    for (const block of Object.keys(defaults)) {
-      if (!own(served, block)) {
+    const answer: JsonMap = {}
+    for (const key in visibilityNode) {
+      const shown = theme[key]
+      answer[key] = typeof shown === 'boolean' ? shown : visibilityNode[key]!
+    }
+    return answer
+  }
+
+  return (served) => {
+    const answer: JsonMap = {}
+    const theme = isMap(served) ? served : {}
+    for (const block in nodes) {
+      const node = nodes[block]!
+      if (!hasOwn.call(theme, block)) {
+        answer[block] = unwrap(node)
         continue
       }
-      const value = served[block]!
-      const fallback = defaults[block]!
+      const value = theme[block]!
       switch (block) {
         case 'components':
-          answer.components = mergeComponents(fallback as JsonMap, value)
+          answer.components = mergeComponents(value)
           break
         case 'visibility':
-          answer.visibility = mergeVisibility(fallback as JsonMap, value)
+          answer.visibility = mergeVisibility(value)
           break
         case 'pages':
-          answer.pages = mergePages(fallback as JsonMap, value, fallback as JsonMap, false)
+          answer.pages = mergePages(node as JsonMap, value, node as JsonMap, false)
           break
         case 'platforms':
-          answer.platforms = mergePlatforms(fallback as JsonMap, value, defaults)
+          answer.platforms = mergePlatforms(unwrap(node) as JsonMap, value, nodes)
           break
         case 'modes':
-          answer.modes = mergeModes(fallback as JsonMap, value, at(defaults.tokens, 'color'))
+          answer.modes = mergeModes(node as JsonMap, value, at(nodes.tokens, 'color'))
           break
         case 'images':
           answer.images = isMap(value)
-            ? Object.fromEntries(Object.entries(fallback as JsonMap).map(([key, image]) => [key, own(value, key) && isImage(value[key]) ? value[key]! : image]))
-            : fallback
+            ? Object.fromEntries(Object.entries(node as JsonMap).map(([key, image]) => [key, own(value, key) && isImage(value[key]) ? value[key]! : image]))
+            : node
           break
         default:
-          answer[block] = mergeValue(fallback, value, childRule(valueRules, block))!
+          answer[block] = mergeNode(node, value)!
       }
     }
     return answer as CompleteValues
