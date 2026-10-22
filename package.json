@@ -1,6 +1,6 @@
 {
   "name": "@orderingco/ordering-theme-engine",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "The Ordering.co API's theme engine (version 2 themes) in TypeScript, with its PHP implementation in the same repo: the same schema, the same rules, the same answer.",
   "license": "MIT",
   "author": "Ordering, Inc.",
