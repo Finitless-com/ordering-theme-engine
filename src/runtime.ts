@@ -31,6 +31,8 @@ import { isInt, isMap, mbStrlen, strlen, type Json, type JsonMap } from './php.j
 /** The compiled form complete() reads (`ordering-theme compile`). */
 export interface RuntimeSchema {
   runtime: number
+  /** The units the `css` entry reads are in the numbers' rules (compileRuntime()). */
+  css?: number
   product_type: string
   version: string
   rules: {

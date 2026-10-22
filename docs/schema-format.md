@@ -847,12 +847,13 @@ its default instead of in a tree of its own, which would repeat every path:
 ```json
 {
   "runtime": 1,
+  "css": 1,
   "product_type": "marketplace_website",
   "version": "26.1.0",
   "rules": { "platforms": ["mobile_web"], "scopes": {}, "text": {}, "platform_values": {} },
   "values": {
     "tokens": { "color": { "primary": { "$value": "#2C7BE5", "$rule": "c" } } },
-    "components": { "button": { "base": { "icon_gap": { "$value": 8, "$rule": [0, 96] } } } },
+    "components": { "button": { "base": { "icon_gap": { "$value": 8, "$rule": [0, 96, "px"] } } } },
     "visibility": { "footer": true },
     "site": { "name": { "$value": "", "$rule": ["x", 60] } }
   }
@@ -864,6 +865,16 @@ the site's settings (`ordering-theme defaults --site`), a value with a rule writ
 `{ "$value": default, "$rule": rule }` (a matrix component's variants each take their
 appearance's rules, which `"*"` stands for in `runtimeRules()`). The editor's metadata
 and the version 1 paths are left out.
+
+A number's rule there also carries its CSS unit, `[min, max, unit]`: `"px"` for a token
+of a length scale (`radius`, `size`, `icon`, `space`, `layout`, `border`, `scrollbar`)
+and a `radius`, `size`, `icon` or `space` property, `"ms"` for `motion` and a
+`duration`, and for a `number` its editor `unit` (§12.1), its own node's or else its
+base's: `px` and `ms` as they are, `%` a percentage unless its range lies within 0 and 1
+(a fraction the editor shows ×100). An opacity, a `number` with unit `x` or none, and a
+`%` fraction take no unit. `complete()` reads only the range; the `css` entry
+(`toCss()`) turns each number into CSS with it, and refuses a compiled form without
+`"css": 1`, the root key that says the units are there.
 
 ## 13. Versions and compatibility
 

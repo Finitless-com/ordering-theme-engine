@@ -1,4 +1,5 @@
 import { compile, isNodes } from './compile.js'
+import { CSS_FORMAT } from './css.js'
 import { FONT_ROLES, STRING_MAX_LENGTH, TOKENS, WEIGHTS, tokenType } from './format.js'
 import { TYPOGRAPHY_RANGES, fieldRanges, filled, formatRange, nodeRange, numberKind, tokenNumberKind, type Range } from './limits.js'
 import { dig, entries, get, isArray, isList, isMap, phpString, values, type Json, type JsonMap } from './php.js'
@@ -126,13 +127,18 @@ export function runtimeRules(schema: NodeSchema | TupleSchema): JsonMap {
  * bundles, smaller once compressed than the defaults and the rules apart.
  * Without the editor's metadata and the version 1 paths: a served theme is
  * already resolved. Throws a TypeError if the schema is not in nodes.
+ *
+ * A number's rule also carries its CSS unit, `[min, max, unit]` (`px`,
+ * `ms` or `%`; none for a unitless one), which the `css` entry reads and
+ * complete() does not; `css: 1` says the compiled form has them.
  */
 export function compileRuntime(schema: NodeSchema): RuntimeSchema {
   if (!isNodes(schema)) {
     throw new TypeError('compileRuntime() reads a schema in nodes ($schema urn:ordering:theme-schema:1).')
   }
   const tuples = compile(schema).schema
-  const { values: rules, ...rest } = runtimeRules(tuples)
+  const { values: plain, ...rest } = runtimeRules(tuples)
+  const rules = withUnits(plain as JsonMap, tuples, schema)
   const theme = defaults(schema) as JsonMap
   const site = siteDefaults(tuples)
   const answer: JsonMap = Object.keys(site).length > 0 ? { ...theme, site } : { ...theme }
@@ -143,11 +149,80 @@ export function compileRuntime(schema: NodeSchema): RuntimeSchema {
   }
   return {
     runtime: RUNTIME_FORMAT,
+    css: CSS_FORMAT,
     product_type: phpString(schema.product_type),
     version: phpString(schema.version),
     rules: rest as unknown as RuntimeSchema['rules'],
     values: answer,
   }
+}
+
+/** The token groups whose numbers are not lengths, and their unit. */
+const TOKEN_UNITS: Record<string, string> = { motion: 'ms', opacity: '' }
+
+/** The CSS unit of a property kind's numbers; null for a `number`, whose editor says it. */
+const KIND_UNITS: Record<string, string> = { radius: 'px', size: 'px', icon: 'px', space: 'px', motion: 'ms', opacity: '' }
+
+/**
+ * $rules (runtimeRules()' `values`) with each number's CSS unit after its
+ * range: a token's by its group (a length but `motion` and `opacity`), a
+ * property's by its kind and a `number`'s by its editor `unit` (its own
+ * node's, else its base's): `px` and `ms` as they are, `%` a percentage
+ * unless its range is within 0 and 1 (a fraction the editor shows ×100,
+ * unitless like `x` and none).
+ */
+function withUnits(rules: JsonMap, tuples: TupleSchema, schema: NodeSchema): JsonMap {
+  const tokens: JsonMap = {}
+  for (const [group, names] of entries(get(rules, 'tokens'))) {
+    const unit = TOKEN_UNITS[group] ?? 'px'
+    tokens[group] = Object.fromEntries(entries(names).map(([name, rule]) => [name, unitRule(rule, unit)]))
+  }
+  const components: JsonMap = {}
+  for (const [name, sections] of entries(get(rules, 'components'))) {
+    const into = dig(tuples, 'matrix', name, 'into')
+    const answer: JsonMap = {}
+    for (const [section, sectionRules] of entries(sections)) {
+      if (section !== into) {
+        answer[section] = sectionUnits(sectionRules, ['components', name, section], tuples, schema)
+      }
+    }
+    if (typeof into === 'string' && answer.appearances !== undefined) {
+      answer[into] = { '*': answer.appearances }
+    }
+    components[name] = answer
+  }
+  return { ...rules, tokens, components }
+}
+
+function sectionUnits(rules: Json, path: string[], tuples: TupleSchema, schema: NodeSchema): Json {
+  if (isRange(rules)) {
+    const kind = phpString(get(dig(tuples, ...path), 0))
+    return unitRule(rules, KIND_UNITS[kind] ?? (kind === 'number' ? editorUnit(schema, path, rules) : ''))
+  }
+  if (!isArray(rules) || isList(rules)) {
+    return rules
+  }
+  return Object.fromEntries(entries(rules).map(([key, rule]) => [key, sectionUnits(rule, [...path, key], tuples, schema)]))
+}
+
+function editorUnit(schema: NodeSchema, path: string[], range: Json): string {
+  const unitAt = (at: string[]): unknown => {
+    const node = at.reduce<unknown>((parent, key) => (isMap(parent) ? (parent as JsonMap)[key] : undefined), schema)
+    return isMap(node) ? get(get(get(node, '$extensions'), 'co.ordering.editor'), 'unit') : undefined
+  }
+  const unit = unitAt(path) ?? unitAt(['components', path[1]!, 'base', path[path.length - 1]!])
+  if (unit === 'px' || unit === 'ms') {
+    return unit
+  }
+  return unit === '%' && (get(range, 1) as number) > 1 ? '%' : ''
+}
+
+function isRange(rule: Json): boolean {
+  return isList(rule) && typeof get(rule, 0) === 'number'
+}
+
+function unitRule(rule: Json, unit: string): Json {
+  return isRange(rule) && unit !== '' ? [...values(rule), unit] : rule
 }
 
 /** The compiled form as the file a product versions: compact JSON with a final newline. */

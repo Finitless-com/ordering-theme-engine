@@ -5,6 +5,35 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+TypeScript only; nothing changes in what is resolved or validated, and nothing in PHP.
+
+- **API:** a new entry, `@orderingco/ordering-theme-engine/css` (ESM, no dependencies,
+  `sideEffects: false`, without the runtime or the rest of the engine):
+  `toCss(compiled, values)` turns the values `complete()` answers into the CSS a web
+  client paints with, once per theme and by each value's type in the schema (a number by
+  its unit, borders, shadows with their opacity in the color and cast down, up and to
+  each side, as a `filter` and with their reach, typography as declarations and as
+  parts with the weight its font has, fonts, the easing), with the levels as Identity
+  paints them (`identity`: radius, shadow, border width, focus ring, scrollbar) and each
+  component's motion. Every string of the view is safe to interpolate in CSS.
+  The tokens, `identity` and `fonts` are built at once and each component the first time
+  it is read. `fonts(view, extra?)` gives each font role's Google Fonts stylesheet with
+  every weight the theme paints it with (from the values: it builds no component);
+  `transition(motion, properties)` and `animation(motion, name, rest?)` a component's
+  transition and keyframes outside reduced motion. The conversions apart: `cssBorder()`, `cssShadow()`,
+  `cssText()`, `alpha()`, `isTransparent()`, `snapWeight()`. It replaces the marketplace
+  web's own helpers (themeCss.js, themeTokens.js, themeColors.js, themeMotion.js,
+  fontWeights.js, and its fonts), which answer the same for its schema.
+- **API:** the compiled form (`ordering-theme compile`, `compileRuntime()`) writes each
+  number's CSS unit after its range (`[min, max, "px"]`) and `"css": 1`
+  (schema-format.md §12.4). `complete()` reads it as before; a product regenerates its
+  file. The format's fonts, with their Google Fonts family and weights, are
+  `FONT_FACES` (`src/format.ts`).
+- CI: `pnpm size` measures both browser entries; `css` fails over 5 KB minified and
+  gzipped (it is about 4 KB).
+
 ## 0.8.0 (2026-10-22)
 
 TypeScript only (like `runtimeRules()`); nothing changes in what is resolved or validated,

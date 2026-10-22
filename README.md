@@ -11,9 +11,10 @@ The v2 theme engine, in two implementations that answer the same:
   preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
   `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and the
-  rules a client checks a served theme with, and publishes it; and a browser entry,
+  rules a client checks a served theme with, and publishes it; and two browser entries:
   `@orderingco/ordering-theme-engine/runtime`, that completes a served theme with
-  them ([Runtime](#runtime-browser)).
+  them ([Runtime](#runtime-browser)), and `@orderingco/ordering-theme-engine/css`, that
+  turns it into CSS once per theme ([CSS](#css-browser)).
 
 Both live here and are checked against each other in one CI
 ([parity](#parity-between-php-and-typescript)).
@@ -83,6 +84,9 @@ alone.
 - `@orderingco/ordering-theme-engine/runtime`: `complete(compiled, values)`, a served
   theme completed and checked for a client, without the schema
   ([below](#runtime-browser)).
+- `@orderingco/ordering-theme-engine/css`: `toCss(compiled, values)`, a completed theme
+  as CSS, `fonts(view, extra?)`, its Google Fonts stylesheets, `transition()` and the
+  conversions apart ([below](#css-browser)).
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads
   (`NodeCompiler`), with its errors: `{ schema, errors }`. `resolve` uses it and caches
   the result per object.
@@ -202,9 +206,66 @@ The compiled form (`ordering-theme compile`, `compileRuntime()`) is the empty th
 with the site's settings (`defaults --site`), each value that has a rule written
 `{ "$value": default, "$rule": rule }`, and the rest of `runtimeRules()` under
 `rules`; without the editor's metadata and the version 1 paths. For the marketplace
-website's schema it is about 97 KB, 11.5 KB gzipped, against 110 KB gzipped for the
+website's schema it is about 98 KB, 11.6 KB gzipped, against 110 KB gzipped for the
 schema. The format is documented in `src/runtime.ts` and in
-[schema-format.md §12.4](docs/schema-format.md#124-runtime-rules).
+[schema-format.md §12.4](docs/schema-format.md#124-runtime-rules). Each number's rule
+also carries its CSS unit, which the `css` entry reads.
+
+### CSS (browser)
+
+`@orderingco/ordering-theme-engine/css` turns the values `complete()` answers into the
+CSS a web client paints with, once per theme: the tokens, `identity` and `fonts` at
+once, each component (a scope's and a platform's too) the first time it is read; after
+that, reading a value is a property access. ESM, no dependencies, `sideEffects: false`, without the runtime or the rest of
+the engine; about 4 KB minified and gzipped (CI fails it over 5 KB: `pnpm size`).
+
+```ts
+import { complete } from '@orderingco/ordering-theme-engine/runtime'
+import { animation, fonts, toCss, transition } from '@orderingco/ordering-theme-engine/css'
+
+const values = complete(compiled, served.values)
+const css = toCss(compiled, values)              // the same values give the same view
+
+css.components.business_card.base.shadow.css     // '0px 1px 4px 0px rgba(0,0,0,0.1)'
+css.components.business_card.base.shadow.down    // the same shadow cast down (a bar across the top)
+css.components.business_card.base.name.css       // "font-family: 'Montserrat', sans-serif;\nfont-size: 20px;…"
+css.identity.radius.md                           // the level as Identity paints it (border_style.radius)
+transition(css.components.button.motion, ['color', 'box-shadow'])
+animation(css.components.modal.motion, 'fade-in', '1 forwards')
+fonts(css, { body: [500] })                      // { heading: { name, weights, href }, body: … }
+```
+
+Each value is converted by its type in the schema, never by its name:
+
+- a number by its unit (`"12px"`, `"200ms"`, `"70%"`, or unitless: `"0.5"`, `"3"`); a
+  color as it is; a border `"1px solid #E9ECEF"` (null: `"none"`); a font
+  `"'Inter', sans-serif"`; `motion_style.easing` `"ease-in-out"`; an option or a
+  boolean as it is;
+- a shadow, a `CssShadow`: `css` (the opacity inside the color; null: `"none"`), the
+  same shadow cast `down`, `up`, `right` and `left` as far as it falls, `drop` (a
+  `filter` of `drop-shadow()`s: a solid outline is four) and `reach`, how far it goes
+  past each side of its box in px;
+- a typography style, a `CssText`: its declarations together (`css`) and each one apart
+  (`size`, `line`, `weight`, `family`, `letter_spacing`, `transform`), the weight the
+  nearest its font has. A style without a family takes its role's: heading for
+  `display` and `h1`–`h4`, body for the rest, a component's `font_role` in it; a
+  component's style that names no font and has no `font_role` is painted with the
+  body's, and its `css` declares no family (it keeps its parent's).
+
+Besides `tokens` (as the theme sets them) and `components` (a group's `scope` holds
+whole components; each component has its `motion`, `{ ms, easing }` or null when the
+identity or the component does not animate) the view has `identity` (the radius,
+shadow and border levels as a spot that follows Identity paints them, the focus ring
+and the scrollbar), `platforms` (each platform's own values of the components) and
+`fonts` (each role's catalog id, Google Fonts name and `font-family`).
+
+Every string of the view is safe to interpolate in CSS: a value with `{ } ; < > ' " \`,
+a comment or a control character (such as a role, `{main}`, left in a matrix's
+appearances) is null. The only quotes and semicolons are the engine's own, in a family
+and in a `CssText`'s `css`. The conversions are also exported for the CSS a client
+writes itself: `cssBorder()`, `cssShadow()`, `cssText()`, `alpha(color, a)`,
+`isTransparent()`, `snapWeight(font, weight)`. The fonts' family names and weights
+(`range` for a variable one) are the format's (`FONT_FACES` in `src/format.ts`).
 
 ## PHP
 
@@ -497,7 +558,7 @@ GitHub Actions*: `Finitless-com`, `ordering-theme-engine`, `publish.yml`, no
 environment, publish directly allowed). The repo keeps no npm token.
 
 `.github/workflows/ci.yml` runs on every PR and every push to `master`: typecheck, tests
-and build of the TypeScript engine, and the `runtime` entry's size budget (`pnpm size`); `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
+and build of the TypeScript engine, and the size budgets of the `runtime` and `css` entries (`pnpm size`); `composer validate`, PHPUnit on PHP 8.1 and 8.3, and
 the parity check (`scripts/sync-fixtures.sh` must leave `fixtures/` unchanged).
 
 ### Migrating from GitHub Packages

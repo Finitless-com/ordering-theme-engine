@@ -43,6 +43,10 @@
       "types": "./dist/runtime.d.ts",
       "import": "./dist/runtime.js"
     },
+    "./css": {
+      "types": "./dist/css.d.ts",
+      "import": "./dist/css.js"
+    },
     "./meta/theme-schema-1.json": "./meta/theme-schema-1.json"
   },
   "files": [

@@ -145,6 +145,32 @@ export const TOKENS: Record<string, string> = {
 /** The font catalog's ids. */
 export const FONTS = ['archivo', 'inter', 'lato', 'montserrat', 'nunito', 'open_sans', 'playfair_display', 'poppins', 'raleway', 'roboto'] as const
 
+/**
+ * What Google Fonts serves for each font of the catalog: its family name
+ * and the weights it has. `range`: a variable font, any weight from min to
+ * max; `weights`: a static font, only those. A weight a family lacks is
+ * not served and the browser fakes it, so a client asks for and paints
+ * with the nearest one it has.
+ */
+export const FONT_FACES: Readonly<Record<(typeof FONTS)[number], FontFace>> = {
+  archivo: { family: 'Archivo', range: [100, 900] },
+  inter: { family: 'Inter', range: [100, 900] },
+  lato: { family: 'Lato', weights: [100, 300, 400, 700, 900] },
+  montserrat: { family: 'Montserrat', range: [100, 900] },
+  nunito: { family: 'Nunito', range: [200, 1000] },
+  open_sans: { family: 'Open Sans', range: [300, 800] },
+  playfair_display: { family: 'Playfair Display', range: [400, 900] },
+  poppins: { family: 'Poppins', weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+  raleway: { family: 'Raleway', range: [100, 900] },
+  roboto: { family: 'Roboto', range: [100, 900] },
+}
+
+export interface FontFace {
+  family: string
+  range?: readonly [number, number]
+  weights?: readonly number[]
+}
+
 export const WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
 
 /** The kinds a component property may have, and the token group an alias in it may name. */
