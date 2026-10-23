@@ -303,7 +303,10 @@ meta-schema: `@orderingco/ordering-theme-engine/meta/reference/<file>` in npm an
 | `reference-1.1.0.json` | A minor of 1.0.0 that changes something of every kind the comparison reports: migrations of a token, a property, a visibility key, a page's section and a setting; a deprecated key removed, keys and an option added, a default, a rule and a section's `hideable` changed, a key and a group deprecated. |
 | `reference-2.0.0.json` | A new base from 1.1.0, with an upgrade block: a token renamed with its aliases, a property renamed with its default on a platform, maps of an option, of a level to another scale and of a boolean, a setting moved into a group, drops of a group, a deprecated key and a visibility key, and a `rewrite` (`reference.2`, which an API must register to publish it) for the header's height, a size in pixels in 1.x and a choice of three in 2.0.0. |
 
-Each version is valid as publishing checks it against the one before (`--previous`,
+Only 1.0.0 is written by hand: `scripts/reference-versions.php` writes 1.1.0 and 2.0.0
+from it, so a change to 1.0.0 reaches them when `scripts/sync-fixtures.sh` runs, and what
+only a later version changes is a replacement in that script, which fails when its text
+is no longer there. Each version is valid as publishing checks it against the one before (`--previous`,
 `--previous-base`), and `test/reference.test.ts` fails when the meta-schema defines a
 property or an enum value no version uses, or when a token group, a component part, a
 slot axis or a property kind is missing: a change to the format adds its shape here in
@@ -640,6 +643,8 @@ Inputs, written by hand, which the scripts never write:
 
 What the PHP engine answers for them:
 
+- `meta/reference/reference-1.1.0.json` and `reference-2.0.0.json`: the reference's later
+  versions, its text with replacements (`scripts/reference-versions.php`);
 - `fixtures/schema.tuples.json`: the golden schema, the reference compiled to the tuples
   of the format before nodes and without the rules it declares (what follows Identity,
   the derivations, the matrix), so the golden cases pin the rules the engine applies to
