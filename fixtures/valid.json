@@ -359,10 +359,6 @@
                     "code": "components.card.base.glow.unknown"
                 },
                 {
-                    "path": "components.card.variants.default.states.pressed",
-                    "code": "components.card.variants.default.states.pressed.unknown"
-                },
-                {
                     "path": "components.card.variants.fancy",
                     "code": "components.card.variants.fancy.unknown"
                 },
@@ -459,6 +455,9 @@
                                     "hover": {
                                         "shadow": "{shadow.lg}",
                                         "background": "#ffffff"
+                                    },
+                                    "pressed": {
+                                        "shadow": "{shadow.lg}"
                                     }
                                 }
                             }

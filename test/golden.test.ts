@@ -5,7 +5,8 @@ import { cases, differences, goldenSchema, json, schemaFor, type Case, reference
 /**
  * The golden cases (fixtures/cases): each theme resolves to exactly what
  * the PHP ThemeResolver::resolve() answers for it, the one api-core runs,
- * over the node conversion of the frozen Web Marketplace 26 schema.
+ * over the node conversion of the golden schema (the reference schema
+ * without the rules it declares, scripts/golden-schema.php).
  */
 describe('the golden cases', () => {
   const schema = goldenSchema()

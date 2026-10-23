@@ -337,14 +337,14 @@ describe('complete(): the open blocks', () => {
   it('scope: the components the group may change, each as that component', () => {
     const v = merge({
       components: {
-        header: { scope: { button: { base: { radius: 'x', icon_gap: 2 } }, input: { base: { radius: 2, text_color: 'azul' } }, tabs: {} } },
+        header: { scope: { button: { base: { radius: 'x', icon_gap: 2 } }, input: { base: { radius: 2, text_color: 'azul' } }, card: {} } },
       },
     })
     // A partial one is completed from the theme's own component (the API serves it whole).
     expect(v.components.header.scope.button).toEqual({ ...D.components.button, base: { ...D.components.button.base, icon_gap: 2 } })
     expect(v.components.header.scope.input).toEqual({ ...D.components.input, base: { ...D.components.input.base, radius: 2 } })
     // A component the group may not change is dropped.
-    expect(v.components.header.scope.tabs).toBeUndefined()
+    expect(v.components.header.scope.card).toBeUndefined()
   })
 
   it("scope: what a scoped component lacks comes from the theme's global one, already checked", () => {

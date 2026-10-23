@@ -56,6 +56,8 @@
                 "primary_text": "#1E72E3",
                 "secondary": "#F2A900",
                 "on_secondary": "#1B1B1B",
+                "secondary_subtle": "#FDF5E0",
+                "secondary_pressed": "#CE9000",
                 "background": "#FFFFFF",
                 "surface": "#FFFFFF",
                 "surface_alt": "#F5F6F8",
@@ -67,8 +69,10 @@
                 "border": "#E5E7EB",
                 "focus": "#1E72E3",
                 "success": "#16A34A",
+                "success_subtle": "#E3F4E9",
                 "danger": "#DC2626",
                 "on_danger": "#FFFFFF",
+                "danger_subtle": "#FBE5E5",
                 "disabled": "#E5E7EB",
                 "favorite": "#E11D48"
             },
@@ -477,6 +481,20 @@
                                     "opacity": 0.06,
                                     "elevation": 2
                                 }
+                            },
+                            "focus": {
+                                "shadow": {
+                                    "x": 0,
+                                    "y": 1,
+                                    "blur": 4,
+                                    "spread": 0,
+                                    "color": "#000000",
+                                    "opacity": 0.07,
+                                    "elevation": 1
+                                }
+                            },
+                            "pressed": {
+                                "background": "#F5F6F8"
                             }
                         }
                     }
@@ -486,7 +504,33 @@
                 "base": {
                     "background": null,
                     "padding": 16,
-                    "radius": 8
+                    "radius": 8,
+                    "shadow": {
+                        "x": 0,
+                        "y": 1,
+                        "blur": 4,
+                        "spread": 0,
+                        "color": "#000000",
+                        "opacity": 0.07,
+                        "elevation": 1
+                    }
+                },
+                "variants": {
+                    "default": {
+                        "states": {
+                            "hover": {
+                                "shadow": {
+                                    "x": 0,
+                                    "y": 2,
+                                    "blur": 10,
+                                    "spread": 0,
+                                    "color": "#000000",
+                                    "opacity": 0.06,
+                                    "elevation": 2
+                                }
+                            }
+                        }
+                    }
                 }
             },
             "banner": {

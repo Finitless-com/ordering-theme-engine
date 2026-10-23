@@ -629,22 +629,24 @@ are regenerated from `php/src` and must not change (`scripts/sync-fixtures.sh`),
 TypeScript tests compare themselves with those fixtures. A change of behavior lands in
 both implementations, and their fixtures, in the same PR.
 
-Inputs, written by hand or copied from the product, which the scripts never write:
+Inputs, written by hand, which the scripts never write:
 
 - `fixtures/cases/*.json`: the golden cases, `{ description, migrate?, values, resolved }`.
   `migrate`, when present, holds the migrations the schema declares in that case
   (`co.ordering.migrate`): a theme stored before them.
-- `fixtures/schema.tuples.json`: the frozen schema of those cases (Web Marketplace 26 as
-  it was, in tuples).
 - `meta/reference/reference-1.0.0.json` and its version 1 map: the reference schema
-  ([The reference schema](#the-reference-schema)), which the cases below start from.
+  ([The reference schema](#the-reference-schema)), which every case starts from.
 - `meta/theme-schema-1.json`: the format's meta-schema, which both implementations read.
 
 What the PHP engine answers for them:
 
-- the `resolved` of each case: `ThemeResolver::resolve()` over the frozen schema
+- `fixtures/schema.tuples.json`: the golden schema, the reference compiled to the tuples
+  of the format before nodes and without the rules it declares (what follows Identity,
+  the derivations, the matrix), so the golden cases pin the rules the engine applies to
+  a schema that declares none (`scripts/golden-schema.php`);
+- the `resolved` of each case: `ThemeResolver::resolve()` over the golden schema
   (`scripts/golden-fixtures.php`; `ThemeResolverGoldenTest` checks them in PHP);
-- `fixtures/schema.nodes.json`: the frozen schema converted to nodes
+- `fixtures/schema.nodes.json`: the golden schema converted to nodes
   (`scripts/convert-schema.php`), which the TypeScript golden test resolves over;
 - `fixtures/reference.empty.json`: the empty theme over the reference schema
   (`scripts/resolve-empty.php`);

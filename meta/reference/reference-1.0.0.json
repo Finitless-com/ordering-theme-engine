@@ -285,6 +285,20 @@
       },
       "secondary": { "$value": "#F2A900", "$extensions": { "co.ordering.editor": { "group": "brand", "order": 2, "pair": "tokens.color.on_secondary" } } },
       "on_secondary": { "$value": "#1B1B1B", "$extensions": { "co.ordering.editor": { "group": "brand", "order": 2 } } },
+      "secondary_subtle": {
+        "$value": "#FDF5E0",
+        "$extensions": {
+          "co.ordering": { "derive": { "op": "mix", "from": "{color.secondary}", "over": "{color.background}", "amount": 0.12 } },
+          "co.ordering.editor": { "hidden": true }
+        }
+      },
+      "secondary_pressed": {
+        "$value": "#CE9000",
+        "$extensions": {
+          "co.ordering": { "derive": { "op": "shade", "from": "{color.secondary}", "amount": -0.07 } },
+          "co.ordering.editor": { "hidden": true }
+        }
+      },
       "background": { "$value": "#FFFFFF" },
       "surface": { "$value": "#FFFFFF" },
       "surface_alt": { "$value": "#F5F6F8" },
@@ -305,8 +319,16 @@
         "$extensions": { "co.ordering": { "derive": { "op": "same", "from": "{color.primary}", "when": "changed" } } }
       },
       "success": { "$value": "#16A34A" },
+      "success_subtle": {
+        "$value": "#E3F4E9",
+        "$extensions": { "co.ordering": { "derive": { "op": "mix", "from": "{color.success}", "over": "{color.background}", "amount": 0.12 } }, "co.ordering.editor": { "hidden": true } }
+      },
       "danger": { "$value": "#DC2626" },
       "on_danger": { "$value": "#FFFFFF" },
+      "danger_subtle": {
+        "$value": "#FBE5E5",
+        "$extensions": { "co.ordering": { "derive": { "op": "mix", "from": "{color.danger}", "over": "{color.background}", "amount": 0.12 } }, "co.ordering.editor": { "hidden": true } }
+      },
       "disabled": { "$value": "#E5E7EB" },
       "favorite": { "$value": "#E11D48", "$deprecated": "Hearts follow the danger color." }
     },
@@ -661,6 +683,20 @@
                 "$value": "{shadow.md}",
                 "$extensions": { "co.ordering": { "derive": { "op": "step", "from": "shadow", "offset": 1, "when": "always" } } }
               }
+            },
+            "focus": {
+              "shadow": {
+                "$type": "shadow",
+                "$value": "{shadow.sm}",
+                "$extensions": { "co.ordering": { "derive": { "op": "step", "from": "shadow", "offset": 0, "when": "always" } } }
+              }
+            },
+            "pressed": {
+              "background": {
+                "$type": "color",
+                "$value": "{color.surface_alt}",
+                "$extensions": { "co.ordering": { "derive": { "op": "shade", "from": "background", "amount": -0.07 } } }
+              }
             }
           }
         }
@@ -676,7 +712,21 @@
       "base": {
         "background": { "$type": "color", "$value": null },
         "padding": { "$type": "dimension", "$value": "{space.md}", "$extensions": { "co.ordering": { "scale": "space" } } },
-        "radius": { "$type": "dimension", "$value": "{radius.md}", "$extensions": { "co.ordering": { "scale": "radius", "follows": "radius" } } }
+        "radius": { "$type": "dimension", "$value": "{radius.md}", "$extensions": { "co.ordering": { "scale": "radius", "follows": "radius" } } },
+        "shadow": { "$type": "shadow", "$value": "{shadow.sm}", "$extensions": { "co.ordering": { "follows": "shadow" } } }
+      },
+      "variants": {
+        "default": {
+          "states": {
+            "hover": {
+              "shadow": {
+                "$type": "shadow",
+                "$value": "{shadow.md}",
+                "$extensions": { "co.ordering": { "derive": { "op": "step", "from": "shadow", "offset": 1, "when": "always" } } }
+              }
+            }
+          }
+        }
       }
     },
     "banner": {
@@ -807,7 +857,8 @@
             "radius": { "$type": "dimension", "$value": "{radius.full}", "$extensions": { "co.ordering": { "scale": "radius", "options": ["none", "sm", "md", "lg", "full"] } } }
           }
         },
-        "input": {}
+        "input": {},
+        "tabs": {}
       },
       "platforms": {
         "mobile_web": {

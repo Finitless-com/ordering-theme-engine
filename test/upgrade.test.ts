@@ -7,7 +7,7 @@ import { differences, json, reference } from './fixtures.js'
 
 /**
  * What the PHP ThemeUpgrades answers for each theme or site's settings
- * between three bases made from the product's current schema
+ * between bases made from the reference schema
  * (scripts/upgrade-cases.php): the same values, step by step.
  */
 type Op = ['set', string[], unknown] | ['delete', string[]]

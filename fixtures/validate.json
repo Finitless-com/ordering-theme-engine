@@ -428,6 +428,10 @@
                     {
                         "path": "components.chip.variants.default.background.default",
                         "code": "components.chip.variants.default.background.default.alias"
+                    },
+                    {
+                        "path": "components.card.variants.default.states.pressed.background.default",
+                        "code": "components.card.variants.default.states.pressed.background.default.alias"
                     }
                 ],
                 "warnings": [],

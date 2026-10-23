@@ -5,7 +5,7 @@ import { differences, json } from './fixtures.js'
 /**
  * What the PHP ThemeValidator::validate() and ThemeResolver::valid() answer
  * for each theme, and ThemeValidator::settings() for each site's settings,
- * over the product's current schema as NodeCompiler compiles it
+ * over the reference schema as NodeCompiler compiles it
  * (scripts/valid-cases.php): the same errors in the same order, and the
  * same theme kept; and ThemeResolver::validSettings() the same settings.
  */

@@ -95,7 +95,7 @@ class ThemeSchemaPublicationTest extends TestCase
 
         $new['components']['card']['base']['background']['$value'] = '#FFFFFF';
         self::assertSame([ 'schema.patch_changes_values' ], array_column(SchemaDiff::compare($old, $new)['errors'], 'code'));
-        // The frozen 26.0 is 26.0.0: a 26.0.1 is its patch, a 26.1.0 its minor.
+        // A version 26.0 is 26.0.0: a 26.0.1 is its patch, a 26.1.0 its minor.
         self::assertSame([ 'schema.patch_changes_values' ], array_column(SchemaDiff::compare(self::schema('26.0'), [ 'version' => '26.0.1' ] + $new)['errors'], 'code'));
         self::assertSame([], SchemaDiff::compare(self::schema('26.0'), [ 'version' => '26.1.0' ] + $new)['errors']);
     }

@@ -52,6 +52,8 @@
                 "primary_text": "#1A64C8",
                 "secondary": "#F2A900",
                 "on_secondary": "#1B1B1B",
+                "secondary_subtle": "#FDF5E0",
+                "secondary_pressed": "#CE9000",
                 "background": "#FFFFFF",
                 "surface": "#FFFFFF",
                 "surface_alt": "#F5F6F8",
@@ -63,8 +65,10 @@
                 "border": "#E5E7EB",
                 "focus": "#1E72E3",
                 "success": "#16A34A",
+                "success_subtle": "#E3F4E9",
                 "danger": "#DC2626",
                 "on_danger": "#FFFFFF",
+                "danger_subtle": "#FBE5E5",
                 "disabled": "#E5E7EB",
                 "favorite": "#E11D48"
             },
@@ -568,6 +572,18 @@
                                     "shadow",
                                     "{shadow.md}"
                                 ]
+                            },
+                            "focus": {
+                                "shadow": [
+                                    "shadow",
+                                    "{shadow.sm}"
+                                ]
+                            },
+                            "pressed": {
+                                "background": [
+                                    "color",
+                                    "{color.surface_alt}"
+                                ]
                             }
                         }
                     }
@@ -594,7 +610,23 @@
                     "radius": [
                         "radius",
                         "{radius.md}"
+                    ],
+                    "shadow": [
+                        "shadow",
+                        "{shadow.sm}"
                     ]
+                },
+                "variants": {
+                    "default": {
+                        "states": {
+                            "hover": {
+                                "shadow": [
+                                    "shadow",
+                                    "{shadow.md}"
+                                ]
+                            }
+                        }
+                    }
                 }
             },
             "banner": {
@@ -703,7 +735,8 @@
                             ]
                         }
                     },
-                    "input": []
+                    "input": [],
+                    "tabs": []
                 },
                 "platforms": {
                     "mobile_web": {
@@ -1067,7 +1100,8 @@
             "components.card.base.radius": "radius",
             "components.card.base.shadow": "shadow",
             "components.card.base.border": "border",
-            "components.business_card.base.radius": "radius"
+            "components.business_card.base.radius": "radius",
+            "components.business_card.base.shadow": "shadow"
         },
         "derive": {
             "primary_subtle": {
@@ -1089,6 +1123,17 @@
                 "step": 0.01,
                 "when": "always"
             },
+            "secondary_subtle": {
+                "op": "mix",
+                "from": "{color.secondary}",
+                "over": "{color.background}",
+                "amount": 0.12
+            },
+            "secondary_pressed": {
+                "op": "shade",
+                "from": "{color.secondary}",
+                "amount": -0.07
+            },
             "link": {
                 "op": "same",
                 "from": "{color.primary}",
@@ -1098,6 +1143,18 @@
                 "op": "same",
                 "from": "{color.primary}",
                 "when": "changed"
+            },
+            "success_subtle": {
+                "op": "mix",
+                "from": "{color.success}",
+                "over": "{color.background}",
+                "amount": 0.12
+            },
+            "danger_subtle": {
+                "op": "mix",
+                "from": "{color.danger}",
+                "over": "{color.background}",
+                "amount": 0.12
             }
         },
         "component_derive": {
@@ -1117,6 +1174,25 @@
                 }
             },
             "card": {
+                "variants.default.states.hover.shadow": {
+                    "op": "step",
+                    "from": "shadow",
+                    "offset": 1,
+                    "when": "always"
+                },
+                "variants.default.states.focus.shadow": {
+                    "op": "step",
+                    "from": "shadow",
+                    "offset": 0,
+                    "when": "always"
+                },
+                "variants.default.states.pressed.background": {
+                    "op": "shade",
+                    "from": "background",
+                    "amount": -0.07
+                }
+            },
+            "business_card": {
                 "variants.default.states.hover.shadow": {
                     "op": "step",
                     "from": "shadow",

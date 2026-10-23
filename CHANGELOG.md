@@ -14,8 +14,15 @@ Nothing changes in what is resolved or validated, in TypeScript or in PHP.
   instead of a copy of the marketplace website's 26.0 schema, which this repository no
   longer has. The tests that pinned that product's design (a selected chip, a badge, a
   divider…) go with it: they are the product's to keep.
-- The reference's button says whether it animates (`animated`), as the `css` entry reads
-  next to its `speed`.
+- The golden cases of `resolve()` run on the reference too: their schema
+  (`fixtures/schema.tuples.json`) is the reference compiled to the tuples of the format
+  before nodes, without the rules it declares, which `scripts/golden-schema.php` writes;
+  the cases' values name the reference's keys.
+- The reference names what those cases need: the button says whether it animates
+  (`animated`), as the `css` entry reads next to its `speed`; the card has `focus` and
+  `pressed` states, `business_card` a shadow and its hover, the header's scope the tabs,
+  and the colors `secondary_subtle`, `secondary_pressed`, `success_subtle` and
+  `danger_subtle`.
 
 ## 0.12.0 (2026-10-23)
 

@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * What a change of a theme schema does to the themes and settings saved
  * with an earlier version, and what publishing it says, case by case: the
- * regressions of a campaign of schema changes over the product's schema.
+ * regressions of a campaign of schema changes, over the reference schema.
  * The golden cases (fixtures/valid.json, upgrade.json, validate.json)
  * carry the same cases to the TypeScript engine.
  */

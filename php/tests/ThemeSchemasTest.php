@@ -284,7 +284,7 @@ class ThemeSchemasTest extends TestCase
             ],
         ]));
         self::assertSame([
-            'components.header.scope.tabs.unknown',
+            'components.header.scope.card.unknown',
             'components.header.scope.button.base.height.unknown',
             'components.header.slots.cta.size.invalid',
             'components.header.slots.cta.component.unknown',
@@ -292,7 +292,7 @@ class ThemeSchemasTest extends TestCase
             'components.header.slots.door.unknown',
         ], $codes([
             'header' => [
-                'scope' => [ 'tabs' => [], 'button' => [ 'base' => [ 'height' => 20 ] ] ],
+                'scope' => [ 'card' => [], 'button' => [ 'base' => [ 'height' => 20 ] ] ],
                 'slots' => [ 'cta' => [ 'size' => 'xl', 'component' => 'chip' ], 'search' => [ 'color' => 'primary' ], 'door' => [] ],
             ],
         ]));

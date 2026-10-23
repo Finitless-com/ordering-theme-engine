@@ -3,10 +3,13 @@
 # Regenerates what fixtures/ derives from the PHP engine of this repository
 # (php/src), the reference the TypeScript engine is compared with:
 #
+# - fixtures/schema.tuples.json: the golden schema of the golden cases, the
+#   reference schema in the tuples of the format before nodes and without the
+#   rules it declares (scripts/golden-schema.php);
 # - fixtures/cases/*.json: the `resolved` of each golden case, what
-#   ThemeResolver::resolve() answers for its `values` over the frozen schema
-#   (fixtures/schema.tuples.json; scripts/golden-fixtures.php);
-# - fixtures/schema.nodes.json: that frozen schema converted to nodes
+#   ThemeResolver::resolve() answers for its `values` over the golden schema
+#   (scripts/golden-fixtures.php);
+# - fixtures/schema.nodes.json: that golden schema converted to nodes
 #   (scripts/convert-schema.php);
 # - fixtures/reference.empty.json: the empty theme over the reference schema
 #   (meta/reference/reference-1.0.0.json; scripts/resolve-empty.php);
@@ -27,8 +30,8 @@
 #   scripts/php-strings.php).
 #
 # What it reads and never writes: the cases' `description`, `migrate` and
-# `values`, the frozen schema, the reference schema and its version 1 map,
-# and meta/theme-schema-1.json.
+# `values`, the reference schema and its version 1 map, and
+# meta/theme-schema-1.json.
 #
 # It runs PHP in docker, pinned to the PHP 8.3 the fixtures record, so it
 # needs nothing but docker on the host; it installs vendor/ with composer:2
@@ -70,15 +73,17 @@ fi
 
 echo "PHP: $(php -r 'echo PHP_VERSION;') ($PHP_IMAGE), engine at $(git -C "$ROOT" rev-parse --short HEAD) with the working tree"
 
-# The golden cases' answers, written in place.
+REFERENCE=meta/reference/reference-1.0.0.json
+REFERENCE_MAP=meta/reference/reference-1.0.0.v1-map.json
+
+# The golden cases' schema, and their answers, written in place.
+into "$FIXTURES/schema.tuples.json" php scripts/golden-schema.php "$REFERENCE" "$REFERENCE_MAP"
 php scripts/golden-fixtures.php > /dev/null
 
 # Their schema in nodes.
 into "$FIXTURES/schema.nodes.json" php scripts/convert-schema.php fixtures/schema.tuples.json
 
 # The reference schema: its empty theme, its tuples and what validate() answers for its mutations.
-REFERENCE=meta/reference/reference-1.0.0.json
-REFERENCE_MAP=meta/reference/reference-1.0.0.v1-map.json
 into "$FIXTURES/reference.empty.json" php scripts/resolve-empty.php "$REFERENCE" "$REFERENCE_MAP"
 into "$FIXTURES/reference.compiled.json" php scripts/compile-schema.php "$REFERENCE" "$REFERENCE_MAP"
 into "$FIXTURES/validate.json" php scripts/validate-cases.php "$REFERENCE" "$REFERENCE_MAP"

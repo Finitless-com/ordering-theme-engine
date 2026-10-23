@@ -8,7 +8,7 @@
 |
 | Rewrites the `resolved` of every case under fixtures/cases/ (or of the
 | cases named) with what ThemeResolver::resolve() answers for its `values`
-| over the frozen schema, fixtures/schema.tuples.json. Run it only when a
+| over the golden schema, fixtures/schema.tuples.json. Run it only when a
 | change of behavior is deliberate, and review the diff:
 | ThemeResolverGoldenTest checks the files as they are, and the TypeScript
 | engine's golden test compares itself with them.

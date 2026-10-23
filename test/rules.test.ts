@@ -67,7 +67,7 @@ describe('runtimeRules()', () => {
     const button = answer.values.components.button
     expect(button.variants).toEqual({ '*': button.appearances })
     expect(Object.keys(button).at(-1)).toBe('variants')
-    expect(answer.scopes).toEqual({ header: ['button', 'input'] })
+    expect(answer.scopes).toEqual({ header: ['button', 'input', 'tabs'] })
     expect(answer.platforms).toEqual(['mobile_web'])
   })
 

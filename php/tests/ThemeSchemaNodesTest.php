@@ -178,14 +178,14 @@ class ThemeSchemaNodesTest extends TestCase
         $declared = ThemeSchemas::declare($schema);
 
         self::assertSame(ThemeOverall::follows($schema), $declared['follows']);
-        self::assertSame('shadow', $declared['follows']['components.tabs.variants.pill.shadow']);
+        self::assertSame('shadow', $declared['follows']['components.modal.base.shadow']);
         // A default that Identity always replaced is now the one that shows.
-        self::assertSame('{shadow.none}', $schema['components']['tabs']['variants']['pill']['shadow'][1]);
-        self::assertSame('{shadow.sm}', $declared['components']['tabs']['variants']['pill']['shadow'][1]);
+        self::assertSame('{shadow.lg}', $schema['components']['modal']['base']['shadow'][1]);
+        self::assertSame('{shadow.sm}', $declared['components']['modal']['base']['shadow'][1]);
         // A rounding with options keeps its own: it shows when the theme's level is not one of them.
-        self::assertSame($schema['components']['tabs']['variants']['pill']['radius'], $declared['components']['tabs']['variants']['pill']['radius']);
+        self::assertSame($schema['components']['button']['base']['radius'], $declared['components']['button']['base']['radius']);
         // A border keeps its own: its color is the one a theme-wide width draws.
-        self::assertSame($schema['components']['alert']['variants'], $declared['components']['alert']['variants']);
+        self::assertSame($schema['components']['input']['base']['border'], $declared['components']['input']['base']['border']);
         self::assertArrayNotHasKey('components.button.appearances.outline.border', $declared['follows']);
         self::assertSame([], ThemeSchemas::check($declared));
 
@@ -206,7 +206,9 @@ class ThemeSchemaNodesTest extends TestCase
     {
         // The schema as it was with its version 1 paths, then without them,
         // and the map api-core keeps of them, which knows a setting more.
+        // Its visibility as its defaults alone: no key shows otherwise on a platform.
         $schema = ThemeResolverGolden::schema();
+        $schema['visibility'] = array_map(fn (array $entry) => array_slice($entry, 0, 2), $schema['visibility']);
         $map = [ 'v1' => [], 'visibility' => array_map(fn (array $entry) => $entry[1], $schema['visibility']), 'images' => array_map(fn (array $entry) => $entry[1], $schema['images']), 'pages' => [], 'site' => [] ];
         foreach ($schema['v1'] as $path => $from) {
             $map['v1'][$path] = $from;

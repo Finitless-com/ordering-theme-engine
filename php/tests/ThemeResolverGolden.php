@@ -8,8 +8,8 @@ use Ordering\ThemeEngine\ThemeResolver;
 
 /**
  * The golden fixtures of ThemeResolver::resolve(): what the resolver
- * answers for a set of themes, over a frozen copy of the Web Marketplace 26
- * schema, so that both implementations (this one and the TypeScript one)
+ * answers for a set of themes, over the golden schema (the reference in
+ * tuples, without the rules it declares), so that both implementations (this one and the TypeScript one)
  * can be proven to answer the same (api-core's docs/THEMES_V2_PLAN.md
  * §6.3.4).
  *
@@ -39,9 +39,10 @@ final class ThemeResolverGolden
     }
 
     /**
-     * The frozen schema, in tuples (`fixtures/schema.tuples.json`): a copy
-     * of Web Marketplace 26 as it was, so a later edit of the product's
-     * schema does not move the fixtures.
+     * The golden schema, in tuples (`fixtures/schema.tuples.json`): the
+     * reference schema in the tuples of the format before nodes, without
+     * the rules it declares (scripts/golden-schema.php), so the engine
+     * applies its own.
      *
      * @return array<string, mixed>
      */
@@ -51,7 +52,7 @@ final class ThemeResolverGolden
     }
 
     /**
-     * The frozen schema with the migrations the case declares, if any.
+     * The golden schema with the migrations the case declares, if any.
      *
      * @return array<string, mixed>
      */
@@ -103,7 +104,7 @@ final class ThemeResolverGolden
     }
 
     /**
-     * What resolve() answers for the case's values on the frozen schema.
+     * What resolve() answers for the case's values on the golden schema.
      *
      * @param array<string, mixed> $schema
      * @return array<string, mixed>

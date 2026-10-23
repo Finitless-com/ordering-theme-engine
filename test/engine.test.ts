@@ -105,9 +105,9 @@ describe('compile', () => {
   it('lifts what the engine reads out of the nodes', () => {
     const { schema, errors } = compile(goldenSchema())
     expect(errors).toEqual([])
-    expect(Object.keys(schema.follows as JsonMap)).toHaveLength(127)
-    expect(schema.inherits).toMatchObject({ business_card: 'card', search_bar: 'input' })
-    expect(Object.keys(schema.derive as JsonMap)).toHaveLength(10)
+    expect(Object.keys(schema.follows as JsonMap)).toHaveLength(13)
+    expect(schema.inherits).toMatchObject({ business_card: 'card' })
+    expect(Object.keys(schema.derive as JsonMap)).toHaveLength(8)
     expect(Object.keys(schema.matrix as JsonMap)).toEqual(['button'])
   })
 
@@ -495,17 +495,17 @@ describe('matrices, as the PHP ThemeDerivationsTest::testAMatrixRoleIsLegibleOve
 describe('compile, as the PHP ThemeSchemaNodesTest::testAVisibilityKeyMayShowOtherwiseOnAPlatform', () => {
   it('serves a visibility key\'s platform default with the platform\'s', () => {
     const nodes = goldenSchema() as JsonMap
-    const logo = ((nodes.visibility as JsonMap)['business.header.logo'] as JsonMap)
-    logo.$extensions = { ...(logo.$extensions as JsonMap ?? {}), 'co.ordering': { platforms: { mobile_web: false } } }
+    const wallet = ((nodes.visibility as JsonMap)['menu.wallet'] as JsonMap)
+    wallet.$extensions = { ...(wallet.$extensions as JsonMap ?? {}), 'co.ordering': { platforms: { mobile_web: false } } }
     const { schema, errors } = compile(nodes as NodeSchema)
     expect(errors).toEqual([])
-    expect(((schema.visibility as JsonMap)['business.header.logo'] as unknown[])[2]).toEqual({ mobile_web: false })
+    expect(((schema.visibility as JsonMap)['menu.wallet'] as unknown[])[2]).toEqual({ mobile_web: false })
     expect(check(schema)).toEqual([])
     const resolved = schemaDefaults(schema)
-    expect((resolved.visibility as JsonMap)['business.header.logo']).toBe(true)
-    expect(((resolved.platforms as JsonMap).mobile_web as JsonMap).visibility).toEqual({ 'business.header.logo': false })
+    expect((resolved.visibility as JsonMap)['menu.wallet']).toBe(true)
+    expect(((resolved.platforms as JsonMap).mobile_web as JsonMap).visibility).toEqual({ 'menu.wallet': false, 'header.cart': false })
 
-    ;((schema.visibility as JsonMap)['business.header.logo'] as unknown[])[2] = { tv: false }
-    expect(check(schema).map((error) => error.code)).toEqual(['visibility.business.header.logo.platforms.invalid'])
+    ;((schema.visibility as JsonMap)['menu.wallet'] as unknown[])[2] = { tv: false }
+    expect(check(schema).map((error) => error.code)).toEqual(['visibility.menu.wallet.platforms.invalid'])
   })
 })
