@@ -294,22 +294,25 @@ export function check(schema: TupleSchema, nodes?: NodeSchema): SchemaError[] {
   }
   errors.push(...checkPages(schema))
 
-  // Two controls on one version 1 key would fight: whichever is projected
-  // last wins and the other does nothing.
-  const v1Paths = new Set<string>()
+  // One version 1 key may feed several keys of the same kind (the one font
+  // of version 1 as both the text and the heading font): each converts from
+  // it, and only the first of them is projected back, so they never fight.
+  // A key of another kind would read a value of the wrong kind.
+  const v1Kinds = new Map<string, string>()
   for (const [v2Path, v1Path] of entries(get(schema, 'v1'))) {
     const list = isArray(v1Path) && isList(v1Path) ? values(v1Path) : [v1Path]
+    const kind = kindAt(schema, v2Path)
     // Visibility, images and pages carry their version 1 paths in their own entries.
-    if (list.length === 0 || !list.every((path) => typeof path === 'string') || kindAt(schema, v2Path) === null
+    if (list.length === 0 || !list.every((path) => typeof path === 'string') || kind === null
       || !among(['tokens', 'components', 'site'], v2Path.split('.')[0])) {
       fail(`v1.${v2Path}`, 'invalid')
       continue
     }
     const paths = list as string[]
-    if (paths.some((path) => v1Paths.has(path)) || uniqueCount(paths) !== paths.length) {
+    if (paths.some((path) => (v1Kinds.get(path) ?? kind) !== kind) || uniqueCount(paths) !== paths.length) {
       fail(`v1.${v2Path}`, 'duplicate')
     }
-    paths.forEach((path) => v1Paths.add(path))
+    paths.forEach((path) => v1Kinds.set(path, v1Kinds.get(path) ?? kind))
   }
 
   if (nodes !== undefined) {

@@ -186,6 +186,21 @@ describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPubl
     expect(codes(check(compiled))).toEqual(['v1.visibility.footer.invalid', 'v1.images.logo.invalid', 'v1.pages.home.footer.invalid'])
   })
 
+  // Prior behavior: a version 1 path could feed one key only, so the one font
+  // of version 1 could not be the heading font as well.
+  it('lets a version 1 path feed several keys of the same kind, never of another', () => {
+    const compiled = schema()
+    const font = (compiled.v1 as JsonMap)['tokens.font.body'] as string
+    compiled.v1 = { ...(compiled.v1 as JsonMap), 'tokens.font.heading': font }
+    expect(codes(check(compiled))).toEqual([])
+
+    compiled.v1 = { ...(compiled.v1 as JsonMap), 'tokens.color.secondary': [font] }
+    expect(codes(check(compiled))).toEqual(['v1.tokens.color.secondary.duplicate'])
+
+    compiled.v1 = { 'tokens.font.heading': ['some.font', 'some.font'] }
+    expect(codes(check(compiled))).toEqual(['v1.tokens.font.heading.duplicate'])
+  })
+
   it('keeps the kind of what a migration moves', () => {
     const compiled = schema()
     compiled.migrate = [

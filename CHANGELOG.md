@@ -5,6 +5,17 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+TypeScript and PHP: what a schema's `v1` block may say.
+
+- A version 1 path may feed several keys of the same kind (version 1's one font as both
+  `tokens.font.body` and `tokens.font.heading`): `check()` and `ThemeSchemas::check()` no
+  longer answer `v1.<path>.duplicate` for it. Each key converts from it, and a version 1
+  client of a version 2 theme gets it projected from the first of them in the map
+  (api-core's projection). `.duplicate` is now a path repeated in its own entry, or
+  already read by a key of another kind (a radius reading a color's key).
+
 ## 0.10.0 (2026-10-22)
 
 TypeScript only; nothing changes in what is resolved or validated, and nothing in PHP.

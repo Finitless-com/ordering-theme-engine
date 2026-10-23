@@ -418,21 +418,25 @@ class ThemeSchemas
             $errors[] = $error;
         }
 
-        // Two controls on one version 1 key would fight: whichever is
-        // projected last wins and the other does nothing.
-        $v1_paths = [];
+        // One version 1 key may feed several keys of the same kind (the one
+        // font of version 1 as both the text and the heading font): each
+        // converts from it, and only the first of them is projected back, so
+        // they never fight. A key of another kind would read a value of the
+        // wrong kind.
+        $v1_kinds = [];
         foreach ($schema['v1'] ?? [] as $v2_path => $v1_path) {
             $list = is_array($v1_path) && array_is_list($v1_path) ? $v1_path : [ $v1_path ];
+            $kind = self::kindAt($schema, (string) $v2_path);
             // Visibility, images and pages carry their version 1 paths in their own entries.
-            if ($list === [] || count(array_filter($list, 'is_string')) !== count($list) || self::kindAt($schema, (string) $v2_path) === null
+            if ($list === [] || count(array_filter($list, 'is_string')) !== count($list) || $kind === null
                 || !in_array(explode('.', (string) $v2_path)[0], [ 'tokens', 'components', 'site' ], true)) {
                 $fail("v1.{$v2_path}", 'invalid');
                 continue;
             }
-            if (array_filter($list, fn ($path) => isset($v1_paths[$path])) !== [] || count(array_unique($list)) !== count($list)) {
+            if (array_filter($list, fn ($path) => ($v1_kinds[$path] ?? $kind) !== $kind) !== [] || count(array_unique($list)) !== count($list)) {
                 $fail("v1.{$v2_path}", 'duplicate');
             }
-            $v1_paths += array_fill_keys($list, true);
+            $v1_kinds += array_fill_keys($list, $kind);
         }
 
         if ($nodes !== null) {

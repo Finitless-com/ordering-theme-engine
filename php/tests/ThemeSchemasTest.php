@@ -59,7 +59,8 @@ class ThemeSchemasTest extends TestCase
         $schema['components']['modal']['platforms']['tv'] = [ 'radius' => [ 'radius', '{radius.none}' ] ];
         $schema['visibility']['Footer Links'] = [ true, 'footer.hidden' ];
         $schema['v1']['components.button.base.glow'] = 'general.components.buttons.glow';
-        $schema['v1']['components.modal.base.radius'] = $schema['v1']['components.button.base.radius'];
+        // A radius cannot read the primary color's version 1 key.
+        $schema['v1']['components.modal.base.radius'] = $schema['v1']['tokens.color.primary'];
         $schema['inherits']['product_card'] = 'nope';
         $schema['inherits']['menu'] = 'menu';
         $schema['extra'] = [];
@@ -366,9 +367,25 @@ class ThemeSchemasTest extends TestCase
         $broken = $schema;
         $broken['v1']['tokens.layout.mode'] = [];
         $broken['v1']['tokens.color.primary'] = [ 'orders.components.layout.type', 7 ];
-        // The button's rounding keeps the key it had: the second one claiming it is the duplicate.
+        // A color now claims the button's rounding first: the radius claiming it after is of another kind.
         $broken['v1']['tokens.color.link'] = [ 'general.components.buttons.borderRadius' ];
         self::assertSame([ 'v1.tokens.color.primary.invalid', 'v1.tokens.layout.mode.invalid', 'v1.components.button.base.radius.duplicate' ], array_column(ThemeSchemas::check($broken), 'code'));
+    }
+
+    /**
+     * Version 1 had one font for the whole site: its key feeds the text
+     * and the heading font. Prior behavior: a version 1 path fed one key
+     * only (`v1.tokens.font.heading.duplicate`).
+     */
+    public function testAVersion1PathFeedsSeveralKeysOfTheSameKind(): void
+    {
+        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema['v1']['tokens.font.heading'] = $schema['v1']['tokens.font.body'];
+        self::assertSame([], ThemeSchemas::check($schema));
+
+        $schema['v1']['tokens.color.secondary'] = [ $schema['v1']['tokens.font.body'] ];
+        $schema['v1']['components.modal.base.radius'] = [ 'some.radius', 'some.radius' ];
+        self::assertSame([ 'v1.components.modal.base.radius.duplicate', 'v1.tokens.color.secondary.duplicate' ], array_column(ThemeSchemas::check($schema), 'code'));
     }
 
     /**

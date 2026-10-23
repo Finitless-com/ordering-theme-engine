@@ -1349,6 +1349,7 @@ Rules of each error:
 | `inherits.<c>.invalid`, `follows.<path>.invalid`, `derive.<color>.invalid`, `component_derive.<c>.<path>.invalid`, `matrix.<c>.invalid` | §5.1, §11 |
 | `migrate.<n>.invalid` | §14 |
 | `v1_map.v1.<path>.unknown`, `v1_map.visibility.<key>.unknown`, `v1_map.images.<key>.unknown`, `v1_map.pages.<page>.unknown`, `v1_map.pages.<page>.<section>.unknown`, `v1_map.site.<setting>.unknown` | a version 2 path of the version 1 map published with the schema that the schema does not have (in `v1`, only tokens, component properties and settings) |
+| `v1.<path>.invalid`, `v1.<path>.duplicate` | in the compiled `v1` block: an entry that is not a version 1 path or a list of them, or of a path that is no token, component property or setting; `.duplicate`, a version 1 path repeated in its own entry, or already read by a key of another kind. A version 1 path may feed several keys of the same kind (version 1's one font as both `tokens.font.body` and `tokens.font.heading`): each converts from it, and a version 1 client of a version 2 theme gets it projected from the first of them in the map |
 | `upgrade.required`, `upgrade.from.invalid`, `upgrade.moves.<n>.from.unknown`, `.to.unknown`, `.kind`, `.map.invalid`, `.duplicate`, `upgrade.drop.<n>.unknown`, `upgrade.<path>.unaccounted`, `upgrade.rewrite.unknown`, `upgrade.invalid` | §15.3 |
 | `.default_out_of_range` | a numeric default outside its editor's `min`/`max` |
 | `.alpha_required`, `.alpha_not_color` | §12.3, `alpha` |
