@@ -5,7 +5,7 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
-## Unreleased
+## 0.11.0 (2026-10-23)
 
 TypeScript and PHP: what a schema's `v1` block may say.
 
