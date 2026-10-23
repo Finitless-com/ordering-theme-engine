@@ -147,6 +147,8 @@ alone.
   `::settings()`: each problem `{ path, code }`, in the API's order.
 - The format's meta-schema, `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`
   (JSON Schema 2020-12), the same file the PHP engine reads.
+- The reference schema, `@orderingco/ordering-theme-engine/meta/reference/` (see
+  [The reference schema](#the-reference-schema)).
 - Types: `NodeSchema`, `ThemeValues`, `ResolvedTheme`,
   `ValidateOptions`, `ValidationResult`, `ShapeError`, `Changes`, `V1Map`,
   `RuntimeSchema`, `CompleteValues`…
@@ -284,6 +286,31 @@ black by default), and `derive`'s operations, the same as the theme's colors are
 derived with: `shade(color, amount)`, `mix(color, over, amount)` and
 `legible(color, background, ratio = 4.5, step = 0.01)`. The fonts' family names and weights
 (`range` for a variable one) are the format's (`FONT_FACES` in `src/format.ts`).
+
+## The reference schema
+
+`meta/reference/` holds a schema that is no product's: it uses every shape of the format
+at least once, so that whoever builds on the format (api-core's registry and resolver,
+an editor) tests against the format instead of copying a product's schema, which goes
+stale as soon as the product changes. It ships in both packages, next to the
+meta-schema: `@orderingco/ordering-theme-engine/meta/reference/<file>` in npm and
+`vendor/orderingco/ordering-theme-engine/meta/reference/<file>` in Composer.
+
+| File | What it is |
+|---|---|
+| `reference-1.0.0.json` | The first version of base 1, for `marketplace_website`. |
+| `reference-1.0.0.v1-map.json` | Its version 1 map, which names only keys every version has. |
+| `reference-1.1.0.json` | A minor of 1.0.0 that changes something of every kind the comparison reports: migrations of a token, a property, a visibility key, a page's section and a setting; a deprecated key removed, keys and an option added, a default, a rule and a section's `hideable` changed, a key and a group deprecated. |
+| `reference-2.0.0.json` | A new base from 1.1.0, with an upgrade block: a token renamed with its aliases, a property renamed with its default on a platform, maps of an option, of a level to another scale and of a boolean, a setting moved into a group, drops of a group, a deprecated key and a visibility key, and a `rewrite` (`reference.2`, which an API must register to publish it) for the header's height, a size in pixels in 1.x and a choice of three in 2.0.0. |
+
+Each version is valid as publishing checks it against the one before (`--previous`,
+`--previous-base`), and `test/reference.test.ts` fails when the meta-schema defines a
+property or an enum value no version uses, or when a token group, a component part, a
+slot axis or a property kind is missing: a change to the format adds its shape here in
+the same change. `php/tests/ReferenceSchemaTest.php` checks the versions in PHP.
+
+Its names and defaults are made up; they may change in a minor of the engine, never in a
+patch.
 
 ## PHP
 

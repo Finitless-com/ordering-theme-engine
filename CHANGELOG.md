@@ -5,6 +5,16 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+Nothing changes in what is resolved or validated, in TypeScript or in PHP.
+
+- The reference schema, `meta/reference/`: a schema that is no product's and uses every
+  shape of the format, its version 1 map, a minor of it and a new base after it, so that
+  api-core and the editors test against the format instead of a copy of a product's
+  schema. It ships in both packages (`@orderingco/ordering-theme-engine/meta/reference/*`
+  in npm). A new test fails when the meta-schema defines something no version of it uses.
+
 ## 0.11.0 (2026-10-23)
 
 TypeScript and PHP: what a schema's `v1` block may say.

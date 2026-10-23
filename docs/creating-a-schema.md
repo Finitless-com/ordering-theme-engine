@@ -91,6 +91,10 @@ node_modules/@orderingco/ordering-theme-engine/meta/theme-schema-1.json
 
 importable as `@orderingco/ordering-theme-engine/meta/theme-schema-1.json`.
 
+A schema that uses every shape of the format, with a minor and a new base after it, is in
+`meta/reference/` ([README](../README.md#the-reference-schema)): read it next to this guide
+for an example of each part.
+
 **`$schema` cannot point to the file.** It must be exactly
 `"urn:ordering:theme-schema:1"`: that is how api-core recognizes the format, and with any
 other value it answers `schema.format`. That limits autocompletion:

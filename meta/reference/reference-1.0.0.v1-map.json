@@ -1,0 +1,51 @@
+{
+  "description": "The version 1 map published with reference-1.0.0.json: each key is a version 2 path of the reference schema, each value the version 1 path a marketplace website's version 1 theme keeps it at (null: no version 1 path). It uses each kind of entry once: one path, several version 1 paths for one key, one version 1 path for several keys of the same kind, and a page section with its version 1 default.",
+  "source": "meta/reference/reference-1.0.0.json",
+  "v1": {
+    "tokens.color.primary": "my_products.components.theme_settings.components.style.primary_btn_color",
+    "tokens.color.background": "my_products.components.theme_settings.components.style.background_page",
+    "components.link.base.color": "my_products.components.theme_settings.components.style.primary_link_color",
+    "tokens.font.body": "general.components.fonts.primary.name",
+    "tokens.font.heading": "general.components.fonts.primary.name",
+    "tokens.layout.mode": ["business_listing_view.components.layout.type", "orders.components.layout.type", "favorite.components.layout.type"],
+    "components.button.base.radius": "general.components.buttons.borderRadius",
+    "components.input.base.radius": "general.components.inputs.borderRadius",
+    "components.input.base.text_color": "general.components.inputs.color",
+    "components.input.base.border.color": "general.components.inputs.borderColor",
+    "components.modal.base.radius": "general.components.modal.components.style.borderRadius",
+    "components.header.base.background": "header.components.style.backgroundColor",
+    "components.banner.base.columns": "business_listing_view.components.layout.rows"
+  },
+  "visibility": {
+    "footer": "footer.hidden",
+    "header.cart": "header.components.cart.hidden",
+    "menu.wallet": "bar_menu.components.wallet.hidden",
+    "header.search": null
+  },
+  "images": {
+    "logotype": "my_products.components.images.components.logo.components.image",
+    "isotype": "my_products.components.images.components.logo_mobile.components.image",
+    "favicon": "general.components.favicon.components.image"
+  },
+  "pages": {
+    "home": {
+      "featured": { "v1": "mobile_view_web.components.home.components.login_account.hidden" }
+    },
+    "checkout": {
+      "tips": { "v1": "checkout.components.customer.hidden" },
+      "notes": { "v1": "checkout.components.business.hidden", "v1_default": false }
+    }
+  },
+  "site": {
+    "mode": "my_products.components.website_theme.components.type",
+    "business_slug": "my_products.components.website_theme.components.business_slug",
+    "franchise_slug": "my_products.components.website_theme.components.franchise_slug",
+    "franchise_id": "my_products.components.website_theme.components.franchise_id",
+    "name": "my_products.components.website_settings.components.values.name",
+    "description": "my_products.components.website_settings.components.values.description",
+    "third_party_code.head": "third_party_code.head",
+    "third_party_code.body": "third_party_code.body",
+    "tracking_only": "tracking_settings.tracking_only",
+    "smart_banner.apple_id": "smart_banner_settings.apple_id"
+  }
+}
