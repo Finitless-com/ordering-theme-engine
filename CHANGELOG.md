@@ -5,6 +5,18 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## Unreleased
+
+Nothing changes in what is resolved or validated, in TypeScript or in PHP.
+
+- The tests and the fixtures that compare the two engines (`validate.json`, `valid.json`,
+  `upgrade.json`, the compiled schema and the empty theme) run on the reference schema
+  instead of a copy of the marketplace website's 26.0 schema, which this repository no
+  longer has. The tests that pinned that product's design (a selected chip, a badge, a
+  divider…) go with it: they are the product's to keep.
+- The reference's button says whether it animates (`animated`), as the `css` entry reads
+  next to its `speed`.
+
 ## 0.12.0 (2026-10-23)
 
 Nothing changes in what is resolved or validated, in TypeScript or in PHP.

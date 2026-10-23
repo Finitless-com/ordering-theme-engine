@@ -5,7 +5,7 @@
  * in nodes, compiled with its version 1 map, as JSON on stdout.
  * scripts/sync-fixtures.sh runs it in PHP 8.3:
  *
- *   php scripts/resolve-empty.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
+ *   php scripts/resolve-empty.php meta/reference/reference-1.0.0.json meta/reference/reference-1.0.0.v1-map.json
  */
 
 declare(strict_types=1);

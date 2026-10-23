@@ -20,21 +20,21 @@ class ThemeValidatorTest extends TestCase
             'tokens' => [ 'color' => [ 'primary' => '#ff0000', 'overlay' => 'rgba(0,0,0,.5)' ], 'radius' => [ 'md' => 12 ], 'font' => [ 'body' => 'inter' ] ],
             'components' => [
                 'button' => [
-                    'base' => [ 'radius' => '{radius.full}', 'mobile_full_width' => true ],
-                    'colors' => [ 'primary' => [ 'main' => '#00AA00' ], 'danger' => [ 'ink' => '{color.text}' ] ],
-                    'appearances' => [ 'solid' => [ 'shadow' => '{shadow.md}', 'radius' => '{radius.none}', 'states' => [ 'pressed' => [ 'background' => '{subtle}' ], 'hover' => [ 'background' => '{pressed}', 'color' => '#FFFFFF' ] ] ],
+                    'base' => [ 'radius' => '{radius.full}', 'full_width' => true, 'text' => '{typography.label}', 'font' => 'heading' ],
+                    'colors' => [ 'primary' => [ 'main' => '#00AA00' ], 'neutral' => [ 'ink' => '{color.text}' ] ],
+                    'appearances' => [ 'solid' => [ 'shadow' => '{shadow.md}', 'states' => [ 'pressed' => [ 'background' => '{subtle}' ], 'disabled' => [ 'background' => '#EEEEEE', 'color' => '#FFFFFF' ] ] ],
                                        'outline' => [ 'border' => [ 'width' => '{border.thick}', 'color' => '{ink}' ] ] ],
-                    'sizes' => [ 'md' => [ 'height' => 28, 'icon_size' => 18, 'text' => '{typography.label}' ] ],
+                    'sizes' => [ 'md' => [ 'height' => 28, 'icon_size' => 18, 'padding_x' => '{space.sm}' ] ],
                     'shapes' => [ 'icon' => [ 'radius' => '{radius.full}' ] ],
                 ],
-                'header' => [ 'base' => [ 'logo_position' => 'center', 'border_bottom' => [ 'width' => 1, 'color' => '{color.border}' ] ] ],
-                'product_card' => [ 'base' => [ 'font_role' => 'heading', 'image_position' => 'left' ] ],
+                'header' => [ 'base' => [ 'layout' => 'centered', 'logo_width' => 200 ] ],
+                'card' => [ 'base' => [ 'border' => [ 'width' => 1, 'color' => '{color.border}' ] ] ],
             ],
             'visibility' => [ 'footer' => false ],
-            'images' => [ 'logo' => 'https://cdn.example.invalid/logo.png', 'favicon' => '' ],
+            'images' => [ 'logotype' => 'https://cdn.example.invalid/logo.png', 'favicon' => '' ],
             'modes' => [ 'dark' => [ 'color' => [ 'background' => '#0B1220' ] ] ],
             'platforms' => [ 'mobile_web' => [ 'components' => [ 'header' => [ 'base' => [ 'height' => 56 ] ] ] ] ],
-        ], ThemeSchemaFixture::webMarketplace()));
+        ], ThemeSchemaFixture::compiled()));
     }
 
     /**
@@ -43,16 +43,16 @@ class ThemeValidatorTest extends TestCase
      */
     public function testAThemeRefersOnlyToTheColorsItsSchemaNames(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
-        unset($schema['tokens']['color']['link'], $schema['tokens']['typography']['overline']);
+        $schema = ThemeSchemaFixture::compiled();
+        unset($schema['tokens']['color']['link'], $schema['tokens']['typography']['label']);
 
         self::assertSame(
-            [ 'tokens.color.link.unknown', 'components.header.base.border_bottom.color.alias', 'components.button.sizes.md.text.alias' ],
+            [ 'tokens.color.link.unknown', 'components.card.base.border.color.alias', 'components.input.base.text.alias' ],
             ThemeValidator::codes(ThemeValidator::validate([
                 'tokens' => [ 'color' => [ 'link' => '#0000FF' ] ],
                 'components' => [
-                    'header' => [ 'base' => [ 'border_bottom' => [ 'width' => 1, 'color' => '{color.link}' ] ] ],
-                    'button' => [ 'sizes' => [ 'md' => [ 'text' => '{typography.overline}' ] ] ],
+                    'card' => [ 'base' => [ 'border' => [ 'width' => 1, 'color' => '{color.link}' ] ] ],
+                    'input' => [ 'base' => [ 'text' => '{typography.label}' ] ],
                 ],
             ], $schema))
         );
@@ -64,32 +64,29 @@ class ThemeValidatorTest extends TestCase
      */
     public function testOnlyAColorMarkedAlphaIsTranslucent(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
-        $nodes['tokens']['color']['overlay']['$extensions']['co.ordering.editor']['alpha'] = true;
-        $nodes['components']['modal']['base']['overlay']['$extensions']['co.ordering.editor']['alpha'] = true;
-        $schema = ThemeSchemaFixture::tuples($nodes)['schema'];
-        self::assertSame([ 'tokens.color.overlay', 'components.modal.base.overlay' ], $schema['alpha']);
+        $schema = ThemeSchemaFixture::compiled();
+        self::assertSame([ 'tokens.color.overlay', 'components.button.appearances.outline.background', 'components.tabs.variants.underline.background', 'components.modal.base.overlay' ], $schema['alpha']);
 
         self::assertSame(
-            [ 'tokens.color.primary.alpha', 'modes.dark.color.surface.alpha', 'components.card.base.background.alpha', 'components.header.base.border_bottom.color.alpha', 'components.button.colors.primary.main.alpha', 'components.chip.base.background.alpha' ],
+            [ 'tokens.color.primary.alpha', 'modes.dark.color.surface.alpha', 'components.card.base.background.alpha', 'components.card.base.border.color.alpha', 'components.button.colors.primary.main.alpha', 'components.chip.variants.default.background.alpha' ],
             ThemeValidator::codes(ThemeValidator::validate([
                 'tokens' => [ 'color' => [ 'primary' => 'rgba(255,0,0,.5)', 'overlay' => 'rgba(0,0,0,.6)', 'text' => '#000000FF' ] ],
                 'modes' => [ 'dark' => [ 'color' => [ 'surface' => 'transparent' ] ] ],
                 'components' => [
-                    'card' => [ 'base' => [ 'background' => '#FFFFFF80' ] ],
+                    'card' => [ 'base' => [ 'background' => '#FFFFFF80', 'border' => [ 'width' => 1, 'color' => 'transparent' ] ] ],
                     'modal' => [ 'base' => [ 'overlay' => '{color.overlay}' ] ],
-                    'header' => [ 'base' => [ 'border_bottom' => [ 'width' => 1, 'color' => 'transparent' ] ] ],
                     'button' => [ 'colors' => [ 'primary' => [ 'main' => '#F008' ] ] ],
                     // An alias to a translucent color is one too.
-                    'chip' => [ 'base' => [ 'background' => '{color.overlay}' ] ],
+                    'chip' => [ 'variants' => [ 'default' => [ 'background' => '{color.overlay}' ] ] ],
                     // A border with no width shows no color.
-                    'stepper' => [ 'base' => [ 'border' => [ 'width' => 0, 'style' => 'solid', 'color' => 'transparent' ] ] ],
+                    'input' => [ 'base' => [ 'border' => [ 'width' => 0, 'style' => 'solid', 'color' => 'transparent' ] ] ],
                 ],
             ], $schema))
         );
 
-        // A schema from before the mark is not checked.
-        self::assertSame([], ThemeValidator::validate([ 'tokens' => [ 'color' => [ 'primary' => 'rgba(255,0,0,.5)' ] ] ], ThemeSchemaFixture::webMarketplace()));
+        // A schema that marks no color is not checked.
+        unset($schema['alpha']);
+        self::assertSame([], ThemeValidator::validate([ 'tokens' => [ 'color' => [ 'primary' => 'rgba(255,0,0,.5)' ] ] ], $schema));
     }
 
     public function testEachProblemNamesItsPathAndRule(): void
@@ -99,19 +96,19 @@ class ThemeValidatorTest extends TestCase
             'tokens' => [ 'color' => [ 'primary' => 'blue', 'brand' => '#000000' ], 'radius' => [ 'md' => '8px' ], 'font' => [ 'body' => 'comic_sans' ] ],
             'components' => [
                 'button' => [
-                    'base' => [ 'radius' => 8, 'text' => '{typography.label}', 'color' => '#000' ],
+                    'base' => [ 'radius' => 8, 'glow' => '#000', 'color' => '#000' ],
                     'colors' => [ 'brand' => [], 'primary' => [ 'main' => '{main}' ] ],
-                    'appearances' => [ 'link' => [], 'solid' => [ 'background' => '{radius.md}', 'states' => [ 'hover' => [ 'color' => 'white' ], 'visited' => [] ] ] ],
-                    'sizes' => [ 'md' => [ 'text' => '{typography.huge}' ] ],
+                    'appearances' => [ 'link' => [], 'solid' => [ 'background' => '{radius.md}', 'states' => [ 'disabled' => [ 'color' => 'white' ], 'visited' => [] ] ] ],
+                    'sizes' => [ 'md' => [ 'height' => '{typography.huge}' ] ],
                 ],
-                'header' => [ 'base' => [ 'logo_position' => 'neon' ] ],
+                'header' => [ 'base' => [ 'layout' => 'neon' ] ],
                 'carousel' => [],
             ],
             'visibility' => [ 'footer' => 'no', 'nope' => true ],
-            'images' => [ 'logo' => 'javascript:alert(1)' ],
+            'images' => [ 'logotype' => 'javascript:alert(1)' ],
             'modes' => [ 'dark' => [ 'color' => [ 'primary' => '{color.text}' ] ], 'sepia' => [] ],
             'platforms' => [ 'tv' => [] ],
-        ], ThemeSchemaFixture::webMarketplace()));
+        ], ThemeSchemaFixture::compiled()));
 
         self::assertSame([
             'layouts.unknown',
@@ -120,20 +117,20 @@ class ThemeValidatorTest extends TestCase
             'tokens.radius.md.invalid',
             'tokens.font.body.invalid',
             'components.button.base.radius.invalid',
-            'components.button.base.text.unknown',
+            'components.button.base.glow.unknown',
             'components.button.base.color.unknown',
             'components.button.colors.brand.unknown',
             'components.button.colors.primary.main.invalid',
             'components.button.appearances.link.unknown',
             'components.button.appearances.solid.background.alias',
-            'components.button.appearances.solid.states.hover.color.invalid',
+            'components.button.appearances.solid.states.disabled.color.invalid',
             'components.button.appearances.solid.states.visited.unknown',
-            'components.button.sizes.md.text.alias',
-            'components.header.base.logo_position.invalid',
+            'components.button.sizes.md.height.alias',
+            'components.header.base.layout.invalid',
             'components.carousel.unknown',
             'visibility.footer.invalid',
             'visibility.nope.unknown',
-            'images.logo.invalid',
+            'images.logotype.invalid',
             'modes.dark.color.primary.invalid',
             'modes.sepia.unknown',
             'platforms.tv.unknown',
@@ -146,9 +143,9 @@ class ThemeValidatorTest extends TestCase
      */
     public function testAPlatformShowsOrHidesWhatTheSchemaCan(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $values = [
-            'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'business.header.info' => false, 'footer' => 'no', 'nope' => true ] ] ],
+            'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'header.search' => false, 'footer' => 'no', 'nope' => true ] ] ],
         ];
 
         self::assertSame(
@@ -157,7 +154,7 @@ class ThemeValidatorTest extends TestCase
         );
         // What the schema refuses goes; the rest stays the platform's own.
         self::assertSame(
-            [ 'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'business.header.info' => false ] ] ] ],
+            [ 'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'header.search' => false ] ] ] ],
             ThemeResolver::valid($values, $schema)
         );
     }
@@ -168,9 +165,9 @@ class ThemeValidatorTest extends TestCase
      */
     public function testABorderMayBeSetToNone(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
 
-        self::assertSame([], ThemeValidator::validate([ 'components' => [ 'tabs' => [ 'variants' => [ 'pill' => [ 'tab_border' => 'none' ] ] ] ] ], $schema));
-        self::assertSame([ 'components.tabs.variants.pill.shadow.invalid', 'components.tabs.variants.pill.background.invalid' ], array_column(ThemeValidator::validate([ 'components' => [ 'tabs' => [ 'variants' => [ 'pill' => [ 'shadow' => 'none', 'background' => 'none' ] ] ] ] ], $schema), 'code'));
+        self::assertSame([], ThemeValidator::validate([ 'components' => [ 'card' => [ 'base' => [ 'border' => 'none' ] ] ] ], $schema));
+        self::assertSame([ 'components.card.base.shadow.invalid', 'components.card.base.background.invalid' ], array_column(ThemeValidator::validate([ 'components' => [ 'card' => [ 'base' => [ 'shadow' => 'none', 'background' => 'none' ] ] ] ], $schema), 'code'));
     }
 }

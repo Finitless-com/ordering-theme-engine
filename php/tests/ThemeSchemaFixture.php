@@ -7,29 +7,30 @@ namespace Ordering\ThemeEngine\Tests;
 use Ordering\ThemeEngine\ThemeSchemas;
 
 /**
- * The theme schema of Web Marketplace 26 as api-core registers it
- * (fixtures/schema-26.0.nodes.json), and the version 1 map api-core keeps
- * for its product type (fixtures/v1-map.json).
+ * The reference schema (meta/reference/): no product's, it uses every shape
+ * of the format; its 1.0.0 is published with its version 1 map.
  */
 final class ThemeSchemaFixture
 {
     /**
-     * The schema in the tuples the engine reads: the product keeps it in
-     * the node format (docs/schema-format.md).
+     * The reference's 1.0.0 in the tuples the engine reads, compiled with
+     * its version 1 map.
      *
      * @return array<string, mixed>
      */
-    public static function webMarketplace(): array
+    public static function compiled(): array
     {
-        return self::tuples(self::webMarketplaceNodes())['schema'];
+        return self::tuples(self::nodes())['schema'];
     }
 
     /**
+     * The reference at $version, in nodes.
+     *
      * @return array<string, mixed>
      */
-    public static function webMarketplaceNodes(): array
+    public static function nodes(string $version = '1.0.0'): array
     {
-        return self::json('schema-26.0.nodes.json');
+        return self::json("reference-{$version}.json");
     }
 
     /**
@@ -37,13 +38,12 @@ final class ThemeSchemaFixture
      */
     public static function v1Map(): array
     {
-        return self::json('v1-map.json');
+        return self::json('reference-1.0.0.v1-map.json');
     }
 
     /**
      * ThemeSchemas::tuples() as api-core compiles a schema: without a map of
-     * its own, with the one api-core keeps for its product type (only Web
-     * Marketplace has one).
+     * its own, with the reference's for its product type.
      *
      * @param array<string, mixed> $schema
      * @return array{schema: array<string, mixed>, errors: array<int, array{path: string, code: string}>}
@@ -58,6 +58,6 @@ final class ThemeSchemaFixture
      */
     private static function json(string $file): array
     {
-        return json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/fixtures/' . $file), true, 512, JSON_THROW_ON_ERROR);
+        return json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/meta/reference/' . $file), true, 512, JSON_THROW_ON_ERROR);
     }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { check, checkEditor, compile, outOfRange, type JsonMap, type NodeSchema } from '../src/index.js'
 import { translucent } from '../src/editor.js'
-import { json } from './fixtures.js'
+import { json, reference, referenceV1Map } from './fixtures.js'
 
 /**
  * The editor checks (checkEditor(), EditorRules::check() in PHP; the
@@ -37,11 +37,13 @@ describe('translucent', () => {
 
 describe('check()', () => {
   it('checks the editor metadata only given the nodes, after its own rules', () => {
-    const original = json<NodeSchema>('schema-26.0.nodes.json')
-    const compiled = compile(original, json<JsonMap>('v1-map.json')).schema
+    // A visibility key in no group of the editor: an error of its metadata alone.
+    const original = reference()
+    ;(original.visibility as JsonMap)['header.glow'] = { $value: true }
+    const compiled = compile(original, referenceV1Map()).schema
     expect(check(compiled)).toEqual([])
     expect(check(compiled, original)).toEqual(checkEditor(original))
-    expect(checkEditor(original).length).toBeGreaterThan(0)
+    expect(checkEditor(original).map((error) => error.code)).toEqual(['visibility.header.glow.in_no_editor_group'])
   })
 })
 
@@ -111,10 +113,10 @@ describe('the editor metadata the format no longer has, as the PHP ThemeSchemaNo
   // Prior behavior: `preview` ({ page, path }) passed the meta-schema.
   it('refuses a `preview`, as any key the editor does not read', async () => {
     const { validateShape } = await import('../src/index.js')
-    const nodes = json<NodeSchema>('schema-26.0.nodes.json')
+    const nodes = reference()
     expect(validateShape(nodes)).toEqual([])
-    const home = (nodes.pages as JsonMap).home as JsonMap
-    ;((home.$extensions as JsonMap)[EDITOR] as JsonMap).preview = { page: 'home', path: '/' }
-    expect(validateShape(nodes).map((error) => error.code)).toEqual(['pages.home.$extensions.co.ordering.editor.schema'])
+    const width = (((nodes.components as JsonMap).header as JsonMap).base as JsonMap).logo_width as JsonMap
+    ;((width.$extensions as JsonMap)[EDITOR] as JsonMap).preview = { page: 'home', path: '/' }
+    expect(validateShape(nodes).map((error) => error.code)).toContain('components.header.base.logo_width.$extensions.co.ordering.editor.schema')
   })
 })

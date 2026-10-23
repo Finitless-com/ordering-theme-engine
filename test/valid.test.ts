@@ -22,7 +22,7 @@ interface ValidCase {
 
 describe("valid() answers what api-core's valid() answers", () => {
   const fixture = json<{ cases: ValidCase[] }>('valid.json')
-  const schema = json<{ schema: JsonMap }>('schema-26.0.compiled.json').schema
+  const schema = json<{ schema: JsonMap }>('reference.compiled.json').schema
   const themes = fixture.cases.filter((golden) => golden.values !== undefined)
   const settings = fixture.cases.filter((golden) => golden.settings !== undefined)
 

@@ -636,9 +636,8 @@ Inputs, written by hand or copied from the product, which the scripts never writ
   (`co.ordering.migrate`): a theme stored before them.
 - `fixtures/schema.tuples.json`: the frozen schema of those cases (Web Marketplace 26 as
   it was, in tuples).
-- `fixtures/schema-26.0.nodes.json` and `fixtures/v1-map.json`: the product's 26.0
-  schema (its typography's line height fields as ratios, as the editor's rules ask) and
-  its version 1 map, which still names five layouts the schema no longer has.
+- `meta/reference/reference-1.0.0.json` and its version 1 map: the reference schema
+  ([The reference schema](#the-reference-schema)), which the cases below start from.
 - `meta/theme-schema-1.json`: the format's meta-schema, which both implementations read.
 
 What the PHP engine answers for them:
@@ -647,10 +646,10 @@ What the PHP engine answers for them:
   (`scripts/golden-fixtures.php`; `ThemeResolverGoldenTest` checks them in PHP);
 - `fixtures/schema.nodes.json`: the frozen schema converted to nodes
   (`scripts/convert-schema.php`), which the TypeScript golden test resolves over;
-- `fixtures/schema-26.0.empty.json`: the empty theme over the current schema
+- `fixtures/reference.empty.json`: the empty theme over the reference schema
   (`scripts/resolve-empty.php`);
-- `fixtures/schema-26.0.compiled.json`: the tuples `NodeCompiler::compile()` returns for
-  the current schema with its v1 map (`scripts/compile-schema.php`), which `compile()`
+- `fixtures/reference.compiled.json`: the tuples `NodeCompiler::compile()` returns for
+  the reference schema with its v1 map (`scripts/compile-schema.php`), which `compile()`
   must match, translucent colors (`alpha`) and the editor's limits (`limits`) included;
 - `fixtures/php-round.json`: PHP's `round()` over the values the engine rounds
   (`scripts/php-round.php`), and `fixtures/php-strings.json`, its `version_compare()`
@@ -660,29 +659,27 @@ What the PHP engine answers for them:
   alpha, duplicate, out_of_range, format; a page's list that stays a list, a mode's
   colors, numbers clamped to their limits and to the format's range on reading), and
   `ThemeValidator::settings()` and `ThemeResolver::validSettings()` for site settings
-  (a case may add `limits` and `site` specs of its own), over the compiled current
+  (a case may add `limits` and `site` specs of its own), over the compiled reference
   schema (`scripts/valid-cases.php`);
   `themeErrors()`, `valid()`, `settingsErrors()` and `validSettings()` must answer the
   same;
-- `fixtures/upgrade.json`: four versions made from the current schema (26.4, 26.5,
-  27.0 and 28.0, each a list of operations) and what `ThemeUpgrades` answers for themes and site
+- `fixtures/upgrade.json`: four versions made from the reference schema (1.4, 1.5,
+  2.0 and 3.0, each a list of operations) and what `ThemeUpgrades` answers for themes and site
   settings between them: identity, moves (with a platform's override, a whole page and
   the previous base's own migration), a move onto a key the theme sets, `map` (an
   option, a scale, a level and a number it does not name), a color's aliases and modes,
   a type change no move takes, `drop`, the rewrite with and without its callback, the
   chain 26 → 27 → 28, a chain of one, settings (a migration within the base too), maps
   of booleans and one that merges options, and cut-downs to an older version that undo
-  renames within the base, a base's moves and maps, and a chain 28 → 27 → 26
+  renames within the base, a base's moves and maps, and a chain 3 → 2 → 1
   (`scripts/upgrade-cases.php`); the TypeScript test runs the same rewrite;
 - `fixtures/validate.json`: the golden cases of `validate()`
-  (`scripts/validate-cases.php`). It starts from the current schema (with version
-  `26.0.0`, the two `signup_page` paddings inside their control and the editor
-  metadata the 26.0 schema gets wrong made right, `editor_fixes()`: the "base") and
-  applies to each case a mutation, a list of `["set", path, value]` / `["delete", path]`
-  operations on the schema, the `previous` and the v1 map, and stores what
+  (`scripts/validate-cases.php`). Each case is a mutation of the reference schema, a
+  list of `["set", path, value]` / `["delete", path]` operations on the schema, the
+  `previous`, the previous base and the v1 map, and stores what
   `ThemeSchemaPublisher::validate()` answers. The test applies the same operations and
-  compares the whole answer, errors in order. The cases cover every rule: the original
-  as is (out of range, without semver and with the editor errors of 26.0), format, product type, compiler, each
+  compares the whole answer, errors in order. The cases cover every rule: a stale v1
+  map, format, product type, compiler, each
   `check()` failure, each editor rule, the schema's own colors in migrations, the
   migrations of tokens (and of a group the schema still has), of visibility, images and pages, and the v1 map (its paths the schema has not too), `outOfRange()`, semver, version order (the same content, another content, lower, two-part, an
   earlier pre-release) and `diff()` (a patch that changes a default, what the editor

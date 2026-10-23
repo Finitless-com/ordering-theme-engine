@@ -21,44 +21,44 @@ class ThemePagesTest extends TestCase
 {
     public function testASchemasPagesSayWhatTheyGetWrong(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
+        $section = fn (string $key, array $changes = []) => $changes + [ 'key' => $key, 'visible' => true, 'hideable' => true, 'group' => 'extras' ];
         $sections = &$schema['pages']['checkout']['sections'][1];
         $sections[0]['visible'] = false;
         $sections[1] = $sections[2];
-        $sections[3]['group'] = 'Main Column';
-        $sections[4]['v1'] = 'checkout.components.map';
-        $sections[5]['v1'] = $schema['visibility']['footer'][1];
+        $sections[3] = $section('extra_a', [ 'group' => 'Main Column' ]);
+        $sections[4] = $section('extra_b', [ 'v1' => 'checkout.components.map' ]);
+        $sections[5] = $section('extra_c', [ 'v1' => $schema['visibility']['footer'][1] ]);
         unset($sections);
         $schema['pages']['home']['footer'] = [ 'bool', 'yes' ];
         $schema['pages']['home']['header'] = [ 'bool', true ];
-        $schema['pages']['help']['sections'] = [ 'sections', [ 'faq' ] ];
+        $schema['pages']['not_found']['sections'] = [ 'sections', [ 'faq' ] ];
 
         self::assertSame([
             'pages.home.header.unknown',
             'pages.home.footer.invalid',
-            'pages.checkout.sections.order_context.invalid',
-            'pages.checkout.sections.business.duplicate',
-            'pages.checkout.sections.business.v1.duplicate',
-            'pages.checkout.sections.customer.invalid',
-            'pages.checkout.sections.address.v1.invalid',
-            'pages.checkout.sections.delivery_instructions.v1.duplicate',
-            'pages.help.sections.0.invalid',
+            'pages.checkout.sections.summary.invalid',
+            'pages.checkout.sections.notes.duplicate',
+            'pages.checkout.sections.notes.v1.duplicate',
+            'pages.checkout.sections.extra_a.invalid',
+            'pages.checkout.sections.extra_b.v1.invalid',
+            'pages.checkout.sections.extra_c.v1.duplicate',
+            'pages.not_found.sections.0.invalid',
         ], ThemeValidator::codes(ThemePages::check($schema)));
 
         // What a version 1 theme without the section's path shows is a bool.
-        $schema = ThemeSchemaFixture::webMarketplace();
-        $near = array_search('near_business', array_column($schema['pages']['business']['sections'][1], 'key'), true);
-        self::assertFalse($schema['pages']['business']['sections'][1][$near]['v1_default']);
-        $schema['pages']['business']['sections'][1][$near]['v1_default'] = 'no';
-        self::assertSame([ 'pages.business.sections.near_business.invalid' ], ThemeValidator::codes(ThemePages::check($schema)));
+        $schema = ThemeSchemaFixture::compiled();
+        self::assertFalse($schema['pages']['checkout']['sections'][1][2]['v1_default']);
+        $schema['pages']['checkout']['sections'][1][2]['v1_default'] = 'no';
+        self::assertSame([ 'pages.checkout.sections.notes.invalid' ], ThemeValidator::codes(ThemePages::check($schema)));
     }
 
     public function testAThemesPagesAreCheckedAgainstTheSchema(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
 
         self::assertSame([], ThemeValidator::validate([
-            'pages' => [ 'checkout' => [ 'footer' => false, 'sections' => [ [ 'key' => 'customer', 'visible' => false ], [ 'key' => 'business', 'visible' => true ] ] ] ],
+            'pages' => [ 'checkout' => [ 'footer' => false, 'sections' => [ [ 'key' => 'notes', 'visible' => false ], [ 'key' => 'tips', 'visible' => true ] ] ] ],
             'platforms' => [ 'mobile_web' => [ 'pages' => [ 'checkout' => [ 'footer' => null ] ] ] ],
         ], $schema));
         self::assertSame([
@@ -76,11 +76,11 @@ class ThemePagesTest extends TestCase
                     'footer' => 'no',
                     'sections' => [
                         [ 'key' => 'map', 'visible' => true ],
-                        [ 'key' => 'business', 'visible' => true ],
-                        [ 'key' => 'business', 'visible' => false ],
+                        [ 'key' => 'tips', 'visible' => true ],
+                        [ 'key' => 'tips', 'visible' => false ],
                         // The page cannot be paid without it.
-                        [ 'key' => 'place_order', 'visible' => false ],
-                        [ 'key' => 'wallet', 'visible' => true, 'group' => 'main' ],
+                        [ 'key' => 'summary', 'visible' => false ],
+                        [ 'key' => 'notes', 'visible' => true, 'group' => 'extras' ],
                     ],
                     'title' => 'Pay',
                 ],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defaults, resolve } from '../src/index.js'
-import { cases, differences, goldenSchema, json, schemaFor, type Case } from './fixtures.js'
+import { cases, differences, goldenSchema, json, schemaFor, type Case, reference } from './fixtures.js'
 
 /**
  * The golden cases (fixtures/cases): each theme resolves to exactly what
@@ -26,14 +26,13 @@ describe('the golden cases', () => {
 })
 
 /**
- * The product's current schema (fixtures/schema-26.0.nodes.json, a copy of
- * api-core's resources/themes/marketplace_website/26.0.json): what a site
- * whose theme sets nothing serves today.
+ * The reference schema (meta/reference/reference-1.0.0.json): what a site
+ * whose theme sets nothing serves.
  */
-describe('the current schema', () => {
+describe('the reference schema', () => {
   it('resolves the empty theme as api-core does', () => {
-    const schema = json<Parameters<typeof resolve>[0]>('schema-26.0.nodes.json')
-    const golden = json<Case>('schema-26.0.empty.json')
+    const schema = reference()
+    const golden = json<Case>('reference.empty.json')
     expect(differences(defaults(schema), golden.resolved)).toEqual([])
   })
 })

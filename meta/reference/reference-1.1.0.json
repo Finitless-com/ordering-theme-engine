@@ -495,7 +495,8 @@
             }
           }
         },
-        "full_width": { "$type": "boolean", "$value": false, "$extensions": { "co.ordering.editor": { "control": "toggle" } } }
+        "full_width": { "$type": "boolean", "$value": false, "$extensions": { "co.ordering.editor": { "control": "toggle" } } },
+        "animated": { "$type": "boolean", "$value": false }
       },
       "colors": {
         "$type": "color",

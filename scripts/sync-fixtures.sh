@@ -8,11 +8,11 @@
 #   (fixtures/schema.tuples.json; scripts/golden-fixtures.php);
 # - fixtures/schema.nodes.json: that frozen schema converted to nodes
 #   (scripts/convert-schema.php);
-# - fixtures/schema-26.0.empty.json: the empty theme over the product's
-#   current schema (fixtures/schema-26.0.nodes.json; scripts/resolve-empty.php);
-# - fixtures/schema-26.0.compiled.json: the tuples NodeCompiler::compile()
-#   answers for that schema with its version 1 map (fixtures/v1-map.json;
-#   scripts/compile-schema.php);
+# - fixtures/reference.empty.json: the empty theme over the reference schema
+#   (meta/reference/reference-1.0.0.json; scripts/resolve-empty.php);
+# - fixtures/reference.compiled.json: the tuples NodeCompiler::compile()
+#   answers for that schema with its version 1 map
+#   (meta/reference/reference-1.0.0.v1-map.json; scripts/compile-schema.php);
 # - fixtures/validate.json: what ThemeSchemaPublisher::validate() answers
 #   for each mutation of that schema (scripts/validate-cases.php);
 # - fixtures/valid.json: what ThemeValidator::validate() and
@@ -20,14 +20,15 @@
 #   ThemeValidator::settings() for each site's settings
 #   (scripts/valid-cases.php);
 # - fixtures/upgrade.json: what ThemeUpgrades answers for each theme or
-#   site's settings between three bases made from that schema
+#   site's settings between bases made from that schema
 #   (scripts/upgrade-cases.php);
 # - fixtures/php-round.json and fixtures/php-strings.json: PHP's round(),
 #   version_compare() and (string) cast (scripts/php-round.php,
 #   scripts/php-strings.php).
 #
 # What it reads and never writes: the cases' `description`, `migrate` and
-# `values`, the two schemas, the version 1 map and meta/theme-schema-1.json.
+# `values`, the frozen schema, the reference schema and its version 1 map,
+# and meta/theme-schema-1.json.
 #
 # It runs PHP in docker, pinned to the PHP 8.3 the fixtures record, so it
 # needs nothing but docker on the host; it installs vendor/ with composer:2
@@ -75,15 +76,17 @@ php scripts/golden-fixtures.php > /dev/null
 # Their schema in nodes.
 into "$FIXTURES/schema.nodes.json" php scripts/convert-schema.php fixtures/schema.tuples.json
 
-# The current schema: its empty theme, its tuples and what validate() answers for its mutations.
-into "$FIXTURES/schema-26.0.empty.json" php scripts/resolve-empty.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
-into "$FIXTURES/schema-26.0.compiled.json" php scripts/compile-schema.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
-into "$FIXTURES/validate.json" php scripts/validate-cases.php fixtures/schema-26.0.nodes.json fixtures/v1-map.json
-into "$FIXTURES/valid.json" php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
-into "$FIXTURES/upgrade.json" php scripts/upgrade-cases.php fixtures/schema-26.0.nodes.json
+# The reference schema: its empty theme, its tuples and what validate() answers for its mutations.
+REFERENCE=meta/reference/reference-1.0.0.json
+REFERENCE_MAP=meta/reference/reference-1.0.0.v1-map.json
+into "$FIXTURES/reference.empty.json" php scripts/resolve-empty.php "$REFERENCE" "$REFERENCE_MAP"
+into "$FIXTURES/reference.compiled.json" php scripts/compile-schema.php "$REFERENCE" "$REFERENCE_MAP"
+into "$FIXTURES/validate.json" php scripts/validate-cases.php "$REFERENCE" "$REFERENCE_MAP"
+into "$FIXTURES/valid.json" php scripts/valid-cases.php fixtures/reference.compiled.json
+into "$FIXTURES/upgrade.json" php scripts/upgrade-cases.php "$REFERENCE"
 
 # PHP's round(), version_compare() and (string), which the TypeScript engine imitates.
 into "$FIXTURES/php-round.json" php scripts/php-round.php
 into "$FIXTURES/php-strings.json" php scripts/php-strings.php
 
-echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') golden cases, the golden schema in nodes, the 26.0 schema's empty theme and tuples, $(php -r 'echo count(json_decode(file_get_contents("fixtures/validate.json"), true)["cases"]);') validate() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/valid.json"), true)["cases"]);') valid() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/upgrade.json"), true)["cases"]);') upgrade cases, PHP's round() and strings."
+echo "fixtures/: $(ls "$FIXTURES/cases" | wc -l | tr -d ' ') golden cases, the golden schema in nodes, the reference schema's empty theme and tuples, $(php -r 'echo count(json_decode(file_get_contents("fixtures/validate.json"), true)["cases"]);') validate() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/valid.json"), true)["cases"]);') valid() cases, $(php -r 'echo count(json_decode(file_get_contents("fixtures/upgrade.json"), true)["cases"]);') upgrade cases, PHP's round() and strings."

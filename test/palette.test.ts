@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolve, type NodeSchema } from '../src/index.js'
 import { contrast, isLight, legible, mix, onColor, rgbOf, shade } from '../src/palette.js'
-import { json } from './fixtures.js'
+import { json, reference } from './fixtures.js'
 
 /**
  * The `colors` entry: the engine's color operations for a color a client
@@ -9,7 +9,7 @@ import { json } from './fixtures.js'
  */
 type Tree = Record<string, any>
 
-const schema = (): Tree => json<Tree>('schema-26.0.nodes.json')
+const schema = (): Tree => (reference() as unknown as Tree)
 
 describe('the colors', () => {
   it('rgbOf() reads every color the engine reads', () => {
@@ -35,7 +35,8 @@ describe('the colors', () => {
     const color = (resolve(nodes as NodeSchema, { tokens: { color: { primary } } }) as Tree).tokens.color
     const rules = Object.fromEntries(Object.entries(nodes.tokens.color as Tree)
       .map(([name, node]) => [name, (node as Tree).$extensions?.['co.ordering']?.derive])
-      .filter(([, rule]) => rule !== undefined && rule.from === '{color.primary}'))
+      // A rule `when: missing` derives nothing while the schema gives the color a value.
+      .filter(([, rule]) => rule !== undefined && rule.from === '{color.primary}' && rule.when !== 'missing'))
     const checked: string[] = []
     for (const [name, rule] of Object.entries(rules) as Array<[string, Tree]>) {
       const over = rule.over === undefined ? undefined : color[rule.over.slice(7, -1)]

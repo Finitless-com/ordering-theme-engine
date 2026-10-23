@@ -5,7 +5,7 @@ import { applyMigrations } from '../src/migrations.js'
 import { applyOverall, follows } from '../src/overall.js'
 import { kindAt, schemaDefaults } from '../src/schemas.js'
 import { check, compile, defaults, resolve, siteDefaults, type JsonMap, type NodeSchema, type SchemaError, type V1Map } from '../src/index.js'
-import { cases, differences, goldenSchema, json, schemaFor } from './fixtures.js'
+import { cases, differences, goldenSchema, json, schemaFor, reference, referenceV1Map } from './fixtures.js'
 
 /** A copy of $schema without the rules it declares under `co.ordering`. */
 function without(schema: NodeSchema, keys: string[]): NodeSchema {
@@ -111,29 +111,24 @@ describe('compile', () => {
     expect(Object.keys(schema.matrix as JsonMap)).toEqual(['button'])
   })
 
-  // What api-core's NodeCompiler::compile() answers for the current schema (scripts/compile-schema.php).
-  it('answers the tuples api-core compiles for the current schema, its translucent colors included', () => {
-    const golden = json<{ alpha: Record<string, boolean>; schema: JsonMap; errors: SchemaError[] }>('schema-26.0.compiled.json')
-    const nodes = json<NodeSchema>('schema-26.0.nodes.json')
-    // The editor's `alpha` on the nodes the script marks.
-    for (const [path, mark] of Object.entries(golden.alpha)) {
-      let node = nodes as unknown as Record<string, JsonMap>
-      for (const segment of path.split('.')) {
-        node = node[segment] as unknown as Record<string, JsonMap>
-      }
-      const extensions = (node.$extensions ??= {})
-      extensions['co.ordering.editor'] = { ...(extensions['co.ordering.editor'] as JsonMap | undefined), alpha: mark }
-    }
-    const { schema, errors } = compile(nodes, json<V1Map>('v1-map.json'))
+  // What api-core's NodeCompiler::compile() answers for the reference schema (scripts/compile-schema.php).
+  it('answers the tuples api-core compiles for the reference schema, its translucent colors included', () => {
+    const golden = json<{ schema: JsonMap; errors: SchemaError[] }>('reference.compiled.json')
+    const { schema, errors } = compile(reference(), referenceV1Map())
     expect(errors).toEqual(golden.errors)
     expect(differences(schema, golden.schema)).toEqual([])
-    expect([...schema.alpha as string[]].sort()).toEqual(Object.keys(golden.alpha).filter((path) => golden.alpha[path]).sort())
+    expect([...schema.alpha as string[]].sort()).toEqual([
+      'components.button.appearances.outline.background',
+      'components.modal.base.overlay',
+      'components.tabs.variants.underline.background',
+      'tokens.color.overlay',
+    ])
   })
 })
 
 describe('siteDefaults', () => {
-  const nodes = json<NodeSchema>('schema-26.0.nodes.json')
-  const compiled = compile(nodes, json<V1Map>('v1-map.json'))
+  const nodes = reference()
+  const compiled = compile(nodes, referenceV1Map())
 
   it('reads the compiled schema', () => {
     expect(compiled.errors).toEqual([])
@@ -169,21 +164,21 @@ describe('applyMigrations, as the PHP ThemeSchemaPublicationTest::testAThemeTake
 })
 
 describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPublicationTest', () => {
-  const schema = (): JsonMap => compile(json<NodeSchema>('schema-26.0.nodes.json'), json<V1Map>('v1-map.json')).schema
+  const schema = (): JsonMap => compile(reference(), referenceV1Map()).schema
   const codes = (errors: SchemaError[]): string[] => errors.map((error) => error.code)
 
   // Prior behavior: kindAt() knew no visibility, image or page path.
   it('gives visibility, images and pages the kind of the schema\'s own keys', () => {
     const compiled = schema()
     const kinds = (paths: string[]): Array<string | null> => paths.map((path) => kindAt(compiled, path))
-    expect(kinds(['visibility.footer', 'visibility.business.header.info', 'images.logo', 'images.empty.not_found', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero']))
+    expect(kinds(['visibility.footer', 'visibility.header.search', 'images.logotype', 'images.favicon', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero']))
       .toEqual(['bool', 'bool', 'image', 'image', 'page', 'bool', 'sections', 'section'])
-    expect(kinds(['visibility', 'visibility.business', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.cards.sections.hero']))
+    expect(kinds(['visibility', 'visibility.header', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.checkout.sections.hero']))
       .toEqual(Array(9).fill(null))
 
     // A version 1 path is a token's, a component's or a site setting's: the others carry theirs.
-    compiled.v1 = { 'visibility.footer': 'some.hidden', 'images.logo': 'some.image', 'pages.home.footer': 'some.footer' }
-    expect(codes(check(compiled))).toEqual(['v1.visibility.footer.invalid', 'v1.images.logo.invalid', 'v1.pages.home.footer.invalid'])
+    compiled.v1 = { 'visibility.footer': 'some.hidden', 'images.logotype': 'some.image', 'pages.home.footer': 'some.footer' }
+    expect(codes(check(compiled))).toEqual(['v1.visibility.footer.invalid', 'v1.images.logotype.invalid', 'v1.pages.home.footer.invalid'])
   })
 
   // Prior behavior: a version 1 path could feed one key only, so the one font
@@ -204,16 +199,16 @@ describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPubl
   it('keeps the kind of what a migration moves', () => {
     const compiled = schema()
     compiled.migrate = [
-      { from: 'visibility.header.brand', to: 'visibility.header.logo' },
-      { from: 'images.brand_logo', to: 'images.logo' },
-      { from: 'pages.shop', to: 'pages.business_listing' },
+      { from: 'visibility.header.brand', to: 'visibility.header.search' },
+      { from: 'images.brand_logo', to: 'images.logotype' },
+      { from: 'pages.shop', to: 'pages.checkout' },
       { from: 'pages.shop.footer', to: 'pages.home.footer' },
       { from: 'pages.shop.sections', to: 'pages.home.sections' },
-      { from: 'pages.home.sections.banner', to: 'pages.home.sections.promo_banners' },
+      { from: 'pages.home.sections.banner', to: 'pages.home.sections.featured' },
       // Invalid from here: a key that is no key, across sections, and kinds that differ.
-      { from: 'visibility.Header-Brand', to: 'visibility.header.logo' },
-      { from: 'images.', to: 'images.logo' },
-      { from: 'visibility.home.banner', to: 'pages.home.sections.promo_banners' },
+      { from: 'visibility.Header-Brand', to: 'visibility.header.search' },
+      { from: 'images.', to: 'images.logotype' },
+      { from: 'visibility.home.banner', to: 'pages.home.sections.featured' },
       { from: 'pages.shop.footer', to: 'pages.home.sections.hero' },
       { from: 'pages.shop', to: 'pages.home.footer' },
       { from: 'pages.shop.sections.hero', to: 'pages.home' },
@@ -280,8 +275,8 @@ describe('migrations of visibility, images and pages, as the PHP ThemeSchemaPubl
 
 describe('tokens in migrations, as the PHP ThemeSchemaPublicationTest', () => {
   const schema = (): JsonMap => {
-    const compiled = compile(json<NodeSchema>('schema-26.0.nodes.json'), json<V1Map>('v1-map.json')).schema
-    delete ((compiled.tokens as JsonMap).typography as JsonMap).overline
+    const compiled = compile(reference(), referenceV1Map()).schema
+    delete ((compiled.tokens as JsonMap).typography as JsonMap).label
     return compiled
   }
   const codes = (errors: SchemaError[]): string[] => errors.map((error) => error.code)
@@ -292,7 +287,7 @@ describe('tokens in migrations, as the PHP ThemeSchemaPublicationTest', () => {
     const kinds = (paths: string[]): Array<string | null> => paths.map((path) => kindAt(compiled, path))
     expect(kinds(['tokens.color.primary', 'tokens.font.body', 'tokens.layout.mode', 'tokens.layout.page_gutter', 'tokens.typography.h1', 'tokens.opacity.scrim', 'tokens.radius.md', 'tokens.space.xxxl', 'tokens.shadow_style.color', 'tokens.scrollbar.size']))
       .toEqual(['color', 'font', 'layout_mode', 'layout', 'typography', 'opacity', 'radius', 'space', 'shadow_style', 'scrollbar'])
-    expect(kinds(['tokens.typography.overline', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more']))
+    expect(kinds(['tokens.typography.label', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more']))
       .toEqual(Array(5).fill(null))
   })
 
@@ -301,7 +296,7 @@ describe('tokens in migrations, as the PHP ThemeSchemaPublicationTest', () => {
   it('migrates a token by its group, and takes no group the schema still has as a from', () => {
     const compiled = schema()
     compiled.migrate = [
-      { from: 'tokens.typography.overline', to: 'tokens.typography.caption' },
+      { from: 'tokens.typography.label', to: 'tokens.typography.body_sm' },
       { from: 'tokens.opacity.dim', to: 'tokens.opacity.scrim' },
       { from: 'tokens.color.brand', to: 'tokens.color.primary' },
       { from: 'tokens.color', to: 'tokens.color.primary' },

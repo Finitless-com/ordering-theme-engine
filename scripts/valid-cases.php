@@ -3,15 +3,15 @@
 /*
  * The golden cases of what of a theme fits its schema: for each theme,
  * what ThemeValidator::validate() answers (its errors, in order) and what
- * ThemeResolver::valid() keeps of it, over the product's current schema as
+ * ThemeResolver::valid() keeps of it, over the reference schema as
  * NodeCompiler compiles it with its version 1 map and the colors the
- * editor may make translucent (fixtures/schema-26.0.compiled.json); and for
+ * editor may make translucent (fixtures/reference.compiled.json); and for
  * site settings, what ThemeValidator::settings() answers and what
  * ThemeResolver::validSettings() keeps of them (a case may give some
  * settings `limits` and `site` specs of its own, over the schema's). JSON on stdout;
  * scripts/sync-fixtures.sh runs it in PHP 8.3, after compile-schema.php:
  *
- *   php scripts/valid-cases.php fixtures/schema-26.0.compiled.json
+ *   php scripts/valid-cases.php fixtures/reference.compiled.json
  *
  * The values are written here as JSON and read back as objects for the
  * fixture, so `{}` stays `{}`.
@@ -72,14 +72,14 @@ $themes = [
                     "extra": {}
                 },
                 "button": {
-                    "base": { "radius": "{radius.full}", "mobile_full_width": "yes" },
-                    "colors": { "primary": { "main": "#00AA55", "ink": "#003311", "glow": "#FFFFFF" }, "nope": { "main": "#000000" } },
-                    "appearances": { "solid": { "background": "{on}", "states": { "hover": { "background": null, "color": "#FFFFFF80" }, "focus": { "background": "{main}" } } } },
+                    "base": { "radius": "{radius.xl}", "full_width": "yes" },
+                    "colors": { "primary": { "main": "#00AA55", "ink": null, "glow": "#FFFFFF" }, "nope": { "main": "#000000" } },
+                    "appearances": { "solid": { "background": "{on}", "states": { "pressed": { "background": null }, "disabled": { "color": "#FFFFFF80" }, "focus": { "background": "{main}" } } } },
                     "sizes": { "sm": { "height": "{size.lg}", "padding_x": "{size.lg}", "states": { "hover": {} } } }
                 },
-                "auth_form": {
+                "header": {
                     "scope": { "button": { "base": { "radius": "{radius.sm}", "speed": "fast" } }, "card": { "base": {} } },
-                    "slots": { "submit": { "size": "md", "appearance": "glossy", "component": "button" }, "cancel": { "component": "link", "variant": "default" }, "nope": { "size": "md" }, "resend": "link" }
+                    "slots": { "cta": { "size": "md", "appearance": "glossy", "component": "button" }, "order_type": { "component": "link", "variant": "default" }, "nope": { "size": "md" }, "search": "link" }
                 },
                 "modal": { "base": { "background": "#00000080" } }
             }
@@ -87,13 +87,13 @@ $themes = [
         JSON ],
     'visibility-images-pages' => [ 'Visibility, images and pages: unknown keys, values of the wrong kind, an unknown page and field, a footer that is no bool, sections that are no list, a section unknown, repeated, hidden that cannot be, and not `{ key, visible }`.', <<<'JSON'
         {
-            "visibility": { "footer": false, "header.logo": "no", "header.nope": true },
-            "images": { "logo": "https://example.com/logo.png", "favicon": "ftp://example.com/x.ico", "nope": "" },
+            "visibility": { "footer": false, "header.search": "no", "header.nope": true },
+            "images": { "logotype": "https://example.com/logo.png", "favicon": "ftp://example.com/x.ico", "nope": "" },
             "pages": {
-                "home": { "footer": "yes", "sections": [ { "key": "hero", "visible": false }, { "key": "content", "visible": false }, { "key": "content", "visible": true }, { "key": "nope", "visible": true }, { "key": "promo_banners" }, { "key": "login_account", "visible": true, "extra": 1 } ], "extra": true },
-                "business_listing": { "sections": { "key": "hero" } },
-                "nope": { "footer": true },
-                "orders": []
+                "home": { "footer": "yes", "sections": [ { "key": "hero", "visible": false }, { "key": "featured", "visible": false }, { "key": "featured", "visible": true }, { "key": "nope", "visible": true }, { "key": "recent", "visible": true, "extra": 1 } ], "extra": true },
+                "checkout": { "sections": [ { "key": "tips" } ] },
+                "not_found": { "sections": { "key": "hero" } },
+                "nope": { "footer": true }
             }
         }
         JSON ],
@@ -104,7 +104,7 @@ $themes = [
                 "tv": { "components": {} },
                 "mobile_web": {
                     "components": { "card": { "base": { "radius": "{radius.xl}", "background": "{color.danger_text}" }, "scope": {} }, "modal": { "base": { "background": "#00000080" } } },
-                    "visibility": { "footer": true, "header.logo": 1, "nope": false },
+                    "visibility": { "footer": true, "header.search": 1, "nope": false },
                     "pages": { "home": { "footer": false, "sections": [ { "key": "hero", "visible": false } ] } }
                 }
             }
@@ -115,26 +115,25 @@ $themes = [
         JSON ],
     'section-lists' => [ "Sections left out of a page's list, not the last ones, also on a platform: the list kept is still a list.", <<<'JSON'
         {
-            "pages": { "home": { "sections": [ { "key": "nope", "visible": false }, { "key": "hero", "visible": false }, { "key": "content", "visible": false }, { "key": "promo_banners", "visible": true } ] } },
-            "platforms": { "mobile_web": { "pages": { "home": { "sections": [ { "key": "nope", "visible": true }, { "key": "content", "visible": true } ] } } } }
+            "pages": { "home": { "sections": [ { "key": "nope", "visible": false }, { "key": "hero", "visible": false }, { "key": "featured", "visible": false }, { "key": "recent", "visible": true } ] } },
+            "platforms": { "mobile_web": { "pages": { "home": { "sections": [ { "key": "nope", "visible": true }, { "key": "featured", "visible": true } ] } } } }
         }
         JSON ],
     'mode-colors' => [ "A mode's colors are the schema's own, as `tokens.color`: a color of the catalog the schema does not name is unknown in a mode too.", <<<'JSON'
         { "modes": { "dark": { "color": { "primary": "#111111", "danger_text": "#B02A3E", "favorite": "#FF5A5F" } } }, "tokens": { "color": { "danger_text": "#B02A3E" } } }
         JSON ],
-    'out-of-range' => [ "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.", <<<'JSON'
+    'out-of-range' => [ "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a property's base, a platform's default with limits of its own and a platform's value of a property with none there, which takes its base's, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.", <<<'JSON'
         {
             "tokens": {
-                "size": { "sm": 90, "md": 20 },
+                "size": { "lg": 90, "md": 20 },
                 "space": { "md": 96 },
                 "typography": { "h1": { "size": 120, "line": 2.5, "weight": 600 }, "h2": { "size": 24, "line": 1.2, "weight": 600 } }
             },
             "components": {
-                "choice": { "variants": { "default": { "states": { "disabled": { "opacity": 0.05 } } } } },
-                "button": { "base": { "icon_gap": "{space.lg}" }, "sizes": { "xs": { "height": 40, "icon_size": 16 } } },
-                "empty_state": { "base": { "padding_y": 120 } }
+                "button": { "base": { "icon_gap": "{space.lg}", "speed": 1500 }, "sizes": { "sm": { "height": 40, "icon_size": 16 } } },
+                "header": { "base": { "logo_width": 400, "height": 96 } }
             },
-            "platforms": { "mobile_web": { "components": { "empty_state": { "base": { "padding_x": 100, "padding_y": 90 } } } } }
+            "platforms": { "mobile_web": { "components": { "banner": { "base": { "columns": 5 } }, "button": { "base": { "speed": 1500 } } } } }
         }
         JSON ],
     'out-of-format' => [ "Numbers outside the format's range, where the editor sets no limits or within the ones it sets: an invalid number when saved, clamped to the format's range or the node's limits when read (a token of a scale, an opacity, a typography style's fields, a component's base, a group's scope, a platform's default); a layout's mode, an alias and a number that is no number of its kind (a radius) are not clamped.", <<<'JSON'
@@ -143,24 +142,30 @@ $themes = [
                 "radius": { "md": 12000, "sm": -4 },
                 "opacity": { "disabled": 1.5 },
                 "layout": { "mode": "original", "page_gutter": 120 },
-                "typography": { "h3": { "size": 300, "line": 5, "weight": 600, "letter_spacing": -30 } }
+                "typography": { "h2": { "size": 300, "line": 5, "weight": 600, "letter_spacing": -30 } }
             },
             "components": {
                 "card": { "base": { "padding": 10001, "radius": 6 } },
-                "auth_form": { "scope": { "button": { "base": { "icon_gap": 200, "radius": "{radius.sm}" } } } }
+                "header": { "scope": { "button": { "base": { "icon_gap": 200, "radius": "{radius.sm}" } } } }
             },
-            "platforms": { "mobile_web": { "components": { "empty_state": { "base": { "padding_x": -3, "min_height": 10000 } } } } }
+            "platforms": { "mobile_web": { "components": { "banner": { "base": { "columns": -3 } }, "header": { "base": { "height": 10000 } } } } }
         }
         JSON ],
-    'image-formats' => [ "An image's extension is one of its formats (`jpeg` is `jpg`, in any case, the query aside): the favicon takes no SVG and a key without formats no ICO; a URL without the extension of a known format says nothing.", <<<'JSON'
+    'image-formats' => [ "An image's extension is one of its formats (in any case, the query aside): the logotype takes SVG, the favicon does not, and a key without formats takes no ICO.", <<<'JSON'
         {
             "images": {
-                "logo": "https://cdn.example.com/a/logo.SVG?w=2",
-                "logo_mobile": "https://cdn.example.com/logo.jpeg",
-                "logo_inverse": "https://cdn.example.com/image/upload/abc",
-                "favicon": "https://cdn.example.com/favicon.svg",
-                "home_hero": "https://cdn.example.com/hero.ico",
-                "app_icon": "https://cdn.example.com/icon.v2/file"
+                "logotype": "https://cdn.example.com/a/logo.SVG?w=2",
+                "isotype": "https://cdn.example.com/hero.ico",
+                "favicon": "https://cdn.example.com/favicon.svg"
+            }
+        }
+        JSON ],
+    'image-formats-unnamed' => [ "`jpeg` is `jpg`, and a URL without the extension of a known format says nothing of it.", <<<'JSON'
+        {
+            "images": {
+                "logotype": "https://cdn.example.com/image/upload/abc",
+                "isotype": "https://cdn.example.com/logo.JPEG",
+                "favicon": "https://cdn.example.com/icon.v2/file"
             }
         }
         JSON ],

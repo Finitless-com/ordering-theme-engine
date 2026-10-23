@@ -3,7 +3,7 @@ import { alpha, animation, cssBorder, cssShadow, cssText, fonts, isTransparent, 
 import { FONTS, FONT_FACES } from '../src/format.js'
 import { compileRuntime, serializeRuntime, type NodeSchema } from '../src/index.js'
 import { complete, type RuntimeSchema } from '../src/runtime.js'
-import { json } from './fixtures.js'
+import { json, reference } from './fixtures.js'
 
 /**
  * toCss(): a completed theme as the CSS a web client paints with, each
@@ -17,18 +17,10 @@ type Tree = Record<string, any>
 
 const editor = (node: Tree): Tree => ((node.$extensions ??= {})['co.ordering.editor'] ??= {})
 
-/** The product's schema made valid as the validate() cases make it, with a percentage and a fraction among its numbers. */
+/** The reference schema, with a percentage among its numbers: the header's logo width. */
 function schema(): Tree {
-  const nodes = json<Tree>('schema-26.0.nodes.json')
-  for (const [op, path, value] of json<{ base: Array<[string, string[], unknown]> }>('validate.json').base) {
-    const parent = path.slice(0, -1).reduce((node: Tree, key) => (node[key] ??= {}), nodes)
-    if (op === 'set') {
-      parent[path[path.length - 1]!] = value
-    } else {
-      delete parent[path[path.length - 1]!]
-    }
-  }
-  Object.assign(editor(nodes.components.tabs.variants.underline.indicator_thickness), { unit: '%' })
+  const nodes = reference() as unknown as Tree
+  Object.assign(editor(nodes.components.header.base.logo_width), { unit: '%' })
   return nodes
 }
 
@@ -45,18 +37,18 @@ describe('compileRuntime() for the css entry', () => {
     expect(values.tokens.size.md.$rule[2]).toBe('px')
     expect(values.tokens.motion.base.$rule[2]).toBe('ms')
     expect(values.tokens.opacity.disabled.$rule).toHaveLength(2)
-    expect(values.components.progress.sizes.md.height.$rule[2]).toBe('px')
+    expect(values.components.button.sizes.md.height.$rule[2]).toBe('px')
     expect(values.components.button.base.icon_gap.$rule[2]).toBe('px')
     expect(values.components.button.base.speed.$rule[2]).toBe('ms')
-    // A fraction the editor shows ×100 is unitless; a `%` beyond 1 a percentage; none, unitless.
-    expect(values.components.choice.variants.default.states.disabled.opacity.$rule).toHaveLength(2)
-    expect(values.components.tabs.variants.underline.indicator_thickness.$rule[2]).toBe('%')
-    expect(values.components.product_section.base.columns.$rule).toHaveLength(2)
+    // An opacity is unitless; a `%` beyond 1 a percentage; a number without unit, unitless.
+    expect(values.components.modal.base.overlay_opacity.$rule).toHaveLength(2)
+    expect(values.components.header.base.logo_width.$rule[2]).toBe('%')
+    expect(values.components.banner.base.columns.$rule).toHaveLength(2)
   })
 
   it('complete() reads it as it read the form without units', () => {
     const plain = JSON.parse(JSON.stringify(C), (key, value) => (key === '$rule' && Array.isArray(value) && typeof value[0] === 'number' ? value.slice(0, 2) : value))
-    const served = { tokens: { size: { md: 99999 } }, components: { progress: { sizes: { md: { height: -4 } } } } }
+    const served = { tokens: { size: { md: 99999 } }, components: { button: { sizes: { md: { height: -4 } } } } }
     expect(complete(C, served)).toEqual(complete(plain, served))
   })
 })
@@ -78,19 +70,19 @@ describe('toCss()', () => {
     expect(D.tokens.size.md).toBe('40px')
     expect(D.tokens.motion.base).toBe('200ms')
     expect(D.tokens.opacity.disabled).toBe(String((complete(C, null).tokens as Tree).opacity.disabled))
-    expect(D.components.progress.sizes.md.height).toBe('12px')
-    expect(D.components.choice.variants.default.states.disabled.opacity).toBe('0.5')
-    expect(D.components.tabs.variants.underline.indicator_thickness).toBe('2%')
-    expect(D.components.product_section.base.columns).toBe('3')
+    expect(D.components.button.sizes.md.height).toBe('40px')
+    expect(D.components.modal.base.overlay_opacity).toBe('0.5')
+    expect(D.components.header.base.logo_width).toBe('160%')
+    expect(D.components.banner.base.columns).toBe('3')
   })
 
   it('turns borders, shadows, fonts and the easing into CSS', () => {
     expect(D.components.card.base.border).toBe('none')
     expect(view({ components: { card: { base: { border: { width: 2, color: '#E9ECEF' } } } } }).components.card.base.border).toBe('2px solid #E9ECEF')
-    expect(D.tokens.shadow.sm).toMatchObject(shadow('0px 1px 4px 0px rgba(0,0,0,0.1)'))
+    expect(D.tokens.shadow.sm).toMatchObject(shadow('0px 1px 4px 0px rgba(0,0,0,0.07)'))
     expect(D.tokens.shadow.none.css).toBe('none')
-    expect(D.tokens.font).toEqual({ heading: "'Montserrat', sans-serif", body: "'Archivo', sans-serif" })
-    expect(D.tokens.motion_style.easing).toBe('ease-out')
+    expect(D.tokens.font).toEqual({ heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" })
+    expect(D.tokens.motion_style.easing).toBe('ease')
     expect(view({ tokens: { motion_style: { easing: 'ease_in_out' } } }).tokens.motion_style.easing).toBe('ease-in-out')
   })
 
@@ -116,11 +108,11 @@ describe('toCss()', () => {
 
   it('gives each typography its declarations and its parts, the weight one its font has', () => {
     expect(D.tokens.typography.h1).toEqual({
-      css: "font-family: 'Montserrat', sans-serif;\nfont-size: 32px;\nline-height: 1.25;\nfont-weight: 600;",
+      css: "font-family: 'Poppins', sans-serif;\nfont-size: 32px;\nline-height: 1.25;\nfont-weight: 700;",
       size: '32px',
       line: '1.25',
-      weight: 600,
-      family: "'Montserrat', sans-serif",
+      weight: 700,
+      family: "'Poppins', sans-serif",
       letter_spacing: null,
       transform: null,
     })
@@ -146,13 +138,13 @@ describe('toCss()', () => {
   it('resolves each component\'s motion, its groups\' scope and the platforms', () => {
     expect(D.components.button.motion).toBeNull()
     const animated = view({ components: { button: { base: { animated: true, speed: 150 } } } })
-    expect(animated.components.button.motion).toEqual({ ms: 150, easing: 'ease-out' })
+    expect(animated.components.button.motion).toEqual({ ms: 150, easing: 'ease' })
     expect(view({ tokens: { motion_style: { enabled: false } }, components: { button: { base: { animated: true } } } }).components.button.motion).toBeNull()
     // A group's scope holds whole components, each with its motion.
-    expect(D.components.category_tabs.scope.tabs.variants.pill.border).toBe('none')
-    expect(D.components.category_tabs.scope.tabs).toHaveProperty('motion')
+    expect(D.components.header.scope.button.base.radius).toBe('9999px')
+    expect(D.components.header.scope.button).toHaveProperty('motion')
     // A platform's own values, converted as their component's.
-    expect(D.platforms.mobile_web.components.modal.base.radius).toBe('0px')
+    expect(D.platforms.mobile_web.components.card.base.padding).toBe('8px')
   })
 
   it('leaves no string that could break out of a declaration', () => {
@@ -168,7 +160,7 @@ describe('toCss()', () => {
       }
     }
     walk(D)
-    expect(strings.length).toBeGreaterThan(500)
+    expect(strings.length).toBeGreaterThan(300)
     expect(strings.filter((value) => /[{};<>'"\\]/.test(value))).toEqual([])
   })
 })
@@ -237,10 +229,10 @@ describe('building on demand', () => {
     const button = css.components.button
     expect(unread(css.components, 'button')).toBe(false)
     expect(css.components.button).toBe(button)
-    const group = css.components.category_tabs as Tree
-    expect(unread(group.scope, 'tabs')).toBe(true)
-    expect(group.scope.tabs).toBe(group.scope.tabs)
-    expect(unread(css.platforms.mobile_web!.components, 'modal')).toBe(true)
+    const group = css.components.header as Tree
+    expect(unread(group.scope, 'button')).toBe(true)
+    expect(group.scope.button).toBe(group.scope.button)
+    expect(unread(css.platforms.mobile_web!.components, 'card')).toBe(true)
     // fonts() reads the values: it builds no component.
     fonts(css)
     expect(unread(css.components, 'card')).toBe(true)
@@ -257,15 +249,16 @@ describe('fonts()', () => {
     expect(fonts(read)).toEqual(before)
   })
 
+  // Poppins has a file per weight; Inter is variable, one range.
   it('asks each role\'s font for every weight the view paints with it and the client\'s own', () => {
     const answer = fonts(D as unknown as CssTheme, { heading: [300, 800], body: [500] })
     expect(answer.heading).toEqual({
-      name: 'Montserrat',
-      weights: [300, 600, 800],
-      href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300..800&display=swap',
+      name: 'Poppins',
+      weights: [300, 600, 700, 800],
+      href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700;800&display=swap',
     })
     expect(answer.body!.weights).toContain(500)
-    expect(answer.body!.href).toMatch(/family=Archivo:wght@\d+\.\.\d+&display=swap$/)
+    expect(answer.body!.href).toMatch(/family=Inter:wght@\d+\.\.\d+&display=swap$/)
   })
 
   it('asks a static font weight by weight, and one family for both roles once', () => {

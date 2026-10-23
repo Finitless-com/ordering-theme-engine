@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { run, serializeDefaults, type Io } from '../src/cli.js'
 import { compile, compileRuntime, defaults, runtimeRules, serializeRules, serializeRuntime, siteDefaults, type JsonMap, type NodeSchema } from '../src/index.js'
-import { json } from './fixtures.js'
+import { json, reference, referenceV1Map } from './fixtures.js'
 
 /**
  * The `ordering-theme` command, run in process over files in a temporary
@@ -34,15 +34,12 @@ function apply<T>(document: T, ops: Op[]): T {
   return answer as T
 }
 
-// The product's current schema made valid as the validate() cases make it (their `base`).
-const original = json<NodeSchema>('schema-26.0.nodes.json')
-const base = apply(original, json<{ base: Op[] }>('validate.json').base)
-const map = json<JsonMap>('v1-map.json')
-// The map without the five layouts the schema no longer has (validate.json's cases take them out too).
-const current = structuredClone(map)
-for (const path of ['header.base.layout', 'business_header.base.layout', 'product_search.base.layout', 'product_card.base.layout', 'signup_page.variants.business.layout']) {
-  delete (current.v1 as JsonMap)[`components.${path}`]
-}
+// The reference schema and its version 1 map; a map that still names two properties the schema no longer has.
+const base = reference()
+const map = referenceV1Map() as JsonMap
+const stale = structuredClone(map)
+;(stale.v1 as JsonMap)['components.header.base.logo_position'] = 'header.components.logo.components.layout.position'
+;(stale.v1 as JsonMap)['components.product_card.base.layout'] = 'business_view.components.products.components.product.components.image.position'
 
 let directory: string
 
@@ -73,19 +70,19 @@ beforeAll(() => {
   write('valid.json', base)
   // Its version is not semver and two defaults are out of their control's range.
   write('invalid.json', apply(base, [
-    ['set', ['version'], '26.0'],
-    ['set', ['components', 'signup_page', 'base', 'padding_y', '$value'], 120],
-    ['set', ['components', 'signup_page', 'base', 'padding_x', '$value'], 130],
+    ['set', ['version'], '1.0'],
+    ['set', ['components', 'button', 'base', 'icon_gap', '$value'], 100],
+    ['set', ['components', 'button', 'base', 'speed', '$value'], 2000],
   ]))
   // Not even its shape: no product type.
   write('shapeless.json', apply(base, [['delete', ['product_type']]]))
-  write('next.json', apply(base, [['set', ['version'], '26.1.0']]))
-  write('base-27.json', apply(base, [['set', ['version'], '27.0.0']]))
-  write('upgraded-27.json', apply(base, [['set', ['version'], '27.0.0'], ['set', ['$extensions'], { 'co.ordering.upgrade': { from: 26, moves: [], drop: [] } }]]))
+  write('next.json', apply(base, [['set', ['version'], '1.1.0']]))
+  write('base-2.json', apply(base, [['set', ['version'], '2.0.0']]))
+  write('upgraded-2.json', apply(base, [['set', ['version'], '2.0.0'], ['set', ['$extensions'], { 'co.ordering.upgrade': { from: 1, moves: [], drop: [] } }]]))
+  write('v1-map-stale.json', stale)
   write('v1-map.json', map)
-  write('v1-map-current.json', current)
   write('changed.json', apply(base, [['set', ['tokens', 'color', 'primary', '$value'], '#123456']]))
-  write('next-upgraded.json', apply(base, [['set', ['version'], '26.1.0'], ['set', ['$extensions'], { 'co.ordering.upgrade': { from: 25, moves: [], drop: [] } }]]))
+  write('next-upgraded.json', apply(base, [['set', ['version'], '2.1.0'], ['set', ['$extensions'], { 'co.ordering.upgrade': { from: 1, moves: [], drop: [] } }]]))
   write('broken.json', '{ not json')
   // Passes as JSON, but a property's `$type` is no property type.
   write('uncompiled.json', apply(base, [['set', ['components', 'input', 'base', 'bogus'], { $type: 'nope', $value: 1 }]]))
@@ -116,14 +113,14 @@ describe('ordering-theme', () => {
 
 describe('ordering-theme validate', () => {
   it('passes a valid schema', async () => {
-    expect(await cli(['validate', 'valid.json', '--v1-map', 'v1-map-current.json'])).toEqual({ code: 0, stdout: 'valid.json 26.0.0 is valid\n', stderr: '' })
+    expect(await cli(['validate', 'valid.json', '--v1-map', 'v1-map.json'])).toEqual({ code: 0, stdout: 'valid.json 1.0.0 is valid\n', stderr: '' })
   })
 
   it('refuses a version 1 map that names what the schema has not', async () => {
-    const answer = await cli(['validate', 'valid.json', '--v1-map', 'v1-map.json'])
+    const answer = await cli(['validate', 'valid.json', '--v1-map', 'v1-map-stale.json'])
     expect(answer.code).toBe(1)
-    expect(answer.stderr).toContain('v1_map.v1.components.header.base.layout.unknown\n')
-    expect(answer.stderr).toContain('valid.json: schema.invalid (5 error(s))\n')
+    expect(answer.stderr).toContain('v1_map.v1.components.header.base.logo_position.unknown\n')
+    expect(answer.stderr).toContain('valid.json: schema.invalid (2 error(s))\n')
   })
 
   it("fails with api-core's codes, one per line", async () => {
@@ -131,8 +128,8 @@ describe('ordering-theme validate', () => {
     expect(answer.code).toBe(1)
     expect(answer.stdout).toBe('')
     expect(answer.stderr.split('\n')).toEqual([
-      'components.signup_page.base.padding_y.default_out_of_range',
-      'components.signup_page.base.padding_x.default_out_of_range',
+      'components.button.base.icon_gap.default_out_of_range',
+      'components.button.base.speed.default_out_of_range',
       'version.semver',
       'invalid.json: schema.invalid (3 error(s))',
       '',
@@ -156,7 +153,7 @@ describe('ordering-theme validate', () => {
   it('takes the same version with the same content as unchanged, as the API does, and another content as published already', async () => {
     expect(await cli(['validate', 'valid.json', '--previous', 'valid.json'])).toEqual({
       code: 0,
-      stdout: 'valid.json 26.0.0 is unchanged: the same content as the version published\n',
+      stdout: 'valid.json 1.0.0 is unchanged: the same content as the version published\n',
       stderr: '',
     })
     expect(await cli(['validate', 'changed.json', '--previous', 'valid.json'])).toEqual({
@@ -169,20 +166,20 @@ describe('ordering-theme validate', () => {
   it('prints what production would refuse as warnings with --development', async () => {
     expect(await cli(['validate', 'changed.json', '--previous', 'valid.json', '--development'])).toEqual({
       code: 0,
-      stdout: 'changed.json 26.0.0 is valid\n  defaults_changed: tokens.color.primary\n',
+      stdout: 'changed.json 1.0.0 is valid\n  defaults_changed: tokens.color.primary\n',
       stderr: 'warning: version: schema.version_exists\nwarning: version: schema.patch_changes_values\n',
     })
   })
 
   it('checks the upgrade block against --previous-base', async () => {
-    expect(await cli(['validate', 'base-27.json', '--previous-base', 'valid.json'])).toEqual({
+    expect(await cli(['validate', 'base-2.json', '--previous-base', 'valid.json'])).toEqual({
       code: 1,
       stdout: '',
-      stderr: 'upgrade.required\nbase-27.json: schema.invalid (1 error(s))\n',
+      stderr: 'upgrade.required\nbase-2.json: schema.invalid (1 error(s))\n',
     })
-    expect(await cli(['validate', 'upgraded-27.json', '--previous-base', 'valid.json'])).toEqual({ code: 0, stdout: 'upgraded-27.json 27.0.0 is valid\n', stderr: '' })
+    expect(await cli(['validate', 'upgraded-2.json', '--previous-base', 'valid.json'])).toEqual({ code: 0, stdout: 'upgraded-2.json 2.0.0 is valid\n', stderr: '' })
     // Without it the block is the API's to check.
-    expect((await cli(['validate', 'base-27.json'])).code).toBe(0)
+    expect((await cli(['validate', 'base-2.json'])).code).toBe(0)
   })
 
   it('refuses a missing argument or option (2) and a file it cannot read (1)', async () => {
@@ -281,22 +278,22 @@ describe('ordering-theme compile', () => {
   it('prints, writes and checks the compiled form the runtime entry reads, as one line of JSON', async () => {
     expect(expected.endsWith('}\n') && !expected.slice(0, -1).includes('\n')).toBe(true)
     expect(await cli(['compile', 'valid.json'])).toEqual({ code: 0, stdout: expected, stderr: '' })
-    expect(await cli(['compile', 'valid.json', '--v1-map', 'v1-map-current.json', '--out', 'theme.runtime.json'])).toMatchObject({ code: 0, stdout: 'wrote theme.runtime.json\n' })
+    expect(await cli(['compile', 'valid.json', '--v1-map', 'v1-map.json', '--out', 'theme.runtime.json'])).toMatchObject({ code: 0, stdout: 'wrote theme.runtime.json\n' })
     expect(readFileSync(join(directory, 'theme.runtime.json'), 'utf8')).toBe(expected)
     expect(await cli(['compile', 'valid.json', '--out', 'theme.runtime.json', '--check'])).toMatchObject({ code: 0, stdout: 'theme.runtime.json is up to date\n' })
 
     write('theme.runtime.json', '{}\n')
-    const stale = await cli(['compile', 'valid.json', '--v1-map', 'v1-map-current.json', '--out', 'theme.runtime.json', '--check'])
+    const stale = await cli(['compile', 'valid.json', '--v1-map', 'v1-map.json', '--out', 'theme.runtime.json', '--check'])
     expect(stale.code).toBe(1)
-    expect(stale.stderr).toBe('theme.runtime.json is out of date: run ordering-theme compile valid.json --v1-map v1-map-current.json --out theme.runtime.json\n')
+    expect(stale.stderr).toBe('theme.runtime.json is out of date: run ordering-theme compile valid.json --v1-map v1-map.json --out theme.runtime.json\n')
     expect(readFileSync(join(directory, 'theme.runtime.json'), 'utf8')).toBe('{}\n')
   })
 
   it('fails on a version 1 map that names what the schema does not have', async () => {
-    const answer = await cli(['compile', 'valid.json', '--v1-map', 'v1-map.json', '--out', 'stale-map.runtime.json'])
+    const answer = await cli(['compile', 'valid.json', '--v1-map', 'v1-map-stale.json', '--out', 'stale-map.runtime.json'])
     expect(answer.code).toBe(1)
-    expect(answer.stderr).toContain('v1_map.v1.components.header.base.layout.unknown\n')
-    expect(answer.stderr).toContain('valid.json: 5 error(s), run ordering-theme validate valid.json --v1-map v1-map.json\n')
+    expect(answer.stderr).toContain('v1_map.v1.components.header.base.logo_position.unknown\n')
+    expect(answer.stderr).toContain('valid.json: 2 error(s), run ordering-theme validate valid.json --v1-map v1-map-stale.json\n')
     expect(() => readFileSync(join(directory, 'stale-map.runtime.json'))).toThrow()
     expect((await cli(['compile', 'valid.json', '--v1-map', 'broken.json'])).stderr).toContain('broken.json is not JSON')
   })
@@ -347,13 +344,13 @@ describe('ordering-theme publish', () => {
   const env = (): Record<string, string> => ({ THEME_PUBLISH_API: `${api}/`, THEME_PUBLISH_KEY: 'secret' })
   const answer = (status: string, extra: JsonMap = {}): JsonMap => ({
     error: false,
-    result: { status, product_type: base.product_type, version: '26.0.0', sha256: 'abc', changes: null, ...extra },
+    result: { status, product_type: base.product_type, version: '1.0.0', sha256: 'abc', changes: null, ...extra },
   })
 
   it('validates and skips publishing without THEME_PUBLISH_API and THEME_PUBLISH_KEY', async () => {
     expect(await cli(['publish', 'valid.json', '--dry-run'])).toEqual({
       code: 0,
-      stdout: 'THEME_PUBLISH_API and THEME_PUBLISH_KEY not set: valid.json 26.0.0 is valid, publishing skipped\n',
+      stdout: 'THEME_PUBLISH_API and THEME_PUBLISH_KEY not set: valid.json 1.0.0 is valid, publishing skipped\n',
       stderr: '',
     })
   })
@@ -361,7 +358,7 @@ describe('ordering-theme publish', () => {
   it('fails without them when required', async () => {
     const flag = await cli(['publish', 'valid.json', '--required'], { THEME_PUBLISH_API: api })
     expect(flag.code).toBe(1)
-    expect(flag.stderr).toBe('THEME_PUBLISH_KEY missing: valid.json 26.0.0 cannot be published\n')
+    expect(flag.stderr).toBe('THEME_PUBLISH_KEY missing: valid.json 1.0.0 cannot be published\n')
     for (const value of ['1', 'true', 'TRUE', 'True']) {
       expect((await cli(['publish', 'valid.json'], { THEME_PUBLISH_REQUIRED: value })).code).toBe(1)
     }
@@ -372,9 +369,9 @@ describe('ordering-theme publish', () => {
   })
 
   it('sends nothing when the upgrade block fails against --previous-base', async () => {
-    const refused = await cli(['publish', 'base-27.json', '--previous-base', 'valid.json'], env())
+    const refused = await cli(['publish', 'base-2.json', '--previous-base', 'valid.json'], env())
     expect(refused.code).toBe(1)
-    expect(refused.stderr).toBe('upgrade.required\nbase-27.json 27.0.0: not published, schema.invalid (1 error(s))\n')
+    expect(refused.stderr).toBe('upgrade.required\nbase-2.json 2.0.0: not published, schema.invalid (1 error(s))\n')
     expect(received).toEqual([])
   })
 
@@ -382,39 +379,39 @@ describe('ordering-theme publish', () => {
     const refused = await cli(['publish', 'invalid.json'], env())
     expect(refused.code).toBe(1)
     expect(refused.stderr).toContain('version.semver')
-    expect(refused.stderr).toContain('invalid.json 26.0: not published, schema.invalid (3 error(s))')
+    expect(refused.stderr).toContain('invalid.json 1.0: not published, schema.invalid (3 error(s))')
     expect(received).toEqual([])
   })
 
   it('--dry-run asks api-core to check everything and save nothing', async () => {
     reply = { status: 200, body: answer('valid', { changes: { added: ['tokens.color.brand'], removed: [], migrated: [], deprecated: [] } }) }
-    const dry = await cli(['publish', 'valid.json', '--dry-run', '--v1-map', 'v1-map-current.json'], env())
-    expect(dry).toEqual({ code: 0, stdout: `valid.json 26.0.0: valid (dry run) on ${api}\n  added: tokens.color.brand\n`, stderr: '' })
+    const dry = await cli(['publish', 'valid.json', '--dry-run', '--v1-map', 'v1-map.json'], env())
+    expect(dry).toEqual({ code: 0, stdout: `valid.json 1.0.0: valid (dry run) on ${api}\n  added: tokens.color.brand\n`, stderr: '' })
     expect(received).toHaveLength(1)
     const [request] = received
     expect(request!.method).toBe('POST')
     expect(request!.url).toBe('/v400/system/theme_schemas')
     expect(request!.headers['x-theme-publish-key-x']).toBe('secret')
     expect(request!.headers['content-type']).toBe('application/json')
-    expect(request!.body).toEqual({ schema: base, v1_map: current, dry_run: true })
+    expect(request!.body).toEqual({ schema: base, v1_map: map, dry_run: true })
   })
 
   it('publishes, and sends no v1_map when none is given (api-core keeps the last one)', async () => {
     reply = { status: 201, body: answer('created') }
-    expect(await cli(['publish', 'valid.json'], env())).toMatchObject({ code: 0, stdout: `valid.json 26.0.0: created on ${api}\n` })
+    expect(await cli(['publish', 'valid.json'], env())).toMatchObject({ code: 0, stdout: `valid.json 1.0.0: created on ${api}\n` })
     expect(received[0]!.body).toEqual({ schema: base })
   })
 
   it('takes a version already published with the same content as done', async () => {
     reply = { status: 200, body: answer('unchanged') }
-    expect(await cli(['publish', 'valid.json'], env())).toEqual({ code: 0, stdout: `valid.json 26.0.0: unchanged on ${api}\n`, stderr: '' })
+    expect(await cli(['publish', 'valid.json'], env())).toEqual({ code: 0, stdout: `valid.json 1.0.0: unchanged on ${api}\n`, stderr: '' })
   })
 
   it("prints the API's warnings, what production would refuse of a publish in development", async () => {
     reply = { status: 200, body: answer('replaced', { warnings: [{ path: 'version', code: 'schema.version_order' }] }) }
     expect(await cli(['publish', 'valid.json'], env())).toEqual({
       code: 0,
-      stdout: `valid.json 26.0.0: replaced on ${api}\n`,
+      stdout: `valid.json 1.0.0: replaced on ${api}\n`,
       stderr: 'warning: version: schema.version_order\n',
     })
   })
@@ -432,17 +429,17 @@ describe('ordering-theme publish', () => {
     expect(await cli(['publish', 'valid.json'], env())).toEqual({
       code: 1,
       stdout: '',
-      stderr: `components.button.base.size.option_removed\nvalid.json 26.0.0: rejected by ${api} (422, schema.incompatible)\n`,
+      stderr: `components.button.base.size.option_removed\nvalid.json 1.0.0: rejected by ${api} (422, schema.incompatible)\n`,
     })
   })
 
   it("falls back to api-core's message when a refusal has no errors", async () => {
     reply = { status: 409, body: { error: true, result: ['This version is already published with another content.'], error_codes: ['schema.version_exists'], errors: [] } }
     expect((await cli(['publish', 'valid.json'], env())).stderr).toBe(
-      `This version is already published with another content.\nvalid.json 26.0.0: rejected by ${api} (409, schema.version_exists)\n`,
+      `This version is already published with another content.\nvalid.json 1.0.0: rejected by ${api} (409, schema.version_exists)\n`,
     )
     reply = { status: 401, body: { error: true, result: ["You don't have permission"] } }
-    expect(await cli(['publish', 'valid.json'], env())).toMatchObject({ code: 1, stderr: `You don't have permission\nvalid.json 26.0.0: rejected by ${api} (401)\n` })
+    expect(await cli(['publish', 'valid.json'], env())).toMatchObject({ code: 1, stderr: `You don't have permission\nvalid.json 1.0.0: rejected by ${api} (401)\n` })
   })
 
   it('fails when api-core cannot be reached', async () => {
@@ -452,7 +449,7 @@ describe('ordering-theme publish', () => {
     await new Promise((done) => closed.close(done))
     const down = await cli(['publish', 'valid.json'], { THEME_PUBLISH_API: `http://127.0.0.1:${port}`, THEME_PUBLISH_KEY: 'secret' })
     expect(down.code).toBe(1)
-    expect(down.stderr).toContain(`valid.json 26.0.0: rejected by http://127.0.0.1:${port} (no answer)`)
+    expect(down.stderr).toContain(`valid.json 1.0.0: rejected by http://127.0.0.1:${port} (no answer)`)
   })
 })
 
@@ -496,51 +493,52 @@ describe('ordering-theme validate --against', () => {
   const key = { THEME_PUBLISH_KEY: 'secret' }
 
   it('compares with the latest version of its base and the latest of the previous base, read from the API', async () => {
+    const upgraded = { 'co.ordering.upgrade': { from: 1, moves: [], drop: [] } }
     published = {
-      '25.3.0': { schema: apply(base, [['set', ['version'], '25.3.0']]), v1_map: null },
-      '26.0.0': { schema: base, v1_map: current },
-      '27.0.0': { schema: apply(base, [['set', ['version'], '27.0.0']]), v1_map: null },
+      '1.3.0': { schema: apply(base, [['set', ['version'], '1.3.0']]), v1_map: null },
+      '2.0.0': { schema: apply(base, [['set', ['version'], '2.0.0'], ['set', ['$extensions'], upgraded]]), v1_map: map },
+      '3.0.0': { schema: apply(base, [['set', ['version'], '3.0.0']]), v1_map: null },
     }
     expect(await cli(['validate', 'next-upgraded.json', '--against', `${api}/`], key)).toEqual({
       code: 0,
-      stdout: `next-upgraded.json 26.1.0 is valid against ${api} (previous 26.0.0, previous base 25.3.0)\n`,
+      stdout: `next-upgraded.json 2.1.0 is valid against ${api} (previous 2.0.0, previous base 1.3.0)\n`,
       stderr: '',
     })
     expect(requests.map((request) => request.url)).toEqual([
       '/v400/system/theme_schemas/marketplace_website',
-      '/v400/system/theme_schemas/marketplace_website/26.0.0',
-      '/v400/system/theme_schemas/marketplace_website/25.3.0',
+      '/v400/system/theme_schemas/marketplace_website/2.0.0',
+      '/v400/system/theme_schemas/marketplace_website/1.3.0',
     ])
     expect(requests.every((request) => request.key === 'secret')).toBe(true)
   })
 
   it('refuses what publishing would: a lower version, an upgrade block the previous base asks for', async () => {
-    published = { '26.1.0': { schema: apply(base, [['set', ['version'], '26.1.0']]), v1_map: null } }
+    published = { '1.1.0': { schema: apply(base, [['set', ['version'], '1.1.0']]), v1_map: null } }
     expect(await cli(['validate', 'valid.json', '--against', api], key)).toMatchObject({
       code: 1,
-      stderr: `version: schema.version_order\nvalid.json: schema.version_order (1 error(s)) against ${api} (previous 26.1.0)\n`,
+      stderr: `version: schema.version_order\nvalid.json: schema.version_order (1 error(s)) against ${api} (previous 1.1.0)\n`,
     })
-    expect(await cli(['validate', 'base-27.json', '--against', api], key)).toMatchObject({
+    expect(await cli(['validate', 'base-2.json', '--against', api], key)).toMatchObject({
       code: 1,
-      stderr: `upgrade.required\nbase-27.json: schema.invalid (1 error(s)) against ${api} (previous base 26.1.0)\n`,
+      stderr: `upgrade.required\nbase-2.json: schema.invalid (1 error(s)) against ${api} (previous base 1.1.0)\n`,
     })
   })
 
   it('answers unchanged for the same version with the same content, as the API answers it, and schema.version_exists for another', async () => {
-    published = { '26.0.0': { schema: base, v1_map: current }, '26.1.0': { schema: apply(base, [['set', ['version'], '26.1.0']]), v1_map: null } }
-    expect(await cli(['validate', 'valid.json', '--against', api, '--v1-map', 'v1-map-current.json'], key)).toEqual({
+    published = { '1.0.0': { schema: base, v1_map: map }, '1.1.0': { schema: apply(base, [['set', ['version'], '1.1.0']]), v1_map: null } }
+    expect(await cli(['validate', 'valid.json', '--against', api, '--v1-map', 'v1-map.json'], key)).toEqual({
       code: 0,
-      stdout: `valid.json 26.0.0 is unchanged on ${api}\n`,
+      stdout: `valid.json 1.0.0 is unchanged on ${api}\n`,
       stderr: '',
     })
     expect(await cli(['validate', 'changed.json', '--against', api], key)).toMatchObject({
       code: 1,
-      stderr: `version: schema.version_exists\nchanged.json: schema.version_exists (1 error(s)) against ${api} (previous 26.1.0)\n`,
+      stderr: `version: schema.version_exists\nchanged.json: schema.version_exists (1 error(s)) against ${api} (previous 1.1.0)\n`,
     })
     // In development the API replaces it: compared with the latest, what production refuses is a warning.
     expect(await cli(['validate', 'changed.json', '--against', api, '--development'], key)).toEqual({
       code: 0,
-      stdout: `changed.json 26.0.0 is valid against ${api} (previous 26.1.0)\n  defaults_changed: tokens.color.primary\n`,
+      stdout: `changed.json 1.0.0 is valid against ${api} (previous 1.1.0)\n  defaults_changed: tokens.color.primary\n`,
       stderr: 'warning: version: schema.version_order\n',
     })
   })

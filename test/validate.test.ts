@@ -1,34 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import { validate, validateFull, validateShape, type JsonMap, type NodeSchema, type ValidationResult } from '../src/index.js'
-import { json } from './fixtures.js'
+import { json, reference, referenceV1Map } from './fixtures.js'
 
 /**
  * What the PHP ThemeSchemaPublisher::validate() answers for each mutation
- * of the product's current schema (scripts/validate-cases.php):
+ * of the reference schema (scripts/validate-cases.php):
  * validate() answers the same code, the same errors in the same order and
  * the same changes.
  */
 type Op = ['set', Array<string | number>, unknown] | ['delete', Array<string | number>]
 
-interface Mutation {
-  from: string
-  ops: Op[]
-}
-
+/** Each mutation is a list of operations over the reference (or its version 1 map). */
 interface ValidateCase {
   name: string
   description: string
-  schema: Mutation
-  previous?: Mutation
-  previousBase?: Mutation
-  v1Map?: Mutation
+  schema: Op[]
+  previous?: Op[]
+  previousBase?: Op[]
+  v1Map?: Op[]
   development?: boolean
   expected: ValidationResult
 }
 
 interface ValidateFixture {
   php: string
-  base: Op[]
   cases: ValidateCase[]
 }
 
@@ -57,10 +52,9 @@ function apply<T>(document: T, ops: Op[]): T {
 
 describe("validate() answers what api-core's validate() answers", () => {
   const fixture = json<ValidateFixture>('validate.json')
-  const original = json<NodeSchema>('schema-26.0.nodes.json')
-  const map = json<JsonMap>('v1-map.json')
-  const base = apply(original, fixture.base)
-  const start = (mutation: Mutation): NodeSchema => apply(mutation.from === 'original' ? original : base, mutation.ops)
+  const base = reference()
+  const map = referenceV1Map() as JsonMap
+  const start = (ops: Op[]): NodeSchema => apply(base, ops)
 
   it('has the cases of every stage', () => {
     const codes = new Set(fixture.cases.map((golden) => golden.expected.code))
@@ -72,14 +66,14 @@ describe("validate() answers what api-core's validate() answers", () => {
     const answer = validate(start(golden.schema), {
       ...(golden.previous ? { previous: start(golden.previous) } : {}),
       ...(golden.previousBase ? { previousBase: start(golden.previousBase) } : {}),
-      ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map.ops) } : {}),
+      ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map) } : {}),
       ...(golden.development ? { development: true } : {}),
     })
     expect(answer).toEqual(golden.expected)
   })
 
   it('changes neither the schema nor the previous version', () => {
-    const schema = start({ from: 'base', ops: [['set', ['version'], '26.1.0']] })
+    const schema = start([['set', ['version'], '1.1.0']])
     const before = JSON.stringify(schema)
     const previous = JSON.stringify(base)
     validate(schema, { previous: base, v1Map: map })
@@ -90,10 +84,9 @@ describe("validate() answers what api-core's validate() answers", () => {
 
 describe('validateFull() adds the meta-schema, between the format and the compiler', () => {
   const fixture = json<ValidateFixture>('validate.json')
-  const original = json<NodeSchema>('schema-26.0.nodes.json')
-  const map = json<JsonMap>('v1-map.json')
-  const base = apply(original, fixture.base)
-  const start = (mutation: Mutation): NodeSchema => apply(mutation.from === 'original' ? original : base, mutation.ops)
+  const base = reference()
+  const map = referenceV1Map() as JsonMap
+  const start = (ops: Op[]): NodeSchema => apply(base, ops)
 
   // Every golden case passes the meta-schema (scripts/validate-cases.php fails otherwise).
   it.each(fixture.cases.map((golden) => [golden.name, golden] as const))('%s answers what validate() answers', (_name, golden) => {
@@ -104,7 +97,7 @@ describe('validateFull() adds the meta-schema, between the format and the compil
     expect(validateFull(schema, {
       ...(golden.previous ? { previous: start(golden.previous) } : {}),
       ...(golden.previousBase ? { previousBase: start(golden.previousBase) } : {}),
-      ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map.ops) } : {}),
+      ...(golden.v1Map ? { v1Map: apply(map, golden.v1Map) } : {}),
       ...(golden.development ? { development: true } : {}),
     })).toEqual(golden.expected)
   })
@@ -113,7 +106,7 @@ describe('validateFull() adds the meta-schema, between the format and the compil
     const schema = apply(base, [
       ['delete', ['product_type']],
       ['set', ['tokens', 'color', 'unknown_key'], 1],
-      ['set', ['version'], '26.0'],
+      ['set', ['version'], '1.0'],
     ])
     const answer = validateFull(schema)
     expect(answer.code).toBe('schema.invalid')

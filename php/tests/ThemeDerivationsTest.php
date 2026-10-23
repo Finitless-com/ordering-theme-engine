@@ -15,13 +15,15 @@ use PHPUnit\Framework\TestCase;
 class ThemeDerivationsTest extends TestCase
 {
     /**
-     * The rules the engine applied before the schema declared them.
+     * The rules the engine applies to a schema that declares none, read from
+     * its shape: the reference's resting card shadow is a level below its
+     * hover one.
      */
-    public function testTheEngineRulesAreTheSchemasOwn(): void
+    public function testTheEngineRulesComeFromTheSchemasShape(): void
     {
-        $rules = ThemeDerivations::rules(ThemeSchemaFixture::webMarketplace());
+        $rules = ThemeDerivations::rules(ThemeSchemaFixture::compiled());
 
-        self::assertSame([ 'op' => 'step', 'from' => 'shadow', 'offset' => 0, 'when' => 'always' ], $rules['derive']['card']['variants.default.states.hover.shadow']);
+        self::assertSame([ 'op' => 'step', 'from' => 'shadow', 'offset' => 1, 'when' => 'always' ], $rules['derive']['card']['variants.default.states.hover.shadow']);
         self::assertSame([ 'op' => 'shade', 'from' => 'background', 'amount' => -0.07 ], $rules['derive']['chip']['variants.default.states.pressed.background']);
         self::assertSame([ 'op' => 'inset', 'from' => 'radius', 'by' => 'inset', 'when' => 'always' ], $rules['derive']['tabs']['variants.pill.tab_radius']);
         self::assertSame([ 'button' ], array_keys($rules['matrix']));

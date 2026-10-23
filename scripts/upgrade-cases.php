@@ -2,19 +2,20 @@
 
 /*
  * The golden cases of a theme's way from one base to the next
- * (ThemeUpgrades): three bases made from the product's current schema (26,
- * 27 and 28, each a list of operations over it, as in validate-cases.php),
+ * (ThemeUpgrades): bases made from the reference schema (1.4 and 1.5 of
+ * base 1, 2 and 3, each a list of operations over it, as in
+ * validate-cases.php),
  * and for each case what ThemeUpgrades answers: a theme or a site's
  * settings through the steps between two or three of them (chain(),
  * settingsChain()), or cut down to an older one (cutDown(),
  * cutDownSettings()). JSON on stdout; scripts/sync-fixtures.sh runs it in
  * PHP 8.3:
  *
- *   php scripts/upgrade-cases.php fixtures/schema-26.0.nodes.json
+ *   php scripts/upgrade-cases.php meta/reference/reference-1.0.0.json
  *
  * A case with `rewrite: true` passes the rewrite every test runs (the
  * TypeScript test has its own copy): for `test.bolder`, a typography style
- * `small` the theme sets becomes its `caption` unless it sets that one,
+ * `small` the theme sets becomes its `label` unless it sets that one,
  * and every style's weight goes one step up. Without it the rewrite is
  * skipped. The bases are compiled with NodeCompiler, their errors aside:
  * the steps read the tuples whatever the editor would say of them.
@@ -71,27 +72,28 @@ $apply = function (array $document, array $ops) {
     return $document;
 };
 
-// 26.4: what 27 takes otherwise (a property, a color, a visibility key, a
+// 1.4: what 2 takes otherwise (a property, a color, a visibility key, a
 // typography style, a page and a setting named otherwise; a property whose
-// scale, and one whose type, 27 changes; an option 27 renames; a boolean 27
-// turns around and one it turns into an option; options 27 merges; keys 27
+// scale, and one whose type, 2 changes; an option 2 renames; a boolean 2
+// turns around and one it turns into an option; options 2 merges; keys 2
 // drops), and a migration of its own base.
-// 26.5: a later minor of 26 that renames, by migrations, a property, a
+// 1.5: a later minor of 1 that renames, by migrations, a property, a
 // color, a visibility key, a home section and a setting.
-// 27.0: the product's schema, with its block from 26 (it leaves the
-// changed type of the modal's padding to the step that drops what changed
-// kind). 28.0: renames the button's icon gap.
-$base_26 = [
-    $set('version', '26.4.0'),
+// 2.0: the reference, with its block from 1 (it leaves the changed type of
+// the header's logo width to the step that drops what changed kind). 3.0:
+// renames the button's icon gap.
+$base_1 = [
+    $set('version', '1.4.0'),
     $set('components.button.base.old_gap', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
     $set([ 'components', 'link', 'base', 'underline', '$extensions', 'co.ordering', 'options' ], [ 'none', 'hover', 'underlined' ]),
-    $set('components.card.base.padding', $node('dimension', '{size.lg}', [ 'scale' => 'size' ])),
-    $set('components.modal.base.padding', $node('dimension', '{space.lg}', [ 'scale' => 'space' ])),
+    $set('components.modal.base.padding', $node('dimension', '{size.lg}', [ 'scale' => 'size' ])),
+    $set('components.header.base.logo_width', $node('dimension', '{space.lg}', [ 'scale' => 'space' ])),
+    $del('components.header.platforms.mobile_web.logo_width'),
     $set('tokens.color.brand', [ '$value' => '#E4002B' ]),
     $set('tokens.typography.small', [ '$value' => [ 'size' => 11, 'line' => 1.4, 'weight' => 400 ] ]),
     $set([ 'visibility', 'header.brand' ], $node(null, true)),
     $set([ 'visibility', 'old_banner' ], $node(null, false)),
-    $set('pages.shop', $original['pages']['multi_cart']),
+    $set('pages.shop', $original['pages']['checkout']),
     $set('site.slug', $node('string', '')),
     $set('site.legacy_flag', $node('boolean', false)),
     $set('site.kiosk_only', $node('boolean', false)),
@@ -102,17 +104,17 @@ $base_26 = [
 ];
 $home = $original['pages']['home']['sections']['$value'];
 $schemas = [
-    '26' => $base_26,
-    '26.5' => [
-        ...$base_26,
-        $set('version', '26.5.0'),
+    '1' => $base_1,
+    '1.5' => [
+        ...$base_1,
+        $set('version', '1.5.0'),
         $del('components.button.base.old_gap'),
         $set('components.button.base.spacer', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
         $del('tokens.color.favorite'),
         $set('tokens.color.danger_text', [ '$value' => '#B02A3E' ]),
         $del([ 'visibility', 'header.brand' ]),
         $set([ 'visibility', 'header.badge' ], $node(null, true)),
-        $set('pages.home.sections.$value', array_map(fn (array $section) => $section['key'] === 'content' ? [ 'key' => 'main_content' ] + $section : $section, $home)),
+        $set('pages.home.sections.$value', array_map(fn (array $section) => $section['key'] === 'featured' ? [ 'key' => 'main_content' ] + $section : $section, $home)),
         $del('site.slug'),
         $set('site.shop_slug', $node('string', '')),
         $set([ '$extensions', 'co.ordering.migrate' ], [
@@ -120,21 +122,21 @@ $schemas = [
             [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.spacer' ],
             [ 'from' => 'tokens.color.favorite', 'to' => 'tokens.color.danger_text' ],
             [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.badge' ],
-            [ 'from' => 'pages.home.sections.content', 'to' => 'pages.home.sections.main_content' ],
+            [ 'from' => 'pages.home.sections.featured', 'to' => 'pages.home.sections.main_content' ],
             [ 'from' => 'site.slug', 'to' => 'site.shop_slug' ],
         ]),
     ],
-    '27' => [
-        $set('version', '27.0.0'),
+    '2' => [
+        $set('version', '2.0.0'),
         $set([ '$extensions', 'co.ordering.upgrade' ], [
-            'from' => 26,
+            'from' => 1,
             'moves' => [
                 [ 'from' => 'components.button.base.old_gap', 'to' => 'components.button.base.icon_gap' ],
                 [ 'from' => 'components.link.base.underline', 'to' => 'components.link.base.underline', 'map' => [ 'none' => 'none', 'hover' => 'hover', 'underlined' => 'always' ] ],
-                [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.padding', 'map' => [ '{size.lg}' => '{space.lg}', '{size.md}' => '{space.md}' ] ],
+                [ 'from' => 'components.modal.base.padding', 'to' => 'components.modal.base.padding', 'map' => [ '{size.lg}' => '{space.lg}', '{size.md}' => '{space.md}' ] ],
                 [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
-                [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
-                [ 'from' => 'pages.shop', 'to' => 'pages.multi_cart' ],
+                [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.search' ],
+                [ 'from' => 'pages.shop', 'to' => 'pages.checkout' ],
                 [ 'from' => 'site.slug', 'to' => 'site.business_slug' ],
                 [ 'from' => 'visibility.hide_prices', 'to' => 'visibility.show_prices', 'map' => [ 'true' => false, 'false' => true ] ],
                 [ 'from' => 'site.kiosk_only', 'to' => 'site.kiosk_mode', 'map' => [ 'true' => 'on', 'false' => 'off' ] ],
@@ -147,12 +149,12 @@ $schemas = [
         $set('site.kiosk_mode', $node('option', 'off', [ 'options' => [ 'on', 'off' ] ])),
         $set('components.card.base.tone', $node('option', 'soft', [ 'options' => [ 'soft', 'loud' ] ])),
     ],
-    '28' => [
-        $set('version', '28.0.0'),
+    '3' => [
+        $set('version', '3.0.0'),
         $del('components.button.base.icon_gap'),
         $set('components.button.base.icon_space', $node('dimension', '{space.sm}', [ 'scale' => 'space' ])),
         $set([ '$extensions', 'co.ordering.upgrade' ], [
-            'from' => 27,
+            'from' => 2,
             'moves' => [ [ 'from' => 'components.button.base.icon_gap', 'to' => 'components.button.base.icon_space' ] ],
             'drop' => [],
         ]),
@@ -169,7 +171,7 @@ $rewrite = function (string $id, array $values, array $previous, array $next): a
         return $values;
     }
     if (is_array($styles['small'] ?? null)) {
-        $styles['caption'] ??= $styles['small'];
+        $styles['label'] ??= $styles['small'];
         unset($styles['small']);
     }
     foreach ($styles as $style => $typography) {
@@ -183,37 +185,37 @@ $rewrite = function (string $id, array $values, array $previous, array $next): a
 };
 
 $cases = [
-    [ 'upgrade', 'identity', 'What keeps its path and kind keeps its value: a color, a component property, a footer, a platform\'s override, a visibility key, an image.', [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'identity', 'What keeps its path and kind keeps its value: a color, a component property, a footer, a platform\'s override, a visibility key, an image.', [ '1', '2' ], false, <<<'JSON'
         {
             "tokens": { "color": { "primary": "#2C7BE5" } },
             "components": { "card": { "base": { "background": "{color.surface}" } } },
             "pages": { "home": { "footer": false } },
             "visibility": { "footer": false },
-            "images": { "logo": "https://example.com/logo.png" },
+            "images": { "logotype": "https://example.com/logo.png" },
             "platforms": { "mobile_web": { "components": { "modal": { "base": { "radius": "{radius.xl}" } } } } }
         }
         JSON ],
-    [ 'upgrade', 'moves', "Moves: a property (and a platform's override of it), a visibility key (and a platform's), a whole page and a key the previous base's own migration moved first (the card's `corner`, its radius since 26.4).", [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'moves', "Moves: a property (and a platform's override of it), a visibility key (and a platform's), a whole page and a key the previous base's own migration moved first (the card's `corner`, its radius since 1.4).", [ '1', '2' ], false, <<<'JSON'
         {
             "components": { "button": { "base": { "old_gap": "{space.md}" } }, "card": { "base": { "corner": "{radius.xl}" } } },
             "visibility": { "header.brand": false },
-            "pages": { "shop": { "footer": false, "sections": [ { "key": "items", "visible": true } ] } },
+            "pages": { "shop": { "footer": false, "sections": [ { "key": "tips", "visible": false } ] } },
             "platforms": { "mobile_web": { "components": { "button": { "base": { "old_gap": "{space.xs}" } } }, "visibility": { "header.brand": true } } }
         }
         JSON ],
-    [ 'upgrade', 'moves-to-set', "A move to a key the theme already sets in the new base's name does not overwrite it; `from` goes either way.", [ '26', '27' ], false, <<<'JSON'
-        { "visibility": { "header.brand": false, "header.logo": true }, "tokens": { "color": { "brand": "#E4002B", "primary": "#000000" } } }
+    [ 'upgrade', 'moves-to-set', "A move to a key the theme already sets in the new base's name does not overwrite it; `from` goes either way.", [ '1', '2' ], false, <<<'JSON'
+        { "visibility": { "header.brand": false, "header.search": true }, "tokens": { "color": { "brand": "#E4002B", "primary": "#000000" } } }
         JSON ],
-    [ 'upgrade', 'map', "Maps: an option renamed (`underlined` is `always`) and a scale changed (`{size.lg}` is `{space.lg}`), also on a platform; a level the map does not name, and a number, are dropped.", [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'map', "Maps: an option renamed (`underlined` is `always`) and a scale changed (`{size.lg}` is `{space.lg}`), also on a platform; a level the map does not name, and a number, are dropped.", [ '1', '2' ], false, <<<'JSON'
         {
-            "components": { "link": { "base": { "underline": "underlined" } }, "card": { "base": { "padding": "{size.lg}" } } },
-            "platforms": { "mobile_web": { "components": { "card": { "base": { "padding": "{size.sm}" } }, "link": { "base": { "underline": "none" } } } } }
+            "components": { "link": { "base": { "underline": "underlined" } }, "modal": { "base": { "padding": "{size.lg}" } } },
+            "platforms": { "mobile_web": { "components": { "modal": { "base": { "padding": "{size.sm}" } }, "link": { "base": { "underline": "none" } } } } }
         }
         JSON ],
-    [ 'upgrade', 'map-number', 'A number where a map translates levels is dropped: the map names only what it translates.', [ '26', '27' ], false, <<<'JSON'
-        { "components": { "card": { "base": { "padding": 12 } } } }
+    [ 'upgrade', 'map-number', 'A number where a map translates levels is dropped: the map names only what it translates.', [ '1', '2' ], false, <<<'JSON'
+        { "components": { "modal": { "base": { "padding": 12 } } } }
         JSON ],
-    [ 'upgrade', 'token-aliases', "A color moved: its value, its value in dark mode and every alias to it (a property, a border's color, a platform's override) name the new one.", [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'token-aliases', "A color moved: its value, its value in dark mode and every alias to it (a property, a border's color, a platform's override) name the new one.", [ '1', '2' ], false, <<<'JSON'
         {
             "tokens": { "color": { "brand": "#E4002B" } },
             "modes": { "dark": { "color": { "brand": "#FF5A5F" } } },
@@ -221,86 +223,87 @@ $cases = [
             "platforms": { "mobile_web": { "components": { "modal": { "base": { "background": "{color.brand}" } } } } }
         }
         JSON ],
-    [ 'upgrade', 'type-changed', "A property whose type changed at the same path (the modal's padding, a level of space in 26, a number in 27) and no move takes: dropped, though 24 would fit both, also on a platform.", [ '26', '27' ], false, <<<'JSON'
-        { "components": { "modal": { "base": { "padding": 24, "radius": "{radius.sm}" } } }, "platforms": { "mobile_web": { "components": { "modal": { "base": { "padding": 16 } } } } } }
+    [ 'upgrade', 'type-changed', "A property whose type changed at the same path (the header's logo width, a level of space in 1, a number in 2) and no move takes: dropped, though 24 would fit both, also on a platform.", [ '1', '2' ], false, <<<'JSON'
+        { "components": { "header": { "base": { "logo_width": 24, "layout": "centered" } } }, "platforms": { "mobile_web": { "components": { "header": { "base": { "logo_width": 16 } } } } } }
         JSON ],
-    [ 'upgrade', 'drop', 'Drops: a visibility key, and a platform\'s override of it.', [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'drop', 'Drops: a visibility key, and a platform\'s override of it.', [ '1', '2' ], false, <<<'JSON'
         { "visibility": { "old_banner": true, "footer": true }, "platforms": { "mobile_web": { "visibility": { "old_banner": false } } } }
         JSON ],
-    [ 'upgrade', 'rewrite', 'The rewrite the base names, passed: the typography `small` becomes `caption` and every weight goes up a step.', [ '26', '27' ], true, <<<'JSON'
+    [ 'upgrade', 'rewrite', 'The rewrite the base names, passed: the typography `small` becomes `label` and every weight goes up a step.', [ '1', '2' ], true, <<<'JSON'
         { "tokens": { "typography": { "small": { "size": 11, "line": 1.4, "weight": 400 }, "h1": { "size": 30, "line": 1.2, "weight": 600 } } } }
         JSON ],
-    [ 'upgrade', 'rewrite-skipped', 'The same theme without the rewrite: `small`, which 27 does not name, is dropped, and the weights stay.', [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'rewrite-skipped', 'The same theme without the rewrite: `small`, which 2 does not name, is dropped, and the weights stay.', [ '1', '2' ], false, <<<'JSON'
         { "tokens": { "typography": { "small": { "size": 11, "line": 1.4, "weight": 400 }, "h1": { "size": 30, "line": 1.2, "weight": 600 } } } }
         JSON ],
-    [ 'upgrade', 'chain', 'Through 27 to 28: the button\'s gap is `old_gap` in 26, `icon_gap` in 27 and `icon_space` in 28; the rest of each step as before, the rewrite once.', [ '26', '27', '28' ], true, <<<'JSON'
+    [ 'upgrade', 'chain', 'Through 2 to 3: the button\'s gap is `old_gap` in 1, `icon_gap` in 2 and `icon_space` in 3; the rest of each step as before, the rewrite once.', [ '1', '2', '3' ], true, <<<'JSON'
         {
             "components": { "button": { "base": { "old_gap": "{space.md}" } }, "link": { "base": { "underline": "underlined" } }, "card": { "base": { "background": "{color.brand}" } } },
             "tokens": { "color": { "brand": "#E4002B" }, "typography": { "h2": { "size": 24, "line": 1.3, "weight": 500 } } },
             "visibility": { "old_banner": true }
         }
         JSON ],
-    [ 'upgrade', 'one-schema', 'A chain of one schema: what of the theme fits it.', [ '27' ], false, <<<'JSON'
+    [ 'upgrade', 'one-schema', 'A chain of one schema: what of the theme fits it.', [ '2' ], false, <<<'JSON'
         { "components": { "button": { "base": { "old_gap": "{space.md}", "radius": "{radius.sm}" } } } }
         JSON ],
-    [ 'upgrade', 'list', 'A list is no theme.', [ '26', '27' ], false, '[ 1 ]' ],
-    [ 'settings', 'settings', "A site's settings: a setting moved, one dropped, one the new base does not take (an option it has not), and one that stays.", [ '26', '27' ], true, <<<'JSON'
+    [ 'upgrade', 'list', 'A list is no theme.', [ '1', '2' ], false, '[ 1 ]' ],
+    [ 'settings', 'settings', "A site's settings: a setting moved, one dropped, one the new base does not take (an option it has not), and one that stays.", [ '1', '2' ], true, <<<'JSON'
         { "slug": "my-shop", "legacy_flag": true, "mode": "kiosk", "name": "My shop" }
         JSON ],
-    [ 'settings', 'settings-chain', 'The same settings through 28.', [ '26', '27', '28' ], false, <<<'JSON'
+    [ 'settings', 'settings-chain', 'The same settings through 3.', [ '1', '2', '3' ], false, <<<'JSON'
         { "slug": "my-shop", "business_slug": "kept", "third_party_code": { "head": "<meta>" } }
         JSON ],
-    [ 'cutDown', 'cut-down', "A theme of 27 for a client of 26: the block's one-to-one maps undone (`always` is `underlined` again, `{space.lg}` is `{size.lg}`, also on a platform where it is a number 26 cannot read); what has the same path and kind and fits 26 stays; a move into a key 26 already has (the gap, `header.logo`) is not undone; a property whose type differs and no move takes takes 26's default.", [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down', "A theme of 2 for a client of 1: the block's one-to-one maps undone (`always` is `underlined` again, `{space.lg}` is `{size.lg}`, also on a platform where it is a number 1 cannot read); what has the same path and kind and fits 1 stays; a move into a key 1 already has (the gap, `header.search`) is not undone; a property whose type differs and no move takes takes 1's default.", [ '2', '1' ], false, <<<'JSON'
         {
             "tokens": { "color": { "primary": "#111111" } },
             "components": {
                 "button": { "base": { "icon_gap": "{space.md}" } },
                 "link": { "base": { "underline": "always" } },
-                "card": { "base": { "padding": "{space.lg}", "background": "{color.surface}" } },
-                "modal": { "base": { "padding": 24 } }
+                "modal": { "base": { "padding": "{space.lg}" } },
+                "card": { "base": { "background": "{color.surface}" } },
+                "header": { "base": { "logo_width": 300 } }
             },
-            "visibility": { "header.logo": false },
-            "platforms": { "mobile_web": { "components": { "card": { "base": { "padding": 8 } } } } }
+            "visibility": { "header.search": false },
+            "platforms": { "mobile_web": { "components": { "modal": { "base": { "padding": 8 } } } } }
         }
         JSON ],
-    [ 'cutDown', 'cut-down-28', 'A theme of 28 for a client of 27: the gap 28 renamed is `icon_gap` again.', [ '28', '27' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down-3', 'A theme of 3 for a client of 2: the gap 3 renamed is `icon_gap` again.', [ '3', '2' ], false, <<<'JSON'
         { "components": { "button": { "base": { "icon_space": "{space.md}", "radius": "{radius.sm}" } } } }
         JSON ],
-    [ 'cutDownSettings', 'cut-down-settings', 'Settings of 27 for a client of 26: a setting 26 has not (its description) is left out; the slug 27 moved into `business_slug`, which 26 has too, stays there.', [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDownSettings', 'cut-down-settings', 'Settings of 2 for a client of 1: a setting 1 has not (its description) is left out; the slug 2 moved into `business_slug`, which 1 has too, stays there.', [ '2', '1' ], false, <<<'JSON'
         { "business_slug": "my-shop", "description": "Fresh food", "mode": "single_store" }
         JSON ],
-    [ 'upgrade', 'map-boolean', 'A boolean turned around by a map (`true` and `false` as its keys), also a platform\'s override.', [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'map-boolean', 'A boolean turned around by a map (`true` and `false` as its keys), also a platform\'s override.', [ '1', '2' ], false, <<<'JSON'
         { "visibility": { "hide_prices": true }, "platforms": { "mobile_web": { "visibility": { "hide_prices": false } } } }
         JSON ],
-    [ 'upgrade', 'map-many', 'A map that merges two options: `neutral` is `soft`.', [ '26', '27' ], false, <<<'JSON'
+    [ 'upgrade', 'map-many', 'A map that merges two options: `neutral` is `soft`.', [ '1', '2' ], false, <<<'JSON'
         { "components": { "card": { "base": { "tone": "neutral" } } } }
         JSON ],
-    [ 'settings', 'settings-map-boolean', 'A boolean setting that becomes an option by a map.', [ '26', '27' ], false, <<<'JSON'
+    [ 'settings', 'settings-map-boolean', 'A boolean setting that becomes an option by a map.', [ '1', '2' ], false, <<<'JSON'
         { "kiosk_only": true }
         JSON ],
-    [ 'settings', 'settings-migrate', "Settings saved with 26.4 read with 26.5, the same base: the setting 26.5 renamed takes its new name.", [ '26.5' ], false, <<<'JSON'
+    [ 'settings', 'settings-migrate', "Settings saved with 1.4 read with 1.5, the same base: the setting 1.5 renamed takes its new name.", [ '1.5' ], false, <<<'JSON'
         { "slug": "my-shop", "name": "My shop" }
         JSON ],
-    [ 'cutDown', 'cut-down-renames', "A theme of 26.5 for a client of 26.4, the same base: every migration 26.4 does not have is undone, a property, a color (its value in dark mode and the aliases to it), a visibility key (and a platform's override) and a home section, in its place.", [ '26.5', '26' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down-renames', "A theme of 1.5 for a client of 1.4, the same base: every migration 1.4 does not have is undone, a property, a color (its value in dark mode and the aliases to it), a visibility key (and a platform's override) and a home section, in its place.", [ '1.5', '1' ], false, <<<'JSON'
         {
             "components": { "button": { "base": { "spacer": "{space.lg}" } }, "card": { "base": { "background": "{color.danger_text}" } } },
             "tokens": { "color": { "danger_text": "#B02A3E" } },
             "modes": { "dark": { "color": { "danger_text": "#FF8899" } } },
             "visibility": { "header.badge": false },
-            "pages": { "home": { "sections": [ { "key": "promo_banners", "visible": true }, { "key": "main_content", "visible": false }, { "key": "login_account", "visible": true } ] } },
+            "pages": { "home": { "sections": [ { "key": "recent", "visible": true }, { "key": "main_content", "visible": false }, { "key": "hero", "visible": true } ] } },
             "platforms": { "mobile_web": { "visibility": { "header.badge": true }, "components": { "button": { "base": { "spacer": "{space.xs}" } } } } }
         }
         JSON ],
-    [ 'cutDown', 'cut-down-chain', "A theme of 28 for a client of 26: 28's rename undone, then 27's map; the gap is `icon_gap` in both 27 and 26.", [ '28', '27', '26' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down-chain', "A theme of 3 for a client of 1: 3's rename undone, then 2's map; the gap is `icon_gap` in both 2 and 1.", [ '3', '2', '1' ], false, <<<'JSON'
         { "components": { "button": { "base": { "icon_space": "{space.md}" } }, "link": { "base": { "underline": "always" } } } }
         JSON ],
-    [ 'cutDown', 'cut-down-map-boolean', "A theme of 27 for a client of 26: the boolean the block turned around, turned back, and the map that merged two options, which cannot be undone: 26's default.", [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDown', 'cut-down-map-boolean', "A theme of 2 for a client of 1: the boolean the block turned around, turned back, and the map that merged two options, which cannot be undone: 1's default.", [ '2', '1' ], false, <<<'JSON'
         { "visibility": { "show_prices": false }, "components": { "card": { "base": { "tone": "loud" } } } }
         JSON ],
-    [ 'cutDownSettings', 'cut-down-settings-renames', 'Settings of 26.5 for a client of 26.4: the setting 26.5 renamed takes its old name.', [ '26.5', '26' ], false, <<<'JSON'
+    [ 'cutDownSettings', 'cut-down-settings-renames', 'Settings of 1.5 for a client of 1.4: the setting 1.5 renamed takes its old name.', [ '1.5', '1' ], false, <<<'JSON'
         { "shop_slug": "my-shop", "name": "My shop" }
         JSON ],
-    [ 'cutDownSettings', 'cut-down-settings-map-boolean', 'Settings of 27 for a client of 26: the option a boolean became is the boolean again.', [ '27', '26' ], false, <<<'JSON'
+    [ 'cutDownSettings', 'cut-down-settings-map-boolean', 'Settings of 2 for a client of 1: the option a boolean became is the boolean again.', [ '2', '1' ], false, <<<'JSON'
         { "kiosk_mode": "off" }
         JSON ],
 ];
@@ -329,7 +332,7 @@ foreach ($cases as [ $kind, $name, $description, $bases, $with_rewrite, $json ])
 }
 
 echo json_encode([
-    'description' => "What ThemeUpgrades answers for each theme or site's settings between bases made from {$original['product_type']}@{$original['version']}.",
+    'description' => "What ThemeUpgrades answers for each theme or site's settings between bases made from the reference schema, {$original['product_type']}@{$original['version']}.",
     'php' => PHP_VERSION,
     'schemas' => $schemas,
     'cases' => $answers,

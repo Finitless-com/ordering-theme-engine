@@ -1,0 +1,1155 @@
+{
+    "description": "What api-core's NodeCompiler::compile() answers for marketplace_website@1.0.0 with its version 1 map.",
+    "schema": {
+        "product_type": "marketplace_website",
+        "version": "1.0.0",
+        "format": 2,
+        "tokens": {
+            "font": {
+                "heading": "poppins",
+                "body": "inter"
+            },
+            "typography": {
+                "h1": {
+                    "size": 32,
+                    "line": 1.25,
+                    "weight": 700
+                },
+                "h2": {
+                    "size": 24,
+                    "line": 1.3,
+                    "weight": 600
+                },
+                "body": {
+                    "size": 16,
+                    "line": 1.5,
+                    "weight": 400
+                },
+                "body_sm": {
+                    "size": 14,
+                    "line": 1.45,
+                    "weight": 400
+                },
+                "button": {
+                    "size": 15,
+                    "line": 1.2,
+                    "weight": 600,
+                    "letter_spacing": 0.2
+                },
+                "label": {
+                    "size": 12,
+                    "line": 1.3,
+                    "weight": 500,
+                    "letter_spacing": 0.5,
+                    "transform": "uppercase"
+                }
+            },
+            "color": {
+                "primary": "#1E72E3",
+                "on_primary": "#FFFFFF",
+                "primary_subtle": "#E4EEFC",
+                "primary_pressed": "#1862C5",
+                "primary_text": "#1A64C8",
+                "secondary": "#F2A900",
+                "on_secondary": "#1B1B1B",
+                "background": "#FFFFFF",
+                "surface": "#FFFFFF",
+                "surface_alt": "#F5F6F8",
+                "overlay": "rgba(0,0,0,0.5)",
+                "text": "#1B1B1B",
+                "text_muted": "#6B7280",
+                "text_disabled": "#A1A1AA",
+                "link": "#1E72E3",
+                "border": "#E5E7EB",
+                "focus": "#1E72E3",
+                "success": "#16A34A",
+                "danger": "#DC2626",
+                "on_danger": "#FFFFFF",
+                "disabled": "#E5E7EB",
+                "favorite": "#E11D48"
+            },
+            "opacity": {
+                "disabled": 0.4,
+                "pressed": 0.12,
+                "scrim": 0.5
+            },
+            "radius": {
+                "none": 0,
+                "xs": 2,
+                "sm": 4,
+                "md": 8,
+                "lg": 12,
+                "xl": 16,
+                "xxl": 24,
+                "full": 9999
+            },
+            "size": {
+                "sm": 32,
+                "md": 40,
+                "lg": 48,
+                "xl": 56
+            },
+            "icon": {
+                "sm": 16,
+                "md": 20,
+                "lg": 24
+            },
+            "space": {
+                "none": 0,
+                "xxs": 2,
+                "xs": 4,
+                "sm": 8,
+                "md": 16,
+                "lg": 24,
+                "xl": 32,
+                "xxl": 48,
+                "xxxl": 64
+            },
+            "layout": {
+                "page_gutter": 16,
+                "mode": "original"
+            },
+            "motion": {
+                "fast": 120,
+                "base": 200,
+                "slow": 320
+            },
+            "border": {
+                "thin": 1,
+                "thick": 2
+            },
+            "shadow": {
+                "none": null,
+                "sm": {
+                    "x": 0,
+                    "y": 1,
+                    "blur": 3,
+                    "spread": 0,
+                    "color": "#000000",
+                    "opacity": 0.12,
+                    "elevation": 1
+                },
+                "md": {
+                    "x": 0,
+                    "y": 2,
+                    "blur": 8,
+                    "spread": 0,
+                    "color": "#000000",
+                    "opacity": 0.1,
+                    "elevation": 3
+                },
+                "lg": {
+                    "x": 0,
+                    "y": 8,
+                    "blur": 24,
+                    "color": "#000000",
+                    "opacity": 0.12,
+                    "elevation": 8
+                },
+                "xl": {
+                    "x": 0,
+                    "y": 16,
+                    "blur": 40,
+                    "color": "#000000",
+                    "opacity": 0.16
+                }
+            },
+            "shadow_style": {
+                "style": "soft",
+                "color": "#000000",
+                "direction": "down",
+                "size": "sm"
+            },
+            "border_style": {
+                "radius": "md",
+                "width": "none",
+                "style": "solid"
+            },
+            "motion_style": {
+                "easing": "ease",
+                "enabled": true
+            },
+            "focus_ring": {
+                "width": "thick",
+                "offset": "xxs",
+                "color": "primary"
+            },
+            "scrollbar": {
+                "size": 8,
+                "radius": 4
+            }
+        },
+        "components": {
+            "button": {
+                "base": {
+                    "radius": [
+                        "radius",
+                        "{radius.md}",
+                        [
+                            "none",
+                            "sm",
+                            "md",
+                            "lg",
+                            "full"
+                        ]
+                    ],
+                    "icon_gap": [
+                        "space",
+                        "{space.sm}"
+                    ],
+                    "text": [
+                        "text",
+                        "{typography.button}",
+                        null,
+                        {
+                            "custom": true
+                        }
+                    ],
+                    "font": [
+                        "font_role",
+                        "body"
+                    ],
+                    "speed": [
+                        "motion",
+                        "{motion.fast}"
+                    ],
+                    "full_width": [
+                        "bool",
+                        false
+                    ],
+                    "animated": [
+                        "bool",
+                        false
+                    ]
+                },
+                "colors": {
+                    "primary": {
+                        "main": [
+                            "color",
+                            "{color.primary}"
+                        ],
+                        "on": [
+                            "color",
+                            "{color.on_primary}"
+                        ],
+                        "ink": [
+                            "color",
+                            null
+                        ],
+                        "subtle": [
+                            "color",
+                            "{color.primary_subtle}"
+                        ],
+                        "pressed": [
+                            "color",
+                            "{color.primary_pressed}"
+                        ]
+                    },
+                    "neutral": {
+                        "main": [
+                            "color",
+                            "{color.surface_alt}"
+                        ],
+                        "on": [
+                            "color",
+                            "{color.text}"
+                        ],
+                        "ink": [
+                            "color",
+                            "{color.text}"
+                        ]
+                    }
+                },
+                "appearances": {
+                    "solid": {
+                        "background": [
+                            "role",
+                            "{main}"
+                        ],
+                        "color": [
+                            "role",
+                            "{on}"
+                        ],
+                        "border": [
+                            "border",
+                            null
+                        ],
+                        "shadow": [
+                            "shadow",
+                            "{shadow.sm}"
+                        ],
+                        "states": {
+                            "pressed": {
+                                "background": [
+                                    "role",
+                                    "{pressed}"
+                                ]
+                            },
+                            "disabled": {
+                                "background": [
+                                    "color",
+                                    "{color.disabled}"
+                                ],
+                                "color": [
+                                    "color",
+                                    "{color.text_disabled}"
+                                ]
+                            }
+                        }
+                    },
+                    "outline": {
+                        "background": [
+                            "color",
+                            "transparent"
+                        ],
+                        "color": [
+                            "role",
+                            "{ink}"
+                        ],
+                        "border": [
+                            "border",
+                            {
+                                "width": "{border.thin}",
+                                "color": "{ink}",
+                                "style": "solid"
+                            }
+                        ],
+                        "shadow": [
+                            "shadow",
+                            null
+                        ],
+                        "states": {
+                            "pressed": {
+                                "background": [
+                                    "role",
+                                    "{subtle}"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "sizes": {
+                    "sm": {
+                        "height": [
+                            "size",
+                            "{size.sm}"
+                        ],
+                        "padding_x": [
+                            "space",
+                            "{space.sm}"
+                        ],
+                        "icon_size": [
+                            "icon",
+                            "{icon.sm}"
+                        ]
+                    },
+                    "md": {
+                        "height": [
+                            "size",
+                            "{size.md}"
+                        ],
+                        "padding_x": [
+                            "space",
+                            "{space.md}"
+                        ],
+                        "icon_size": [
+                            "icon",
+                            "{icon.md}"
+                        ]
+                    }
+                },
+                "shapes": {
+                    "pill": {
+                        "radius": [
+                            "radius",
+                            "{radius.full}"
+                        ]
+                    },
+                    "icon": {
+                        "radius": [
+                            "radius",
+                            "{radius.full}"
+                        ],
+                        "padding_x": [
+                            "space",
+                            "{space.none}"
+                        ]
+                    }
+                }
+            },
+            "link": {
+                "base": {
+                    "color": [
+                        "color",
+                        "{color.link}"
+                    ],
+                    "underline": [
+                        "option",
+                        "hover",
+                        [
+                            "none",
+                            "hover",
+                            "always"
+                        ]
+                    ]
+                }
+            },
+            "input": {
+                "base": {
+                    "radius": [
+                        "radius",
+                        "{radius.md}"
+                    ],
+                    "text_color": [
+                        "color",
+                        "{color.text}"
+                    ],
+                    "border": [
+                        "border",
+                        {
+                            "width": "{border.thin}",
+                            "color": "{color.border}",
+                            "style": "solid"
+                        }
+                    ],
+                    "text": [
+                        "text",
+                        "{typography.body}",
+                        null,
+                        {
+                            "custom": true
+                        }
+                    ]
+                },
+                "sizes": {
+                    "md": {
+                        "height": [
+                            "size",
+                            "{size.md}"
+                        ]
+                    }
+                },
+                "slots": {
+                    "trailing_action": {
+                        "component": "button",
+                        "size": "sm",
+                        "appearance": "solid",
+                        "color": "primary",
+                        "shape": "icon"
+                    }
+                }
+            },
+            "tabs": {
+                "variants": {
+                    "pill": {
+                        "background": [
+                            "color",
+                            "{color.surface_alt}"
+                        ],
+                        "radius": [
+                            "radius",
+                            "{radius.md}"
+                        ],
+                        "inset": [
+                            "space",
+                            "{space.xs}"
+                        ],
+                        "tab_radius": [
+                            "radius",
+                            "{radius.md}"
+                        ],
+                        "active": [
+                            "color",
+                            "{color.primary_text}"
+                        ]
+                    },
+                    "underline": {
+                        "background": [
+                            "color",
+                            "transparent"
+                        ],
+                        "active": [
+                            "color",
+                            "{color.primary}"
+                        ]
+                    }
+                },
+                "sizes": {
+                    "md": {
+                        "height": [
+                            "size",
+                            "{size.md}"
+                        ]
+                    }
+                }
+            },
+            "chip": {
+                "variants": {
+                    "default": {
+                        "background": [
+                            "color",
+                            "{color.surface_alt}"
+                        ],
+                        "color": [
+                            "color",
+                            "{color.text}"
+                        ],
+                        "states": {
+                            "pressed": {
+                                "background": [
+                                    "color",
+                                    "{color.border}"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "modal": {
+                "base": {
+                    "background": [
+                        "color",
+                        "{color.surface}"
+                    ],
+                    "radius": [
+                        "radius",
+                        "{radius.md}"
+                    ],
+                    "overlay": [
+                        "color",
+                        "{color.overlay}"
+                    ],
+                    "overlay_opacity": [
+                        "opacity",
+                        "{opacity.scrim}"
+                    ],
+                    "speed": [
+                        "motion",
+                        "{motion.base}"
+                    ],
+                    "padding": [
+                        "space",
+                        "{space.lg}"
+                    ],
+                    "shadow": [
+                        "shadow",
+                        "{shadow.lg}"
+                    ]
+                }
+            },
+            "card": {
+                "base": {
+                    "background": [
+                        "color",
+                        "{color.surface}"
+                    ],
+                    "padding": [
+                        "space",
+                        "{space.md}"
+                    ],
+                    "radius": [
+                        "radius",
+                        "{radius.md}"
+                    ],
+                    "shadow": [
+                        "shadow",
+                        "{shadow.sm}"
+                    ],
+                    "border": [
+                        "border",
+                        null
+                    ]
+                },
+                "variants": {
+                    "default": {
+                        "states": {
+                            "hover": {
+                                "shadow": [
+                                    "shadow",
+                                    "{shadow.md}"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "padding": [
+                            "space",
+                            "{space.sm}"
+                        ]
+                    }
+                }
+            },
+            "business_card": {
+                "base": {
+                    "background": [
+                        "color",
+                        null
+                    ],
+                    "padding": [
+                        "space",
+                        "{space.md}"
+                    ],
+                    "radius": [
+                        "radius",
+                        "{radius.md}"
+                    ]
+                }
+            },
+            "banner": {
+                "base": {
+                    "image": [
+                        "image",
+                        ""
+                    ],
+                    "title": [
+                        "string",
+                        "",
+                        null,
+                        {
+                            "max_length": 40
+                        }
+                    ],
+                    "code": [
+                        "string",
+                        "",
+                        null,
+                        {
+                            "max_length": 12,
+                            "pattern": "^[A-Z0-9_-]+$"
+                        }
+                    ],
+                    "link_id": [
+                        "id",
+                        null
+                    ],
+                    "columns": [
+                        "number",
+                        3
+                    ],
+                    "autoplay": [
+                        "bool",
+                        true
+                    ]
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "columns": [
+                            "number",
+                            1
+                        ]
+                    }
+                }
+            },
+            "header": {
+                "base": {
+                    "background": [
+                        "color",
+                        "{color.surface}"
+                    ],
+                    "height": [
+                        "size",
+                        "{size.lg}"
+                    ],
+                    "layout": [
+                        "layout",
+                        "classic",
+                        [
+                            "classic",
+                            "centered"
+                        ]
+                    ],
+                    "logo_width": [
+                        "number",
+                        160
+                    ],
+                    "icon_size": [
+                        "icon",
+                        "{icon.md}"
+                    ]
+                },
+                "slots": {
+                    "cta": {
+                        "component": "button",
+                        "size": "md",
+                        "appearance": "solid",
+                        "color": "primary",
+                        "shape": null
+                    },
+                    "order_type": {
+                        "component": "tabs",
+                        "size": "md",
+                        "variant": "pill"
+                    },
+                    "search": {
+                        "component": "input",
+                        "size": "md"
+                    }
+                },
+                "scope": {
+                    "button": {
+                        "base": {
+                            "radius": [
+                                "radius",
+                                "{radius.full}",
+                                [
+                                    "none",
+                                    "sm",
+                                    "md",
+                                    "lg",
+                                    "full"
+                                ]
+                            ]
+                        }
+                    },
+                    "input": []
+                },
+                "platforms": {
+                    "mobile_web": {
+                        "height": [
+                            "size",
+                            "{size.md}"
+                        ],
+                        "logo_width": [
+                            "number",
+                            120
+                        ]
+                    }
+                }
+            }
+        },
+        "inherits": {
+            "business_card": "card"
+        },
+        "visibility": {
+            "footer": [
+                true,
+                "footer.hidden"
+            ],
+            "menu.wallet": [
+                true,
+                "bar_menu.components.wallet.hidden"
+            ],
+            "product.navigation": [
+                false,
+                null
+            ],
+            "header.search": [
+                true,
+                null
+            ],
+            "header.cart": [
+                true,
+                "header.components.cart.hidden",
+                {
+                    "mobile_web": false
+                }
+            ],
+            "header.far_away": [
+                true,
+                null
+            ],
+            "address.map": [
+                true,
+                null
+            ],
+            "address.notes": [
+                true,
+                null
+            ]
+        },
+        "images": {
+            "logotype": [
+                "",
+                "my_products.components.images.components.logo.components.image",
+                [
+                    "png",
+                    "svg",
+                    "webp"
+                ],
+                {
+                    "size": [
+                        800,
+                        200
+                    ],
+                    "ratio": "4:1",
+                    "alpha": true,
+                    "max_kb": 200,
+                    "safe": "3:1"
+                }
+            ],
+            "isotype": [
+                "",
+                "my_products.components.images.components.logo_mobile.components.image"
+            ],
+            "favicon": [
+                "",
+                "general.components.favicon.components.image",
+                [
+                    "ico",
+                    "png"
+                ],
+                {
+                    "size": [
+                        64,
+                        64
+                    ],
+                    "ratio": "1:1"
+                }
+            ]
+        },
+        "pages": {
+            "home": {
+                "footer": [
+                    "bool",
+                    null
+                ],
+                "sections": [
+                    "sections",
+                    [
+                        {
+                            "key": "hero",
+                            "visible": true,
+                            "hideable": false,
+                            "group": null
+                        },
+                        {
+                            "key": "featured",
+                            "visible": true,
+                            "hideable": true,
+                            "group": "content",
+                            "v1": "mobile_view_web.components.home.components.login_account.hidden"
+                        },
+                        {
+                            "key": "recent",
+                            "visible": false,
+                            "hideable": true,
+                            "group": "content"
+                        }
+                    ]
+                ]
+            },
+            "checkout": {
+                "footer": [
+                    "bool",
+                    false
+                ],
+                "sections": [
+                    "sections",
+                    [
+                        {
+                            "key": "summary",
+                            "visible": true,
+                            "hideable": false,
+                            "group": null
+                        },
+                        {
+                            "key": "tips",
+                            "visible": true,
+                            "hideable": true,
+                            "group": "extras",
+                            "v1": "checkout.components.customer.hidden"
+                        },
+                        {
+                            "key": "notes",
+                            "visible": true,
+                            "hideable": true,
+                            "group": "extras",
+                            "v1": "checkout.components.business.hidden",
+                            "v1_default": false
+                        }
+                    ]
+                ]
+            },
+            "not_found": {
+                "footer": [
+                    "bool",
+                    true
+                ],
+                "sections": [
+                    "sections",
+                    []
+                ]
+            }
+        },
+        "platforms": [
+            "mobile_web"
+        ],
+        "alpha": [
+            "tokens.color.overlay",
+            "components.button.appearances.outline.background",
+            "components.tabs.variants.underline.background",
+            "components.modal.base.overlay"
+        ],
+        "limits": {
+            "tokens.typography": {
+                "fields": {
+                    "size": {
+                        "min": 10,
+                        "max": 72
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 2
+                    },
+                    "letter_spacing": {
+                        "min": -2,
+                        "max": 4
+                    }
+                }
+            },
+            "tokens.typography.h1": {
+                "fields": {
+                    "size": {
+                        "min": 20,
+                        "max": 56
+                    },
+                    "line": {
+                        "min": 1,
+                        "max": 1.6
+                    }
+                }
+            },
+            "tokens.opacity.disabled": {
+                "min": 0.1,
+                "max": 0.9
+            },
+            "tokens.size.lg": {
+                "min": 40,
+                "max": 64
+            },
+            "components.button.base.icon_gap": {
+                "min": 0,
+                "max": 32
+            },
+            "components.button.base.speed": {
+                "min": 0,
+                "max": 1000
+            },
+            "components.banner.base.columns": {
+                "min": 1,
+                "max": 4
+            },
+            "components.banner.platforms.mobile_web.columns": {
+                "min": 1,
+                "max": 2
+            },
+            "components.header.base.height": {
+                "min": 40,
+                "max": 96
+            },
+            "components.header.base.logo_width": {
+                "min": 40,
+                "max": 320
+            }
+        },
+        "token_options": {
+            "focus_ring.offset": [
+                "none",
+                "xxs",
+                "xs",
+                "sm"
+            ],
+            "focus_ring.color": [
+                "primary",
+                "text",
+                "danger"
+            ]
+        },
+        "site": {
+            "mode": [
+                "option",
+                "marketplace",
+                [
+                    "marketplace",
+                    "single_store",
+                    "franchise"
+                ]
+            ],
+            "business_slug": [
+                "string",
+                ""
+            ],
+            "franchise_slug": [
+                "id",
+                ""
+            ],
+            "franchise_id": [
+                "id",
+                null
+            ],
+            "name": [
+                "string",
+                "",
+                null,
+                {
+                    "max_length": 60
+                }
+            ],
+            "description": [
+                "string",
+                "",
+                null,
+                {
+                    "max_length": 160
+                }
+            ],
+            "contact_email": [
+                "string",
+                "",
+                null,
+                {
+                    "max_length": 120,
+                    "pattern": "^[^@]+@[^@]+$"
+                }
+            ],
+            "tracking_only": [
+                "bool",
+                false
+            ],
+            "smart_banner": {
+                "apple_id": [
+                    "string",
+                    "",
+                    null,
+                    {
+                        "pattern": "^\\d{6,12}$"
+                    }
+                ]
+            },
+            "third_party_code": {
+                "head": [
+                    "html",
+                    ""
+                ],
+                "body": [
+                    "html",
+                    ""
+                ]
+            }
+        },
+        "v1": {
+            "tokens.color.primary": "my_products.components.theme_settings.components.style.primary_btn_color",
+            "tokens.color.background": "my_products.components.theme_settings.components.style.background_page",
+            "components.link.base.color": "my_products.components.theme_settings.components.style.primary_link_color",
+            "tokens.font.body": "general.components.fonts.primary.name",
+            "tokens.font.heading": "general.components.fonts.primary.name",
+            "tokens.layout.mode": [
+                "business_listing_view.components.layout.type",
+                "orders.components.layout.type",
+                "favorite.components.layout.type"
+            ],
+            "components.button.base.radius": "general.components.buttons.borderRadius",
+            "components.input.base.radius": "general.components.inputs.borderRadius",
+            "components.input.base.text_color": "general.components.inputs.color",
+            "components.input.base.border.color": "general.components.inputs.borderColor",
+            "components.modal.base.radius": "general.components.modal.components.style.borderRadius",
+            "components.header.base.background": "header.components.style.backgroundColor",
+            "components.banner.base.columns": "business_listing_view.components.layout.rows",
+            "site.mode": "my_products.components.website_theme.components.type",
+            "site.business_slug": "my_products.components.website_theme.components.business_slug",
+            "site.franchise_slug": "my_products.components.website_theme.components.franchise_slug",
+            "site.franchise_id": "my_products.components.website_theme.components.franchise_id",
+            "site.name": "my_products.components.website_settings.components.values.name",
+            "site.description": "my_products.components.website_settings.components.values.description",
+            "site.third_party_code.head": "third_party_code.head",
+            "site.third_party_code.body": "third_party_code.body",
+            "site.tracking_only": "tracking_settings.tracking_only",
+            "site.smart_banner.apple_id": "smart_banner_settings.apple_id"
+        },
+        "follows": {
+            "components.button.base.radius": "radius",
+            "components.button.appearances.solid.shadow": "shadow",
+            "components.input.base.radius": "radius",
+            "components.tabs.variants.pill.radius": "radius",
+            "components.modal.base.radius": "radius",
+            "components.card.base.radius": "radius",
+            "components.card.base.shadow": "shadow",
+            "components.card.base.border": "border",
+            "components.business_card.base.radius": "radius"
+        },
+        "derive": {
+            "primary_subtle": {
+                "op": "mix",
+                "from": "{color.primary}",
+                "over": "{color.background}",
+                "amount": 0.12
+            },
+            "primary_pressed": {
+                "op": "shade",
+                "from": "{color.primary}",
+                "amount": -0.07
+            },
+            "primary_text": {
+                "op": "legible",
+                "from": "{color.primary}",
+                "over": "{color.background}",
+                "contrast": 4.5,
+                "step": 0.01,
+                "when": "always"
+            },
+            "link": {
+                "op": "same",
+                "from": "{color.primary}",
+                "when": "missing"
+            },
+            "focus": {
+                "op": "same",
+                "from": "{color.primary}",
+                "when": "changed"
+            }
+        },
+        "component_derive": {
+            "tabs": {
+                "variants.pill.tab_radius": {
+                    "op": "inset",
+                    "from": "radius",
+                    "by": "inset",
+                    "when": "always"
+                }
+            },
+            "chip": {
+                "variants.default.states.pressed.background": {
+                    "op": "shade",
+                    "from": "background",
+                    "amount": -0.07
+                }
+            },
+            "card": {
+                "variants.default.states.hover.shadow": {
+                    "op": "step",
+                    "from": "shadow",
+                    "offset": 1,
+                    "when": "always"
+                }
+            }
+        },
+        "matrix": {
+            "button": {
+                "into": "variants",
+                "roles": {
+                    "ink": {
+                        "op": "legible",
+                        "from": "main",
+                        "over": "{color.background}",
+                        "contrast": 4.5,
+                        "when": "missing"
+                    },
+                    "subtle": {
+                        "op": "mix",
+                        "from": "main",
+                        "over": "{color.background}",
+                        "amount": 0.12
+                    },
+                    "pressed": {
+                        "op": "shade",
+                        "from": "main",
+                        "amount": -0.07
+                    }
+                }
+            }
+        }
+    },
+    "errors": []
+}

@@ -24,7 +24,7 @@ class ThemeSchemaNodesTest extends TestCase
     public function testTheWebMarketplaceSchemaConvertsAndCompilesBackToTheSameTuples(): void
     {
         // The same once it declares what follows Identity (ThemeOverall::declare()).
-        $schema = ThemeSchemas::declare(ThemeSchemaFixture::webMarketplace());
+        $schema = ThemeSchemas::declare(ThemeSchemaFixture::compiled());
         $converted = NodeConverter::convert($schema);
         $compiled = NodeCompiler::compile($converted['schema'], $converted['v1']);
 
@@ -37,7 +37,7 @@ class ThemeSchemaNodesTest extends TestCase
 
     public function testTheConvertedSchemaFitsTheMetaSchemaAndRegistersAsTheSameTuples(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $nodes = json_decode(NodeConverter::json(NodeConverter::convert($schema)['schema']), true);
 
         self::assertSame([], ThemeSchemas::meta($nodes));
@@ -50,20 +50,18 @@ class ThemeSchemaNodesTest extends TestCase
     /**
      * The version 1 paths come from api-core's map: those of what the schema
      * has, the site's settings under `site.`, and none of what it removed
-     * (the clients' layouts).
+     * (a property the map still names).
      */
     public function testTheVersionOnePathsComeFromTheMapForWhatTheSchemaHas(): void
     {
         $map = ThemeSchemaFixture::v1Map();
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $stale = $map;
+        $stale['v1']['components.header.base.logo_position'] = 'header.components.logo.components.layout.position';
+        $schema = ThemeSchemaFixture::tuples(ThemeSchemaFixture::nodes(), $stale)['schema'];
 
         $expected = $map['v1'];
         foreach ($map['site'] as $key => $path) {
             $expected["site.{$key}"] = $path;
-        }
-        foreach ([ 'header.base.layout', 'business_header.base.layout', 'product_search.base.layout', 'product_card.base.layout', 'signup_page.variants.business.layout' ] as $removed) {
-            self::assertArrayHasKey("components.{$removed}", $expected);
-            unset($expected["components.{$removed}"]);
         }
         self::assertSame($expected, $schema['v1']);
         self::assertSame(array_map(fn (string $key) => $map['visibility'][$key] ?? null, array_keys($schema['visibility'])), array_column($schema['visibility'], 1));
@@ -72,7 +70,7 @@ class ThemeSchemaNodesTest extends TestCase
 
     public function testTheMetaSchemaSaysWhereANodeIsMalformed(): void
     {
-        $nodes = NodeConverter::convert(ThemeSchemaFixture::webMarketplace())['schema'];
+        $nodes = NodeConverter::convert(ThemeSchemaFixture::compiled())['schema'];
         $nodes['components']['button']['base']['radius']['glow'] = true;
         unset($nodes['tokens']['layout']['mode']['$extensions']);
         $nodes['components']['button']['base']['animated']['$value'] = 'yes';
@@ -86,14 +84,14 @@ class ThemeSchemaNodesTest extends TestCase
         ], array_column(ThemeSchemas::meta($nodes), 'code'));
 
         // A key the format does not have, at the root.
-        $nodes = NodeConverter::convert(ThemeSchemaFixture::webMarketplace())['schema'];
+        $nodes = NodeConverter::convert(ThemeSchemaFixture::compiled())['schema'];
         $nodes['extra'] = 1;
         self::assertSame([ [ 'path' => '', 'code' => 'schema' ] ], ThemeSchemas::meta($nodes));
     }
 
     public function testATokenMustDeclareTheTypeTheEngineValidatesItWith(): void
     {
-        $nodes = NodeConverter::convert(ThemeSchemaFixture::webMarketplace())['schema'];
+        $nodes = NodeConverter::convert(ThemeSchemaFixture::compiled())['schema'];
         $nodes['tokens']['shadow_style']['style']['$extensions']['co.ordering']['options'] = [ 'normal', 'neon' ];
         $nodes['tokens']['color']['primary']['$type'] = 'dimension';
         $nodes['components']['card']['base']['radius']['$extensions']['co.ordering']['scale'] = 'motion';
@@ -107,13 +105,13 @@ class ThemeSchemaNodesTest extends TestCase
 
     public function testTheEditorMetadataGoesIntoTheNodesAndChangesNothingTheEngineReads(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $nodes = NodeConverter::convert($schema)['schema'];
         $label = [ 'key' => 'BUILDER_THEME_COLOR_PRIMARY', 'default' => 'Primary' ];
         $injected = EditorMetadata::inject($nodes, [
             'nodes' => [
                 'tokens.color.primary' => [ 'label' => $label, 'group' => 'brand', 'order' => 1 ],
-                'visibility.business.header.info' => [ 'label' => null, 'related' => [ 'components.business_header' ] ],
+                'visibility.header.search' => [ 'label' => null, 'related' => [ 'components.header' ] ],
                 'components.nope' => [ 'group' => 'controls' ],
             ],
             'props' => [ 'radius' => [ 'label' => [ 'key' => 'BUILDER_THEME_PROP_RADIUS', 'default' => 'Rounding' ] ] ],
@@ -130,7 +128,7 @@ class ThemeSchemaNodesTest extends TestCase
         $editor = $injected['schema']['tokens']['color']['primary']['$extensions']['co.ordering.editor'];
         self::assertSame([ 'label' => $label, 'group' => 'brand', 'order' => 1 ], $editor);
         // Without a text of its own, the label is left out: the editor humanizes the key.
-        self::assertSame([ 'related' => [ 'components.business_header' ] ], $injected['schema']['visibility']['business.header.info']['$extensions']['co.ordering.editor']);
+        self::assertSame([ 'related' => [ 'components.header' ] ], $injected['schema']['visibility']['header.search']['$extensions']['co.ordering.editor']);
         self::assertSame([ 'key' => 'colors', 'groups' => [ [ 'key' => 'brand', 'paths' => [ 'tokens.color.primary' ], 'open' => true ] ], 'parent' => 'identity' ], $injected['schema']['editor']['sections'][0]);
         // What the export already writes in the format's names is kept as it is.
         self::assertSame([ [ 'key' => 'identity' ] ], $injected['schema']['editor']['section_groups']);
@@ -151,7 +149,7 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testAPartialEditorExportMergesIntoTheSchemasOwn(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         $before = $nodes['editor']['sections'];
         $label = [ 'key' => 'BUILDER_THEME_SECTION_SITE', 'default' => 'Website settings' ];
         $merged = EditorMetadata::inject($nodes, [
@@ -206,9 +204,30 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testASchemaWithoutVersionOnePathsTakesThemFromTheMapAndKeepsItsSite(): void
     {
-        // The schema as it was with its version 1 paths, then without them.
+        // The schema as it was with its version 1 paths, then without them,
+        // and the map api-core keeps of them, which knows a setting more.
         $schema = ThemeResolverGolden::schema();
-        $map = ThemeSchemaFixture::v1Map();
+        $map = [ 'v1' => [], 'visibility' => array_map(fn (array $entry) => $entry[1], $schema['visibility']), 'images' => array_map(fn (array $entry) => $entry[1], $schema['images']), 'pages' => [], 'site' => [] ];
+        foreach ($schema['v1'] as $path => $from) {
+            $map['v1'][$path] = $from;
+        }
+        foreach ($schema['pages'] as $page => $spec) {
+            foreach ($spec['sections'][1] as $section) {
+                if (isset($section['v1'])) {
+                    $map['pages'][$page][$section['key']] = array_intersect_key($section, [ 'v1' => true, 'v1_default' => true ]);
+                }
+            }
+        }
+        $map['site'] = [
+            'mode' => 'my_products.components.website_theme.components.type',
+            'business_slug' => 'my_products.components.website_theme.components.business_slug',
+            'franchise_id' => 'my_products.components.website_theme.components.franchise_id',
+            'home_html' => 'my_products.components.theme_settings.components.values.homepage_content',
+            'third_party_code.head' => 'third_party_code.head',
+            'third_party_code.body' => 'third_party_code.body',
+            'tracking_only' => 'tracking_settings.tracking_only',
+            'name' => 'my_products.components.website_settings.components.values.name',
+        ];
         $site = [
             'mode' => [ 'option', 'marketplace', [ 'marketplace', 'single_store', 'franchise' ] ],
             'business_slug' => [ 'string', '' ],
@@ -231,7 +250,7 @@ class ThemeSchemaNodesTest extends TestCase
         self::assertSame($map, $converted['v1']);
         $nodes = json_decode(NodeConverter::json($converted['schema']), true);
         self::assertSame([], ThemeSchemas::meta($nodes));
-        $tuples = ThemeSchemaFixture::tuples($nodes);
+        $tuples = ThemeSchemaFixture::tuples($nodes, $map);
         self::assertSame([], $tuples['errors']);
         self::assertSame([], ThemeSchemas::check($tuples['schema']));
 
@@ -257,7 +276,7 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testSiteDefaultsRefusesTheNodesAndWhatTuplesAnswers(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         $compiled = ThemeSchemaFixture::tuples($nodes);
         self::assertSame([], $compiled['errors']);
         self::assertNotSame([], ThemeSchemas::siteDefaults($compiled['schema']));
@@ -279,9 +298,9 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testColorDerivationsAreDeclaredOnTheirColors(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         self::assertSame([ 'op' => 'shade', 'from' => '{color.primary}', 'amount' => -0.07 ], $nodes['tokens']['color']['primary_pressed']['$extensions']['co.ordering']['derive']);
-        self::assertSame([ 'op' => 'mix', 'from' => '{color.danger}', 'over' => '{color.background}', 'amount' => 0.12 ], $nodes['tokens']['color']['danger_subtle']['$extensions']['co.ordering']['derive']);
+        self::assertSame([ 'op' => 'mix', 'from' => '{color.primary}', 'over' => '{color.background}', 'amount' => 0.12 ], $nodes['tokens']['color']['primary_subtle']['$extensions']['co.ordering']['derive']);
         // Declaring what is declared changes nothing.
         self::assertSame($nodes, json_decode(NodeConverter::json(NodeConverter::declare($nodes)), true));
 
@@ -294,9 +313,9 @@ class ThemeSchemaNodesTest extends TestCase
         $with = ThemeSchemaFixture::tuples($nodes)['schema'];
         $without = ThemeSchemaFixture::tuples($undeclared)['schema'];
         self::assertArrayNotHasKey('derive', $without);
-        // The same rules, in the order of the schema's colors.
-        self::assertEquals(ThemeColors::rules(), $with['derive']);
-        self::assertSame($nodes, json_decode(NodeConverter::json(NodeConverter::declare($undeclared)), true));
+        // Declaring a schema that declares none writes the engine's rules on its colors.
+        $engine = ThemeSchemaFixture::tuples(NodeConverter::declare($undeclared))['schema'];
+        self::assertEquals(array_intersect_key(ThemeColors::rules(), $engine['tokens']['color']), $engine['derive']);
 
         $with['derive']['primary_pressed']['from'] = '{color.nope}';
         $with['derive']['nope'] = [ 'op' => 'same', 'from' => '{color.primary}' ];
@@ -310,7 +329,7 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testWhatAGroupOrTheEngineSaysForANodeThatDoesNot(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         $declared = ThemeSchemaFixture::tuples($nodes)['schema'];
 
         $typed = $nodes;
@@ -325,12 +344,15 @@ class ThemeSchemaNodesTest extends TestCase
         $undeclared = json_decode((string) preg_replace('/,?\s*"follows":\s*"(shadow|radius|border)"/', '', (string) json_encode($nodes)), true);
         $compiled = ThemeSchemaFixture::tuples($undeclared)['schema'];
         self::assertArrayNotHasKey('follows', $compiled);
-        self::assertSame($declared['follows'], ThemeOverall::follows($compiled));
+        // The engine's rule, wider than what the reference declares: every shadow that is an alias, the modal's too.
+        $engine = ThemeOverall::follows($compiled);
+        self::assertSame([ 'shadow', 'shadow' ], [ $engine['components.card.base.shadow'], $engine['components.modal.base.shadow'] ]);
+        self::assertArrayNotHasKey('components.modal.base.shadow', $declared['follows']);
     }
 
     public function testASchemaInTuplesIsReadAsItIs(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
 
         self::assertSame([ 'schema' => $schema, 'errors' => [] ], ThemeSchemas::tuples($schema));
     }
@@ -342,45 +364,46 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testAVisibilityKeyMayShowOtherwiseOnAPlatform(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
-        $nodes['visibility']['business.header.logo']['$extensions']['co.ordering']['platforms'] = [ 'mobile_web' => false ];
+        $nodes = ThemeSchemaFixture::nodes();
+        $nodes['visibility']['menu.wallet']['$extensions']['co.ordering']['platforms'] = [ 'mobile_web' => false ];
 
         self::assertSame([], ThemeSchemas::meta($nodes));
         $schema = ThemeSchemaFixture::tuples($nodes)['schema'];
-        self::assertSame([ true, 'business_view.components.header.components.business.components.logo.hidden', [ 'mobile_web' => false ] ], $schema['visibility']['business.header.logo']);
+        self::assertSame([ true, 'bar_menu.components.wallet.hidden', [ 'mobile_web' => false ] ], $schema['visibility']['menu.wallet']);
         self::assertSame([], ThemeSchemas::check($schema));
         $defaults = ThemeSchemas::defaults($schema);
-        self::assertTrue($defaults['visibility']['business.header.logo']);
-        self::assertSame([ 'business.header.logo' => false ], $defaults['platforms']['mobile_web']['visibility']);
+        self::assertTrue($defaults['visibility']['menu.wallet']);
+        self::assertSame([ 'menu.wallet' => false, 'header.cart' => false ], $defaults['platforms']['mobile_web']['visibility']);
         // The tuples convert back to the same node.
-        self::assertSame([ 'platforms' => [ 'mobile_web' => false ] ], NodeConverter::convert($schema)['schema']['visibility']['business.header.logo']['$extensions']['co.ordering']);
+        self::assertSame([ 'platforms' => [ 'mobile_web' => false ] ], NodeConverter::convert($schema)['schema']['visibility']['menu.wallet']['$extensions']['co.ordering']);
 
-        $schema['visibility']['business.header.logo'][2] = [ 'tv' => false ];
-        $schema['visibility']['business.header.info'][2] = [ 'mobile_web' => 'no' ];
+        $schema['visibility']['menu.wallet'][2] = [ 'tv' => false ];
+        $schema['visibility']['header.search'][2] = [ 'mobile_web' => 'no' ];
         self::assertSame(
-            [ 'visibility.business.header.logo.platforms.invalid', 'visibility.business.header.info.platforms.invalid' ],
+            [ 'visibility.menu.wallet.platforms.invalid', 'visibility.header.search.platforms.invalid' ],
             array_column(ThemeSchemas::check($schema), 'code')
         );
     }
 
     public function testATokenMayBeNarrowedAndAPropertyCarryRules(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         $nodes['tokens']['focus_ring']['color']['$value'] = 'primary';
         $nodes['tokens']['focus_ring']['color']['$extensions']['co.ordering']['options'] = [ 'primary', 'danger' ];
         $nodes['tokens']['focus_ring']['offset']['$extensions']['co.ordering']['options'] = [ 'none', 'xxs', 'xs', 'sm' ];
         $nodes['tokens']['scrollbar']['$type'] = 'dimension';
-        $nodes['components']['link']['sizes']['sm']['text']['$extensions']['co.ordering.editor'] = [ 'custom' => true ];
+        // The button's text has no custom style here: the input's has.
+        unset($nodes['components']['button']['base']['text']['$extensions']['co.ordering.editor']['custom']);
         $nodes['site']['name']['$extensions']['co.ordering'] = [ 'max_length' => 5 ];
         $nodes['site']['smart_banner']['apple_id']['$extensions']['co.ordering'] = [ 'pattern' => '^\\d{6,12}$' ];
-        $nodes['images']['business_listing_hero']['$extensions']['co.ordering']['hints']['safe'] = '4:1';
+        $nodes['images']['isotype']['$extensions']['co.ordering']['hints']['safe'] = '1:1';
 
         self::assertSame([], ThemeSchemas::meta($nodes));
         $compiled = ThemeSchemaFixture::tuples($nodes);
         self::assertSame([], $compiled['errors']);
         $schema = $compiled['schema'];
         self::assertSame([ 'focus_ring.offset' => [ 'none', 'xxs', 'xs', 'sm' ], 'focus_ring.color' => [ 'primary', 'danger' ] ], $schema['token_options']);
-        self::assertSame([ 'text', '{typography.caption}', null, [ 'custom' => true ] ], $schema['components']['link']['sizes']['sm']['text']);
+        self::assertSame([ 'text', '{typography.body}', null, [ 'custom' => true ] ], $schema['components']['input']['base']['text']);
         self::assertSame([ 'string', '', null, [ 'max_length' => 5 ] ], $schema['site']['name']);
         self::assertSame([], ThemeSchemas::check($schema));
         // The tuples convert back to nodes that compile to them.
@@ -389,15 +412,15 @@ class ThemeSchemaNodesTest extends TestCase
         $typography = [ 'size' => 18, 'line' => 1.33, 'weight' => 600 ];
         self::assertSame([], ThemeValidator::validate([
             'tokens' => [ 'focus_ring' => [ 'color' => 'danger', 'offset' => 'sm' ] ],
-            'components' => [ 'link' => [ 'sizes' => [ 'sm' => [ 'text' => $typography ] ] ] ],
+            'components' => [ 'input' => [ 'base' => [ 'text' => $typography ] ] ],
         ], $schema));
         self::assertSame([
             'tokens.focus_ring.offset.invalid',
             'tokens.focus_ring.color.invalid',
-            'components.link.sizes.md.text.invalid',
+            'components.button.base.text.invalid',
         ], ThemeValidator::codes(ThemeValidator::validate([
             'tokens' => [ 'focus_ring' => [ 'color' => 'secondary', 'offset' => 'md' ] ],
-            'components' => [ 'link' => [ 'sizes' => [ 'md' => [ 'text' => $typography ] ] ] ],
+            'components' => [ 'button' => [ 'base' => [ 'text' => $typography ] ] ],
         ], $schema)));
         // An empty string is unset, whatever its pattern.
         self::assertSame([], ThemeValidator::settings([ 'name' => 'Acme', 'smart_banner' => [ 'apple_id' => '' ] ], $schema));
@@ -412,12 +435,12 @@ class ThemeSchemaNodesTest extends TestCase
         $schema['token_options']['scrollbar.size'] = [ 6 ];
         $schema['site']['name'][3] = [ 'custom' => true ];
         $schema['site']['description'] = [ 'string', '', null, [ 'pattern' => '(' ] ];
-        $schema['components']['link']['sizes']['md']['text'] = [ 'text', '{typography.body}', null, [ 'max_length' => 3 ] ];
+        $schema['components']['button']['base']['text'] = [ 'text', '{typography.body}', null, [ 'max_length' => 3 ] ];
         self::assertSame([
             'token_options.focus_ring.offset.invalid',
             'token_options.focus_ring.color.invalid',
             'token_options.scrollbar.size.invalid',
-            'components.link.sizes.md.text.rules.invalid',
+            'components.button.base.text.rules.invalid',
             'site.name.rules.invalid',
             'site.description.rules.invalid',
         ], array_column(ThemeSchemas::check($schema), 'code'));
@@ -428,7 +451,7 @@ class ThemeSchemaNodesTest extends TestCase
      */
     public function testTheMetaSchemaRefusesAPreviewAsAnyKeyTheEditorDoesNotRead(): void
     {
-        $nodes = ThemeSchemaFixture::webMarketplaceNodes();
+        $nodes = ThemeSchemaFixture::nodes();
         self::assertSame([], ThemeSchemas::meta($nodes));
 
         $nodes['pages']['home']['$extensions']['co.ordering.editor']['preview'] = [ 'page' => 'home', 'path' => '/' ];

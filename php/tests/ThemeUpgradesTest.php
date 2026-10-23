@@ -109,6 +109,6 @@ class ThemeUpgradesTest extends TestCase
      */
     private static function schema(string $version): array
     {
-        return [ 'version' => $version ] + ThemeSchemaFixture::webMarketplaceNodes();
+        return [ 'version' => $version ] + ThemeSchemaFixture::nodes();
     }
 }

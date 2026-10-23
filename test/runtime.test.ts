@@ -2,49 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { themeDefaults } from '../src/cli.js'
 import { compile, compileRuntime, runtimeRules, serializeRuntime, type NodeSchema } from '../src/index.js'
 import { complete, type RuntimeSchema } from '../src/runtime.js'
-import { json } from './fixtures.js'
+import { reference } from './fixtures.js'
 
 /**
  * complete(): a served theme read with the compiled form, as a website
  * reads it without the schema. These are the cases of the marketplace
  * web's own merge (src/utils/themeMerge.js and its tests), which the
- * runtime entry replaces, over the product's schema with the limits the
- * web's has; each range is the one runtimeRules() gives.
+ * runtime entry replaces, over the reference schema; each range is the one
+ * runtimeRules() gives.
  */
 // A schema in nodes, walked freely to change a node.
 type Tree = Record<string, any>
 
-const editor = (node: Tree): Tree => ((node.$extensions ??= {})['co.ordering.editor'] ??= {})
-const ordering = (node: Tree): Tree => ((node.$extensions ??= {})['co.ordering'] ??= {})
-
-/**
- * The product's schema made valid as the validate() cases make it (their
- * `base`: two defaults out of their range, among others), with the limits
- * of the web's.
- */
-function schema(): Tree {
-  const nodes = json<Tree>('schema-26.0.nodes.json')
-  for (const [op, path, value] of json<{ base: Array<[string, string[], unknown]> }>('validate.json').base) {
-    const parent = path.slice(0, -1).reduce((node: Tree, key) => (node[key] ??= {}), nodes)
-    if (op === 'set') {
-      parent[path[path.length - 1]!] = value
-    } else {
-      delete parent[path[path.length - 1]!]
-    }
-  }
-  editor(nodes.tokens.typography).fields = { size: { min: 10, max: 72 }, line: { min: 1, max: 2 }, letter_spacing: { min: -2, max: 4 } }
-  Object.assign(editor(nodes.components.product_section.base.columns), { min: 1, max: 4 })
-  // The platform's own limit: 1–2 columns on phones.
-  nodes.components.product_section.platforms = {
-    mobile_web: { columns: { $type: 'number', $value: 1, $extensions: { 'co.ordering.editor': { control: 'range', min: 1, max: 2 } } } },
-  }
-  ordering(nodes.visibility.footer).platforms = { mobile_web: false }
-  ordering(nodes.site.name).max_length = 60
-  ordering(nodes.site.smart_banner.apple_id).pattern = '^[0-9]+$'
-  return nodes
-}
-
-const nodes = schema()
+const nodes = reference() as unknown as Tree
 const compiled = compileRuntime(nodes as NodeSchema)
 // What the file a product versions gives back.
 const C = JSON.parse(serializeRuntime(compiled)) as RuntimeSchema
@@ -86,13 +56,13 @@ describe('complete(): a value that is not understood is the default', () => {
   it('a value of another kind', () => {
     const v = merge({
       tokens: { color: { primary: { r: 1 } }, space: { md: '16px' }, motion_style: { enabled: 'yes' }, typography: { body: 'big' } },
-      components: { button: { base: { mobile_full_width: 1, radius: '8px' } }, card: 'x' },
+      components: { button: { base: { full_width: 1, radius: '8px' } }, card: 'x' },
     })
     expect(v.tokens.color.primary).toBe(D.tokens.color.primary)
     expect(v.tokens.space.md).toBe(D.tokens.space.md)
     expect(v.tokens.motion_style.enabled).toBe(D.tokens.motion_style.enabled)
     expect(v.tokens.typography.body).toEqual(D.tokens.typography.body)
-    expect(v.components.button.base.mobile_full_width).toBe(D.components.button.base.mobile_full_width)
+    expect(v.components.button.base.full_width).toBe(D.components.button.base.full_width)
     expect(v.components.button.base.radius).toBe(D.components.button.base.radius)
     expect(v.components.card).toEqual(D.components.card)
   })
@@ -100,33 +70,33 @@ describe('complete(): a value that is not understood is the default', () => {
   it('an option the schema does not list', () => {
     const v = merge({
       tokens: { layout: { mode: 'grid' }, font: { body: 'comic_sans' }, shadow_style: { style: 'huge' } },
-      components: { header: { base: { logo_position: 'top' } }, home_hero: { base: { fullscreen: 'yes' } }, card: { base: { font_role: 'display' } } },
+      components: { header: { base: { layout: 'top' } }, button: { base: { animated: 'yes', font: 'display' } } },
     })
     expect(v.tokens.layout.mode).toBe(D.tokens.layout.mode)
     expect(v.tokens.font.body).toBe(D.tokens.font.body)
     expect(v.tokens.shadow_style.style).toBe(D.tokens.shadow_style.style)
-    expect(v.components.header.base.logo_position).toBe(D.components.header.base.logo_position)
-    expect(v.components.home_hero.base.fullscreen).toBe(D.components.home_hero.base.fullscreen)
-    expect(v.components.card.base.font_role).toBe(D.components.card.base.font_role)
+    expect(v.components.header.base.layout).toBe(D.components.header.base.layout)
+    expect(v.components.button.base.animated).toBe(D.components.button.base.animated)
+    expect(v.components.button.base.font).toBe(D.components.button.base.font)
     // The listed ones pass.
-    const ok = merge({ tokens: { layout: { mode: 'appointments' } }, components: { home_hero: { base: { fullscreen: true } }, card: { base: { font_role: 'heading' } } } })
+    const ok = merge({ tokens: { layout: { mode: 'appointments' } }, components: { header: { base: { layout: 'centered' } }, button: { base: { animated: true, font: 'heading' } } } })
     expect(ok.tokens.layout.mode).toBe('appointments')
-    expect(ok.components.home_hero.base.fullscreen).toBe(true)
-    expect(ok.components.card.base.font_role).toBe('heading')
+    expect(ok.components.header.base.layout).toBe('centered')
+    expect(ok.components.button.base).toMatchObject({ animated: true, font: 'heading' })
   })
 
   it('null only where the default is null, or a border or a shadow', () => {
     const v = merge({
       tokens: { color: { primary: null }, space: { md: null } },
       components: {
-        button: { appearances: { solid: { states: { hover: { background: null }, pressed: { background: null } } } } },
+        button: { appearances: { solid: { border: null, states: { pressed: { background: null } } } } },
         card: { base: { shadow: null, border: null } },
       },
     })
     expect(v.tokens.color.primary).toBe(D.tokens.color.primary)
     expect(v.tokens.space.md).toBe(D.tokens.space.md)
-    expect(D.components.button.appearances.solid.states.hover.background).toBeNull()
-    expect(v.components.button.appearances.solid.states.hover.background).toBeNull()
+    expect(D.components.button.appearances.solid.border).toBeNull()
+    expect(v.components.button.appearances.solid.border).toBeNull()
     expect(v.components.button.appearances.solid.states.pressed.background).toBe(D.components.button.appearances.solid.states.pressed.background)
     expect(v.components.card.base.shadow).toBeNull()
     expect(v.components.card.base.border).toBeNull()
@@ -156,8 +126,8 @@ describe('complete(): a value that is not understood is the default', () => {
     expect(merge({ tokens: { typography: { body: { size: 15, weight: 450, family: 'inter' } } } }).tokens.typography.body)
       .toEqual({ size: 15, line: body.line, weight: body.weight, family: 'inter' })
     // A component's own style without a family keeps none.
-    expect(merge({ components: { product_card: { base: { name: { size: 17 } } } } }).components.product_card.base.name)
-      .toEqual({ size: 17, line: D.components.product_card.base.name.line, weight: D.components.product_card.base.name.weight })
+    expect(merge({ components: { input: { base: { text: { size: 17 } } } } }).components.input.base.text)
+      .toEqual({ size: 17, line: D.components.input.base.text.line, weight: D.components.input.base.text.weight })
   })
 
   it('a border and a shadow field by field', () => {
@@ -178,12 +148,12 @@ describe('complete(): a value that is not understood is the default', () => {
     // A border or a shadow the default does not complete (its default is null) stays the default.
     expect(outline.shadow).toBeNull()
     expect(merge({ components: { button: { appearances: { outline: { shadow: { y: 2 } } } } } }).components.button.appearances.outline.shadow).toBeNull()
-    expect(merge({ components: { input: { base: { border: { width: 'thick', color: 'azul' } } } } }).components.input.base.border).toBeNull()
+    expect(merge({ components: { card: { base: { border: { width: 'thick', color: 'azul' } } } } }).components.card.base.border).toBeNull()
   })
 
   it("an id, a nullable boolean and a value without a rule, by its default's kind", () => {
-    const site = merge({ site: { franchise_id: 1.5, franchise_slug: 'x'.repeat(256), home_html: 3, footer_html: '<p>hi</p>', tracking_only: 1 } }).site
-    expect(site).toMatchObject({ franchise_id: D.site.franchise_id, franchise_slug: D.site.franchise_slug, home_html: D.site.home_html, footer_html: '<p>hi</p>', tracking_only: D.site.tracking_only })
+    const site = merge({ site: { franchise_id: 1.5, franchise_slug: 'x'.repeat(256), third_party_code: { head: 3, body: '<p>hi</p>' }, tracking_only: 1 } }).site
+    expect(site).toMatchObject({ franchise_id: D.site.franchise_id, franchise_slug: D.site.franchise_slug, third_party_code: { head: D.site.third_party_code.head, body: '<p>hi</p>' }, tracking_only: D.site.tracking_only })
     expect(merge({ site: { franchise_id: 12, franchise_slug: 'ñ'.repeat(127) } }).site).toMatchObject({ franchise_id: 12, franchise_slug: 'ñ'.repeat(127) })
   })
 })
@@ -193,13 +163,14 @@ describe('complete(): numbers are clamped to their range', () => {
     const rules = RULES.values
     const v = merge({
       tokens: {
-        space: { md: 999 },
+        space: { md: 99999 },
         opacity: { disabled: 2 },
         typography: { body: { size: -4, line: 5, letter_spacing: 30 }, h1: { size: 999, line: 0.5 } },
         layout: { page_gutter: -10 },
       },
       components: {
-        button: { sizes: { md: { height: 9999, text: { size: 1000 } } }, appearances: { outline: { border: { width: -1, color: '#000000', style: 'solid' } } } },
+        button: { sizes: { md: { height: 9999 } }, appearances: { outline: { border: { width: -1, color: '#000000', style: 'solid' } } } },
+        input: { base: { text: { size: 1000 } } },
         card: { base: { shadow: { ...D.components.card.base.shadow, x: 500, opacity: 3, elevation: 99 } } },
       },
     })
@@ -212,7 +183,7 @@ describe('complete(): numbers are clamped to their range', () => {
     expect(v.tokens.typography.h1.line).toBe(min(rules.tokens.typography.h1[1]?.line ?? RULES.text.line))
     expect(v.tokens.layout.page_gutter).toBe(min(rules.tokens.layout.page_gutter))
     expect(v.components.button.sizes.md.height).toBe(max(rules.components.button.sizes.md.height))
-    expect(v.components.button.sizes.md.text.size).toBe(max(RULES.text.size))
+    expect(v.components.input.base.text.size).toBe(max(RULES.text.size))
     expect(v.components.card.base.shadow).toMatchObject({ x: 128, opacity: 1, elevation: 24 })
     expect(v.components.button.appearances.outline.border.width).toBe(0)
     // The ranges come from the limits.
@@ -221,8 +192,8 @@ describe('complete(): numbers are clamped to their range', () => {
 
   it("a level's property to its scale's levels, as runtimeRules() widens it", () => {
     const iconGap = RULES.values.components.button.base.icon_gap
-    expect(iconGap).toEqual([0, 96])
-    expect(merge({ components: { button: { base: { icon_gap: 500 } } } }).components.button.base.icon_gap).toBe(96)
+    expect(iconGap).toEqual([0, 64])
+    expect(merge({ components: { button: { base: { icon_gap: 500 } } } }).components.button.base.icon_gap).toBe(64)
     expect(merge({ components: { button: { base: { icon_gap: 48 } } } }).components.button.base.icon_gap).toBe(48)
   })
 })
@@ -279,10 +250,9 @@ describe('complete(): the open blocks', () => {
           components: {
             button: { base: { radius: 4, icon_gap: 'x', foo: 1 } },
             card: { base: { shadow: null, background: 'azul' } },
-            product_section: { base: { columns: 4 } },
-            home_hero: { base: { field_text: { size: 15 } } },
+            banner: { base: { columns: 4 } },
             nope: { base: { radius: 4 } },
-            header: { slots: { cart: { size: 'sm' } } },
+            header: { slots: { cta: { size: 'sm' } } },
           },
         },
       },
@@ -290,46 +260,41 @@ describe('complete(): the open blocks', () => {
     expect(v.platforms.ios).toBeUndefined()
     const phone = v.platforms.mobile_web.components
     expect(phone.button.base).toEqual({ ...D.platforms.mobile_web.components.button?.base, radius: 4 })
-    expect(phone.card.base).toEqual({ shadow: null })
+    expect(phone.card.base).toEqual({ ...D.platforms.mobile_web.components.card.base, shadow: null })
     // The platform's own limit (1–2 columns on phones, 1–4 on the rest).
-    expect(RULES.platform_values.mobile_web.components.product_section.base.columns).toEqual([1, 2])
-    expect(phone.product_section.base.columns).toBe(2)
-    expect(merge({ components: { product_section: { base: { columns: 4 } } } }).components.product_section.base.columns).toBe(4)
-    // A text style over the platform's default (without a family it keeps none).
-    const { family, ...fieldText } = D.platforms.mobile_web.components.home_hero.base.field_text
-    expect(family).toBeTruthy()
-    expect(phone.home_hero.base.field_text).toEqual({ ...fieldText, size: 15 })
+    expect(RULES.platform_values.mobile_web.components.banner.base.columns).toEqual([1, 2])
+    expect(phone.banner.base.columns).toBe(2)
+    expect(merge({ components: { banner: { base: { columns: 4 } } } }).components.banner.base.columns).toBe(4)
     expect(phone.nope).toBeUndefined()
-    expect(phone.header).toBeUndefined()
-    // What the theme leaves keeps the platform's defaults.
-    expect(phone.empty_state).toEqual(D.platforms.mobile_web.components.empty_state)
+    // What the theme leaves, or sets where a platform takes nothing (a slot), keeps the platform's defaults.
+    expect(phone.header).toEqual(D.platforms.mobile_web.components.header)
   })
 
   it('platforms: visibility keys of the schema and pages', () => {
-    expect(D.platforms.mobile_web.visibility).toEqual({ footer: false })
+    expect(D.platforms.mobile_web.visibility).toEqual({ 'header.cart': false })
     const v = merge({
       platforms: {
         mobile_web: {
-          visibility: { 'business.header.logo': true, footer: true, 'nope.nope': true, 'home.hero.logo': 'no' },
-          pages: { home: { footer: false, sections: [{ key: 'content', visible: false }, { key: 'nope' }] }, nope: { footer: true }, checkout: 'x' },
+          visibility: { 'header.search': true, footer: true, 'nope.nope': true, 'header.cart': 'no' },
+          pages: { home: { footer: false, sections: [{ key: 'featured', visible: false }, { key: 'nope' }] }, nope: { footer: true }, checkout: 'x' },
         },
       },
     })
     const phone = v.platforms.mobile_web
-    expect(phone.visibility).toEqual({ footer: true, 'business.header.logo': true })
-    expect(phone.pages).toEqual({ home: { footer: false, sections: [{ key: 'content', visible: false }] } })
+    expect(phone.visibility).toEqual({ 'header.cart': false, 'header.search': true, footer: true })
+    expect(phone.pages).toEqual({ home: { footer: false, sections: [{ key: 'featured', visible: false }] } })
   })
 
   it("pages: the theme's order with the page's own sections, once each", () => {
     const home = D.pages.home
     const v = merge({
       pages: {
-        home: { footer: 'yes', sections: [{ key: 'content', visible: false }, { key: 'nope', visible: true }, { key: 'hero', visible: 'no' }, { key: 'content', visible: true }, 'x'] },
+        home: { footer: 'yes', sections: [{ key: 'featured', visible: false }, { key: 'nope', visible: true }, { key: 'hero', visible: 'no' }, { key: 'featured', visible: true }, 'x'] },
         checkout: { footer: false, sections: {} },
       },
     })
     expect(v.pages.home.footer).toBe(home.footer)
-    expect(v.pages.home.sections).toEqual([{ key: 'content', visible: false }, { key: 'hero', visible: true }])
+    expect(v.pages.home.sections).toEqual([{ key: 'featured', visible: false }, { key: 'hero', visible: true }])
     expect(v.pages.checkout).toEqual({ ...D.pages.checkout, footer: false })
   })
 
@@ -342,7 +307,6 @@ describe('complete(): the open blocks', () => {
         tracking_only: 'true',
         franchise_id: -1,
         franchise_slug: 'my-franchise',
-        home_html: 3,
         third_party_code: { head: '<script></script>', body: null },
         smart_banner: { apple_id: '12ab', android_id: 'com.example.app' },
       },
@@ -353,9 +317,9 @@ describe('complete(): the open blocks', () => {
     expect(v.site.tracking_only).toBe(D.site.tracking_only)
     expect(v.site.franchise_id).toBe(D.site.franchise_id)
     expect(v.site.franchise_slug).toBe('my-franchise')
-    expect(v.site.home_html).toBe(D.site.home_html)
     expect(v.site.third_party_code).toEqual({ head: '<script></script>', body: D.site.third_party_code.body })
-    expect(v.site.smart_banner).toEqual({ apple_id: D.site.smart_banner.apple_id, android_id: 'com.example.app' })
+    // A setting the schema has not (`android_id`) is dropped.
+    expect(v.site.smart_banner).toEqual({ apple_id: D.site.smart_banner.apple_id })
     const ok = merge({ site: { mode: 'franchise', franchise_id: 12, tracking_only: true, name: 'x'.repeat(60), smart_banner: { apple_id: '123456789' } } }).site
     expect(ok).toMatchObject({ mode: 'franchise', franchise_id: 12, tracking_only: true, name: 'x'.repeat(60), smart_banner: { apple_id: '123456789' } })
   })
@@ -366,23 +330,21 @@ describe('complete(): the open blocks', () => {
     const v = merge({ components: { input: { slots: { trailing_action: { component: 'chip', size: 'xl', appearance: 'outline', shape: 'icon', color: 7, variant: 'primary' } }, nope: {} } } })
     // `variant` is a part of the button, but not an axis this slot declares.
     expect(v.components.input.slots).toEqual({ trailing_action: { ...slot, appearance: 'outline', shape: 'icon' } })
-    expect(merge({ components: { input: { slots: { trailing_action: { shape: null, color: 'danger' } } } } }).components.input.slots.trailing_action)
-      .toEqual({ ...slot, shape: null, color: 'danger' })
+    expect(merge({ components: { input: { slots: { trailing_action: { shape: null, color: 'neutral' } } } } }).components.input.slots.trailing_action)
+      .toEqual({ ...slot, shape: null, color: 'neutral' })
   })
 
   it('scope: the components the group may change, each as that component', () => {
     const v = merge({
       components: {
-        header: { scope: { button: { base: { radius: 'x', icon_gap: 2 } }, input: { base: { radius: 2 } }, tabs: {} } },
-        category_tabs: { scope: { tabs: { base: { icon_gap: 9999 } } } },
+        header: { scope: { button: { base: { radius: 'x', icon_gap: 2 } }, input: { base: { radius: 2, text_color: 'azul' } }, tabs: {} } },
       },
     })
-    expect(v.components.header.scope.button).toEqual({ ...D.components.button, base: { ...D.components.button.base, icon_gap: 2 } })
-    expect(v.components.header.scope.input).toBeUndefined()
-    expect(v.components.header.scope.tabs).toEqual({})
     // A partial one is completed from the theme's own component (the API serves it whole).
-    expect(v.components.category_tabs.scope.tabs.base).toEqual({ ...D.components.tabs.base, icon_gap: max(RULES.values.components.tabs.base.icon_gap) })
-    expect(v.components.category_tabs.scope.tabs.variants).toEqual(D.components.tabs.variants)
+    expect(v.components.header.scope.button).toEqual({ ...D.components.button, base: { ...D.components.button.base, icon_gap: 2 } })
+    expect(v.components.header.scope.input).toEqual({ ...D.components.input, base: { ...D.components.input.base, radius: 2 } })
+    // A component the group may not change is dropped.
+    expect(v.components.header.scope.tabs).toBeUndefined()
   })
 
   it("scope: what a scoped component lacks comes from the theme's global one, already checked", () => {
@@ -442,9 +404,9 @@ describe('complete(): inputs', () => {
     const served = [
       defaults,
       { tokens: { color: { primary: '#000000' }, typography: { body: { size: 999 } } } },
-      { components: { button: { base: { radius: 4 }, slots: {} }, category_tabs: { scope: { tabs: { base: { icon_gap: 2 } } } } } },
-      { platforms: { mobile_web: { components: { product_section: { base: { columns: 9 } } }, visibility: { footer: true }, pages: { home: { footer: null } } } } },
-      { visibility: { footer: false }, pages: { home: { sections: [] } }, modes: { dark: { color: { primary: '#000000' } } }, images: { logo: 'https://x.test/a.png' } },
+      { components: { button: { base: { radius: 4 }, slots: {} }, header: { scope: { input: { base: { radius: 2 } } } } } },
+      { platforms: { mobile_web: { components: { banner: { base: { columns: 9 } } }, visibility: { footer: true }, pages: { home: { footer: null } } } } },
+      { visibility: { footer: false }, pages: { home: { sections: [] } }, modes: { dark: { color: { primary: '#000000' } } }, images: { logotype: 'https://x.test/a.png' } },
     ]
     for (const values of served) {
       const answer = complete(frozen, values) as Tree

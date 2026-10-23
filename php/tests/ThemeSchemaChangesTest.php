@@ -29,11 +29,11 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testASectionLeftOutKeepsItsPagesListAList(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
-        $values = [ 'pages' => [ 'home' => [ 'sections' => [ [ 'key' => 'nope', 'visible' => false ], [ 'key' => 'content', 'visible' => false ] ] ] ] ];
+        $schema = ThemeSchemaFixture::compiled();
+        $values = [ 'pages' => [ 'home' => [ 'sections' => [ [ 'key' => 'nope', 'visible' => false ], [ 'key' => 'featured', 'visible' => false ] ] ] ] ];
 
         $valid = ThemeResolver::valid($values, $schema);
-        self::assertSame([ [ 'key' => 'content', 'visible' => false ] ], $valid['pages']['home']['sections']);
+        self::assertSame([ [ 'key' => 'featured', 'visible' => false ] ], $valid['pages']['home']['sections']);
         self::assertSame([], ThemeValidator::validate($valid, $schema));
         self::assertSame($valid, ThemeUpgrades::cutDown($values, [ $schema ]));
     }
@@ -45,7 +45,7 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testAMigrationOfASettingWithinABaseMovesIt(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $schema['site']['analytics_only'] = $schema['site']['tracking_only'];
         unset($schema['site']['tracking_only']);
         $schema['migrate'] = [ [ 'from' => 'site.tracking_only', 'to' => 'site.analytics_only' ] ];
@@ -61,25 +61,24 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testWhatTheEditorValidatesIsARule(): void
     {
-        $old = self::nodes('26.1.0');
+        $old = self::nodes('1.1.0');
         $old['components']['card']['base']['background']['$extensions']['co.ordering.editor']['alpha'] = true;
-        $old['components']['link']['sizes']['sm']['text']['$extensions']['co.ordering.editor']['custom'] = true;
 
-        $patch = self::nodes('26.1.1');
+        $patch = self::nodes('1.1.1');
         $patch['components']['card']['base']['background']['$extensions']['co.ordering.editor']['alpha'] = true;
-        $patch['components']['link']['sizes']['sm']['text']['$extensions']['co.ordering.editor']['custom'] = true;
         $patch['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor']['max'] = 64;
         self::assertSame([ 'schema.patch_changes_values' ], array_column(SchemaDiff::compare($old, $patch)['errors'], 'code'));
         // Texts, the step and the unit validate nothing.
-        $patch['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor'] = [ 'max' => 96, 'step' => 4, 'unit' => 'px' ] + $old['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor'];
+        $patch['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor'] = [ 'max' => 32, 'step' => 4, 'unit' => 'px' ] + $old['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor'];
         $patch['components']['button']['base']['icon_gap']['$description'] = 'The gap.';
         self::assertSame([], SchemaDiff::compare($old, $patch)['errors']);
 
-        $minor = self::nodes('26.2.0');
-        $minor['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor']['max'] = 64;
+        $minor = self::nodes('1.2.0');
+        $minor['components']['button']['base']['icon_gap']['$extensions']['co.ordering.editor']['max'] = 24;
+        unset($minor['components']['input']['base']['text']['$extensions']['co.ordering.editor']['custom']);
         $diff = SchemaDiff::compare($old, $minor);
-        self::assertSame([ 'components.link.sizes.sm.text.custom_removed', 'components.card.base.background.alpha_removed' ], array_column($diff['errors'], 'code'));
-        self::assertSame([ 'components.button.base.icon_gap', 'components.link.sizes.sm.text', 'components.card.base.background' ], $diff['changes']['rules_changed']);
+        self::assertSame([ 'components.input.base.text.custom_removed', 'components.card.base.background.alpha_removed' ], array_column($diff['errors'], 'code'));
+        self::assertSame([ 'components.button.base.icon_gap', 'components.input.base.text', 'components.card.base.background' ], $diff['changes']['rules_changed']);
     }
 
     /**
@@ -89,28 +88,28 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testAPlatformsDefaultGoesWithItsProperty(): void
     {
-        $old = self::nodes('26.1.0');
+        $old = self::nodes('1.1.0');
         $moved = function (array $schema): array {
-            $schema['components']['empty_state']['base']['padding_top'] = $schema['components']['empty_state']['base']['padding_y'];
-            $schema['components']['empty_state']['platforms']['mobile_web']['padding_top'] = $schema['components']['empty_state']['platforms']['mobile_web']['padding_y'];
-            unset($schema['components']['empty_state']['base']['padding_y'], $schema['components']['empty_state']['platforms']['mobile_web']['padding_y']);
+            $schema['components']['banner']['base']['per_row'] = $schema['components']['banner']['base']['columns'];
+            $schema['components']['banner']['platforms']['mobile_web']['per_row'] = $schema['components']['banner']['platforms']['mobile_web']['columns'];
+            unset($schema['components']['banner']['base']['columns'], $schema['components']['banner']['platforms']['mobile_web']['columns']);
 
             return $schema;
         };
-        $minor = $moved(self::nodes('26.2.0'));
-        $minor['$extensions'] = [ 'co.ordering.migrate' => [ [ 'from' => 'components.empty_state.base.padding_y', 'to' => 'components.empty_state.base.padding_top' ] ] ];
+        $minor = $moved(self::nodes('1.2.0'));
+        $minor['$extensions'] = [ 'co.ordering.migrate' => [ [ 'from' => 'components.banner.base.columns', 'to' => 'components.banner.base.per_row' ] ] ];
         $diff = SchemaDiff::compare($old, $minor);
         self::assertSame([], $diff['errors']);
-        self::assertSame([ 'components.empty_state.base.padding_y', 'components.empty_state.platforms.mobile_web.padding_y' ], $diff['changes']['migrated']);
+        self::assertSame([ 'components.banner.base.columns', 'components.banner.platforms.mobile_web.columns' ], $diff['changes']['migrated']);
 
-        $base = $moved(self::nodes('27.0.0'));
-        $base['$extensions'] = [ 'co.ordering.upgrade' => [ 'from' => 26, 'moves' => [ [ 'from' => 'components.empty_state.base.padding_y', 'to' => 'components.empty_state.base.padding_top' ] ], 'drop' => [] ] ];
+        $base = $moved(self::nodes('2.0.0'));
+        $base['$extensions'] = [ 'co.ordering.upgrade' => [ 'from' => 1, 'moves' => [ [ 'from' => 'components.banner.base.columns', 'to' => 'components.banner.base.per_row' ] ], 'drop' => [] ] ];
         self::assertSame([], ThemeUpgrades::check($base, $old));
         // And the theme's override moves with the value.
         self::assertSame(
-            [ 'components' => [ 'empty_state' => [ 'base' => [ 'padding_top' => 40 ] ] ], 'platforms' => [ 'mobile_web' => [ 'components' => [ 'empty_state' => [ 'base' => [ 'padding_top' => 24 ] ] ] ] ] ],
+            [ 'components' => [ 'banner' => [ 'base' => [ 'per_row' => 4 ] ] ], 'platforms' => [ 'mobile_web' => [ 'components' => [ 'banner' => [ 'base' => [ 'per_row' => 2 ] ] ] ] ] ],
             ThemeUpgrades::apply(
-                [ 'components' => [ 'empty_state' => [ 'base' => [ 'padding_y' => 40 ] ] ], 'platforms' => [ 'mobile_web' => [ 'components' => [ 'empty_state' => [ 'base' => [ 'padding_y' => 24 ] ] ] ] ] ],
+                [ 'components' => [ 'banner' => [ 'base' => [ 'columns' => 4 ] ] ], 'platforms' => [ 'mobile_web' => [ 'components' => [ 'banner' => [ 'base' => [ 'columns' => 2 ] ] ] ] ] ],
                 NodeCompiler::compile($base)['schema'],
                 NodeCompiler::compile($old)['schema'],
             ),
@@ -135,7 +134,7 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testAModesColorsAreTheSchemasOwn(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $values = [ 'modes' => [ 'dark' => [ 'color' => [ 'primary' => '#111111', 'danger_text' => '#B02A3E' ] ] ] ];
 
         self::assertSame([ 'modes.dark.color.danger_text.unknown' ], ThemeValidator::codes(ThemeValidator::validate($values, $schema)));
@@ -148,14 +147,14 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testACutDownUndoesWhatANewerVersionRenamed(): void
     {
-        $older = self::nodes('26.1.0');
-        $newer = self::nodes('26.2.0');
-        $newer['visibility']['header.badge'] = $newer['visibility']['header.logo'];
-        unset($newer['visibility']['header.logo']);
-        $newer['$extensions'] = [ 'co.ordering.migrate' => [ [ 'from' => 'visibility.header.logo', 'to' => 'visibility.header.badge' ] ] ];
+        $older = self::nodes('1.1.0');
+        $newer = self::nodes('1.2.0');
+        $newer['visibility']['header.badge'] = $newer['visibility']['header.search'];
+        unset($newer['visibility']['header.search']);
+        $newer['$extensions'] = [ 'co.ordering.migrate' => [ [ 'from' => 'visibility.header.search', 'to' => 'visibility.header.badge' ] ] ];
 
         self::assertSame(
-            [ 'visibility' => [ 'header.logo' => false ], 'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'header.logo' => true ] ] ] ],
+            [ 'visibility' => [ 'header.search' => false ], 'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'header.search' => true ] ] ] ],
             ThemeUpgrades::cutDown(
                 [ 'visibility' => [ 'header.badge' => false ], 'platforms' => [ 'mobile_web' => [ 'visibility' => [ 'header.badge' => true ] ] ] ],
                 [ NodeCompiler::compile($newer)['schema'], NodeCompiler::compile($older)['schema'] ],
@@ -172,24 +171,24 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testANumberOutOfItsLimitsOrAnImageOfAnotherFormatIsRefusedAndTheNumberIsReadClamped(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $values = [
-            'tokens' => [ 'size' => [ 'sm' => 90 ], 'typography' => [ 'h1' => [ 'size' => 30, 'line' => 2.5, 'weight' => 600 ] ] ],
-            'components' => [ 'button' => [ 'sizes' => [ 'xs' => [ 'height' => 40, 'icon_size' => '{icon.sm}' ] ] ] ],
-            'images' => [ 'favicon' => 'https://cdn.example.com/favicon.svg', 'logo' => 'https://cdn.example.com/logo.svg' ],
+            'tokens' => [ 'size' => [ 'lg' => 90 ], 'typography' => [ 'h1' => [ 'size' => 30, 'line' => 2.5, 'weight' => 600 ] ] ],
+            'components' => [ 'header' => [ 'base' => [ 'logo_width' => 400, 'icon_size' => '{icon.sm}' ] ] ],
+            'images' => [ 'favicon' => 'https://cdn.example.com/favicon.svg', 'logotype' => 'https://cdn.example.com/logo.svg' ],
         ];
 
         self::assertSame([
             'images.favicon.format',
-            'tokens.size.sm.out_of_range',
+            'tokens.size.lg.out_of_range',
             'tokens.typography.h1.line.out_of_range',
-            'components.button.sizes.xs.height.out_of_range',
+            'components.header.base.logo_width.out_of_range',
         ], ThemeValidator::codes(ThemeValidator::validate($values, $schema)));
         self::assertSame(
             [
-                'tokens' => [ 'size' => [ 'sm' => 80 ], 'typography' => [ 'h1' => [ 'size' => 30, 'line' => 2, 'weight' => 600 ] ] ],
-                'components' => [ 'button' => [ 'sizes' => [ 'xs' => [ 'height' => 32, 'icon_size' => '{icon.sm}' ] ] ] ],
-                'images' => [ 'logo' => 'https://cdn.example.com/logo.svg' ],
+                'tokens' => [ 'size' => [ 'lg' => 64 ], 'typography' => [ 'h1' => [ 'size' => 30, 'line' => 1.6, 'weight' => 600 ] ] ],
+                'components' => [ 'header' => [ 'base' => [ 'logo_width' => 320, 'icon_size' => '{icon.sm}' ] ] ],
+                'images' => [ 'logotype' => 'https://cdn.example.com/logo.svg' ],
             ],
             array_filter(ThemeResolver::valid($values, $schema), fn ($section) => $section !== []),
         );
@@ -201,14 +200,14 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testEachSectionOfAPageIsAKey(): void
     {
-        $old = self::nodes('26.1.0');
-        $new = self::nodes('26.2.0');
-        $sections = $old['pages']['home']['sections']['$value'];
-        $new['pages']['home']['sections']['$value'] = [ $sections[0], [ 'hideable' => false ] + $sections[1], $sections[3], $sections[2] ];
+        $old = self::nodes('1.1.0');
+        $new = self::nodes('1.2.0');
+        $sections = $old['pages']['checkout']['sections']['$value'];
+        $new['pages']['checkout']['sections']['$value'] = [ [ 'hideable' => false ] + $sections[1], $sections[0] ];
 
         $diff = SchemaDiff::compare($old, $new);
-        self::assertSame([ 'pages.home.sections.promo_banners.removed' ], array_column($diff['errors'], 'code'));
-        self::assertSame([ 'pages.home.sections.login_account', 'pages.home.sections' ], $diff['changes']['sections_changed']);
+        self::assertSame([ 'pages.checkout.sections.notes.removed' ], array_column($diff['errors'], 'code'));
+        self::assertSame([ 'pages.checkout.sections.tips', 'pages.checkout.sections' ], $diff['changes']['sections_changed']);
     }
 
     /**
@@ -217,7 +216,7 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testAVersionOneMapNamesOnlyWhatTheSchemaHas(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         self::assertSame([
             [ 'path' => 'v1_map.v1.tokens.color.nope', 'code' => 'v1_map.v1.tokens.color.nope.unknown' ],
             [ 'path' => 'v1_map.images.nope', 'code' => 'v1_map.images.nope.unknown' ],
@@ -227,8 +226,8 @@ class ThemeSchemaChangesTest extends TestCase
             'description' => 'Not a path.',
             'v1' => [ 'tokens.color.primary' => 'a.b', 'tokens.color.nope' => 'a.c' ],
             'visibility' => [ 'footer' => 'footer.hidden' ],
-            'images' => [ 'logo' => null, 'nope' => null ],
-            'pages' => [ 'home' => [ 'content' => [ 'v1' => 'x.hidden' ], 'nope' => [ 'v1' => 'y.hidden' ] ] ],
+            'images' => [ 'logotype' => null, 'nope' => null ],
+            'pages' => [ 'home' => [ 'featured' => [ 'v1' => 'x.hidden' ], 'nope' => [ 'v1' => 'y.hidden' ] ] ],
             'site' => [ 'name' => 'a.d', 'nope' => 'a.e' ],
         ]));
     }
@@ -240,7 +239,7 @@ class ThemeSchemaChangesTest extends TestCase
      */
     public function testDevelopmentWarnsOfWhatProductionRefusesAndTheSameContentIsUnchanged(): void
     {
-        $base = self::valid('26.0.0');
+        $base = self::nodes('1.0.0');
         $changed = $base;
         $changed['tokens']['color']['primary']['$value'] = '#123456';
 
@@ -257,38 +256,6 @@ class ThemeSchemaChangesTest extends TestCase
      */
     private static function nodes(string $version): array
     {
-        return [ 'version' => $version ] + ThemeSchemaFixture::webMarketplaceNodes();
-    }
-
-    /**
-     * The product's schema made valid as the golden cases make it
-     * (fixtures/validate.json's `base`).
-     *
-     * @return array<string, mixed>
-     */
-    private static function valid(string $version): array
-    {
-        $document = ThemeSchemaFixture::webMarketplaceNodes();
-        $fixture = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/fixtures/validate.json'), true, 512, JSON_THROW_ON_ERROR);
-        foreach ($fixture['base'] as $op) {
-            $segments = $op[1];
-            $last = array_pop($segments);
-            $node = &$document;
-            foreach ($segments as $segment) {
-                if (!is_array($node[$segment] ?? null)) {
-                    $node[$segment] = [];
-                }
-                $node = &$node[$segment];
-            }
-            if ($op[0] === 'set') {
-                $node[$last] = $op[2];
-            } else {
-                unset($node[$last]);
-            }
-            unset($node);
-        }
-        $document['version'] = $version;
-
-        return $document;
+        return [ 'version' => $version ] + ThemeSchemaFixture::nodes();
     }
 }

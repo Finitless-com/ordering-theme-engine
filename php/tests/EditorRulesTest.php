@@ -52,7 +52,9 @@ class EditorRulesTest extends TestCase
 
     public function testCheckReadsTheEditorOnlyGivenTheNodesAfterItsOwnRules(): void
     {
-        $original = ThemeSchemaFixture::webMarketplaceNodes();
+        // A visibility key in no group of the editor: an error of its metadata alone.
+        $original = ThemeSchemaFixture::nodes();
+        $original['visibility']['header.glow'] = [ '$value' => true ];
         $compiled = ThemeSchemaFixture::tuples($original)['schema'];
 
         self::assertSame([], ThemeSchemas::check($compiled));

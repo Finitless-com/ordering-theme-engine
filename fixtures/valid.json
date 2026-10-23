@@ -1,5 +1,5 @@
 {
-    "description": "What ThemeValidator::validate() and ThemeResolver::valid() answer for each theme, and ThemeValidator::settings() for each site's settings, over marketplace_website@26.0.",
+    "description": "What ThemeValidator::validate() and ThemeResolver::valid() answer for each theme, and ThemeValidator::settings() for each site's settings, over marketplace_website@1.0.0.",
     "php": "8.3.35",
     "cases": [
         {
@@ -267,13 +267,13 @@
                     },
                     "button": {
                         "base": {
-                            "radius": "{radius.full}",
-                            "mobile_full_width": "yes"
+                            "radius": "{radius.xl}",
+                            "full_width": "yes"
                         },
                         "colors": {
                             "primary": {
                                 "main": "#00AA55",
-                                "ink": "#003311",
+                                "ink": null,
                                 "glow": "#FFFFFF"
                             },
                             "nope": {
@@ -284,8 +284,10 @@
                             "solid": {
                                 "background": "{on}",
                                 "states": {
-                                    "hover": {
-                                        "background": null,
+                                    "pressed": {
+                                        "background": null
+                                    },
+                                    "disabled": {
                                         "color": "#FFFFFF80"
                                     },
                                     "focus": {
@@ -304,7 +306,7 @@
                             }
                         }
                     },
-                    "auth_form": {
+                    "header": {
                         "scope": {
                             "button": {
                                 "base": {
@@ -317,19 +319,19 @@
                             }
                         },
                         "slots": {
-                            "submit": {
+                            "cta": {
                                 "size": "md",
                                 "appearance": "glossy",
                                 "component": "button"
                             },
-                            "cancel": {
+                            "order_type": {
                                 "component": "link",
                                 "variant": "default"
                             },
                             "nope": {
                                 "size": "md"
                             },
-                            "resend": "link"
+                            "search": "link"
                         }
                     },
                     "modal": {
@@ -369,8 +371,12 @@
                     "code": "components.card.extra.unknown"
                 },
                 {
-                    "path": "components.button.base.mobile_full_width",
-                    "code": "components.button.base.mobile_full_width.invalid"
+                    "path": "components.button.base.radius",
+                    "code": "components.button.base.radius.invalid"
+                },
+                {
+                    "path": "components.button.base.full_width",
+                    "code": "components.button.base.full_width.invalid"
                 },
                 {
                     "path": "components.button.colors.primary.glow",
@@ -381,6 +387,10 @@
                     "code": "components.button.colors.nope.unknown"
                 },
                 {
+                    "path": "components.button.appearances.solid.states.pressed.background",
+                    "code": "components.button.appearances.solid.states.pressed.background.invalid"
+                },
+                {
                     "path": "components.button.appearances.solid.states.focus",
                     "code": "components.button.appearances.solid.states.focus.unknown"
                 },
@@ -389,32 +399,32 @@
                     "code": "components.button.sizes.sm.padding_x.alias"
                 },
                 {
-                    "path": "components.auth_form.scope.button.base.speed",
-                    "code": "components.auth_form.scope.button.base.speed.invalid"
+                    "path": "components.header.scope.button.base.speed",
+                    "code": "components.header.scope.button.base.speed.invalid"
                 },
                 {
-                    "path": "components.auth_form.scope.card",
-                    "code": "components.auth_form.scope.card.unknown"
+                    "path": "components.header.scope.card",
+                    "code": "components.header.scope.card.unknown"
                 },
                 {
-                    "path": "components.auth_form.slots.submit.appearance",
-                    "code": "components.auth_form.slots.submit.appearance.invalid"
+                    "path": "components.header.slots.cta.appearance",
+                    "code": "components.header.slots.cta.appearance.invalid"
                 },
                 {
-                    "path": "components.auth_form.slots.cancel.component",
-                    "code": "components.auth_form.slots.cancel.component.unknown"
+                    "path": "components.header.slots.order_type.component",
+                    "code": "components.header.slots.order_type.component.unknown"
                 },
                 {
-                    "path": "components.auth_form.slots.cancel.variant",
-                    "code": "components.auth_form.slots.cancel.variant.unknown"
+                    "path": "components.header.slots.order_type.variant",
+                    "code": "components.header.slots.order_type.variant.invalid"
                 },
                 {
-                    "path": "components.auth_form.slots.nope",
-                    "code": "components.auth_form.slots.nope.unknown"
+                    "path": "components.header.slots.nope",
+                    "code": "components.header.slots.nope.unknown"
                 },
                 {
-                    "path": "components.auth_form.slots.resend",
-                    "code": "components.auth_form.slots.resend.unknown"
+                    "path": "components.header.slots.search",
+                    "code": "components.header.slots.search.unknown"
                 },
                 {
                     "path": "components.card.base.border.color",
@@ -425,8 +435,12 @@
                     "code": "components.card.variants.default.background.alpha"
                 },
                 {
-                    "path": "components.button.appearances.solid.states.hover.color",
-                    "code": "components.button.appearances.solid.states.hover.color.alpha"
+                    "path": "components.button.appearances.solid.states.disabled.color",
+                    "code": "components.button.appearances.solid.states.disabled.color.alpha"
+                },
+                {
+                    "path": "components.modal.base.background",
+                    "code": "components.modal.base.background.alpha"
                 }
             ],
             "valid": {
@@ -451,22 +465,19 @@
                         }
                     },
                     "button": {
-                        "base": {
-                            "radius": "{radius.full}"
-                        },
+                        "base": [],
                         "colors": {
                             "primary": {
                                 "main": "#00AA55",
-                                "ink": "#003311"
+                                "ink": null
                             }
                         },
                         "appearances": {
                             "solid": {
                                 "background": "{on}",
                                 "states": {
-                                    "hover": {
-                                        "background": null
-                                    }
+                                    "pressed": [],
+                                    "disabled": []
                                 }
                             }
                         },
@@ -479,7 +490,7 @@
                             }
                         }
                     },
-                    "auth_form": {
+                    "header": {
                         "scope": {
                             "button": {
                                 "base": {
@@ -488,17 +499,15 @@
                             }
                         },
                         "slots": {
-                            "submit": {
+                            "cta": {
                                 "size": "md",
                                 "component": "button"
                             },
-                            "cancel": []
+                            "order_type": []
                         }
                     },
                     "modal": {
-                        "base": {
-                            "background": "#00000080"
-                        }
+                        "base": []
                     }
                 }
             }
@@ -509,11 +518,11 @@
             "values": {
                 "visibility": {
                     "footer": false,
-                    "header.logo": "no",
+                    "header.search": "no",
                     "header.nope": true
                 },
                 "images": {
-                    "logo": "https://example.com/logo.png",
+                    "logotype": "https://example.com/logo.png",
                     "favicon": "ftp://example.com/x.ico",
                     "nope": ""
                 },
@@ -526,11 +535,11 @@
                                 "visible": false
                             },
                             {
-                                "key": "content",
+                                "key": "featured",
                                 "visible": false
                             },
                             {
-                                "key": "content",
+                                "key": "featured",
                                 "visible": true
                             },
                             {
@@ -538,31 +547,34 @@
                                 "visible": true
                             },
                             {
-                                "key": "promo_banners"
-                            },
-                            {
-                                "key": "login_account",
+                                "key": "recent",
                                 "visible": true,
                                 "extra": 1
                             }
                         ],
                         "extra": true
                     },
-                    "business_listing": {
+                    "checkout": {
+                        "sections": [
+                            {
+                                "key": "tips"
+                            }
+                        ]
+                    },
+                    "not_found": {
                         "sections": {
                             "key": "hero"
                         }
                     },
                     "nope": {
                         "footer": true
-                    },
-                    "orders": []
+                    }
                 }
             },
             "errors": [
                 {
-                    "path": "visibility.header.logo",
-                    "code": "visibility.header.logo.invalid"
+                    "path": "visibility.header.search",
+                    "code": "visibility.header.search.invalid"
                 },
                 {
                     "path": "visibility.header.nope",
@@ -597,16 +609,16 @@
                     "code": "pages.home.sections.4.invalid"
                 },
                 {
-                    "path": "pages.home.sections.5",
-                    "code": "pages.home.sections.5.invalid"
-                },
-                {
                     "path": "pages.home.extra",
                     "code": "pages.home.extra.unknown"
                 },
                 {
-                    "path": "pages.business_listing.sections",
-                    "code": "pages.business_listing.sections.invalid"
+                    "path": "pages.checkout.sections.0",
+                    "code": "pages.checkout.sections.0.invalid"
+                },
+                {
+                    "path": "pages.not_found.sections",
+                    "code": "pages.not_found.sections.invalid"
                 },
                 {
                     "path": "pages.nope",
@@ -618,19 +630,21 @@
                     "footer": false
                 },
                 "images": {
-                    "logo": "https://example.com/logo.png"
+                    "logotype": "https://example.com/logo.png"
                 },
                 "pages": {
                     "home": {
                         "sections": [
                             {
-                                "key": "content",
+                                "key": "featured",
                                 "visible": false
                             }
                         ]
                     },
-                    "business_listing": [],
-                    "orders": []
+                    "checkout": {
+                        "sections": []
+                    },
+                    "not_found": []
                 }
             }
         },
@@ -673,7 +687,7 @@
                         },
                         "visibility": {
                             "footer": true,
-                            "header.logo": 1,
+                            "header.search": 1,
                             "nope": false
                         },
                         "pages": {
@@ -716,8 +730,8 @@
                     "code": "platforms.mobile_web.pages.home.sections.0.invalid"
                 },
                 {
-                    "path": "platforms.mobile_web.visibility.header.logo",
-                    "code": "platforms.mobile_web.visibility.header.logo.invalid"
+                    "path": "platforms.mobile_web.visibility.header.search",
+                    "code": "platforms.mobile_web.visibility.header.search.invalid"
                 },
                 {
                     "path": "platforms.mobile_web.visibility.nope",
@@ -730,6 +744,10 @@
                 {
                     "path": "modes.dark.color.surface",
                     "code": "modes.dark.color.surface.alpha"
+                },
+                {
+                    "path": "platforms.mobile_web.components.modal.base.background",
+                    "code": "platforms.mobile_web.components.modal.base.background.alpha"
                 }
             ],
             "valid": {
@@ -750,9 +768,7 @@
                                 }
                             },
                             "modal": {
-                                "base": {
-                                    "background": "#00000080"
-                                }
+                                "base": []
                             }
                         },
                         "visibility": {
@@ -808,11 +824,11 @@
                                 "visible": false
                             },
                             {
-                                "key": "content",
+                                "key": "featured",
                                 "visible": false
                             },
                             {
-                                "key": "promo_banners",
+                                "key": "recent",
                                 "visible": true
                             }
                         ]
@@ -828,7 +844,7 @@
                                         "visible": true
                                     },
                                     {
-                                        "key": "content",
+                                        "key": "featured",
                                         "visible": true
                                     }
                                 ]
@@ -856,11 +872,11 @@
                     "home": {
                         "sections": [
                             {
-                                "key": "content",
+                                "key": "featured",
                                 "visible": false
                             },
                             {
-                                "key": "promo_banners",
+                                "key": "recent",
                                 "visible": true
                             }
                         ]
@@ -872,7 +888,7 @@
                             "home": {
                                 "sections": [
                                     {
-                                        "key": "content",
+                                        "key": "featured",
                                         "visible": true
                                     }
                                 ]
@@ -927,11 +943,11 @@
         },
         {
             "name": "out-of-range",
-            "description": "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a variant's state, a size, a platform's default and the base it falls back to, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.",
+            "description": "Numbers outside their editor's limits: a token, a typography style's fields (one out, one within), a property's base, a platform's default with limits of its own and a platform's value of a property with none there, which takes its base's, refused when saved and clamped to the closest limit when read; within them, at the limits, and an alias are kept.",
             "values": {
                 "tokens": {
                     "size": {
-                        "sm": 90,
+                        "lg": 90,
                         "md": 20
                     },
                     "space": {
@@ -951,41 +967,36 @@
                     }
                 },
                 "components": {
-                    "choice": {
-                        "variants": {
-                            "default": {
-                                "states": {
-                                    "disabled": {
-                                        "opacity": 0.05
-                                    }
-                                }
-                            }
-                        }
-                    },
                     "button": {
                         "base": {
-                            "icon_gap": "{space.lg}"
+                            "icon_gap": "{space.lg}",
+                            "speed": 1500
                         },
                         "sizes": {
-                            "xs": {
+                            "sm": {
                                 "height": 40,
                                 "icon_size": 16
                             }
                         }
                     },
-                    "empty_state": {
+                    "header": {
                         "base": {
-                            "padding_y": 120
+                            "logo_width": 400,
+                            "height": 96
                         }
                     }
                 },
                 "platforms": {
                     "mobile_web": {
                         "components": {
-                            "empty_state": {
+                            "banner": {
                                 "base": {
-                                    "padding_x": 100,
-                                    "padding_y": 90
+                                    "columns": 5
+                                }
+                            },
+                            "button": {
+                                "base": {
+                                    "speed": 1500
                                 }
                             }
                         }
@@ -994,8 +1005,8 @@
             },
             "errors": [
                 {
-                    "path": "tokens.size.sm",
-                    "code": "tokens.size.sm.out_of_range"
+                    "path": "tokens.size.lg",
+                    "code": "tokens.size.lg.out_of_range"
                 },
                 {
                     "path": "tokens.typography.h1",
@@ -1006,26 +1017,26 @@
                     "code": "tokens.typography.h1.line.out_of_range"
                 },
                 {
-                    "path": "components.choice.variants.default.states.disabled.opacity",
-                    "code": "components.choice.variants.default.states.disabled.opacity.out_of_range"
+                    "path": "components.button.base.speed",
+                    "code": "components.button.base.speed.out_of_range"
                 },
                 {
-                    "path": "components.button.sizes.xs.height",
-                    "code": "components.button.sizes.xs.height.out_of_range"
+                    "path": "components.header.base.logo_width",
+                    "code": "components.header.base.logo_width.out_of_range"
                 },
                 {
-                    "path": "components.empty_state.base.padding_y",
-                    "code": "components.empty_state.base.padding_y.out_of_range"
+                    "path": "platforms.mobile_web.components.banner.base.columns",
+                    "code": "platforms.mobile_web.components.banner.base.columns.out_of_range"
                 },
                 {
-                    "path": "platforms.mobile_web.components.empty_state.base.padding_x",
-                    "code": "platforms.mobile_web.components.empty_state.base.padding_x.out_of_range"
+                    "path": "platforms.mobile_web.components.button.base.speed",
+                    "code": "platforms.mobile_web.components.button.base.speed.out_of_range"
                 }
             ],
             "valid": {
                 "tokens": {
                     "size": {
-                        "sm": 80,
+                        "lg": 64,
                         "md": 20
                     },
                     "space": {
@@ -1033,8 +1044,8 @@
                     },
                     "typography": {
                         "h1": {
-                            "size": 96,
-                            "line": 2,
+                            "size": 56,
+                            "line": 1.6,
                             "weight": 600
                         },
                         "h2": {
@@ -1045,41 +1056,36 @@
                     }
                 },
                 "components": {
-                    "choice": {
-                        "variants": {
-                            "default": {
-                                "states": {
-                                    "disabled": {
-                                        "opacity": 0.1
-                                    }
-                                }
-                            }
-                        }
-                    },
                     "button": {
                         "base": {
-                            "icon_gap": "{space.lg}"
+                            "icon_gap": "{space.lg}",
+                            "speed": 1000
                         },
                         "sizes": {
-                            "xs": {
-                                "height": 32,
+                            "sm": {
+                                "height": 40,
                                 "icon_size": 16
                             }
                         }
                     },
-                    "empty_state": {
+                    "header": {
                         "base": {
-                            "padding_y": 96
+                            "logo_width": 320,
+                            "height": 96
                         }
                     }
                 },
                 "platforms": {
                     "mobile_web": {
                         "components": {
-                            "empty_state": {
+                            "banner": {
                                 "base": {
-                                    "padding_x": 96,
-                                    "padding_y": 90
+                                    "columns": 2
+                                }
+                            },
+                            "button": {
+                                "base": {
+                                    "speed": 1000
                                 }
                             }
                         }
@@ -1104,7 +1110,7 @@
                         "page_gutter": 120
                     },
                     "typography": {
-                        "h3": {
+                        "h2": {
                             "size": 300,
                             "line": 5,
                             "weight": 600,
@@ -1119,7 +1125,7 @@
                             "radius": 6
                         }
                     },
-                    "auth_form": {
+                    "header": {
                         "scope": {
                             "button": {
                                 "base": {
@@ -1133,10 +1139,14 @@
                 "platforms": {
                     "mobile_web": {
                         "components": {
-                            "empty_state": {
+                            "banner": {
                                 "base": {
-                                    "padding_x": -3,
-                                    "min_height": 10000
+                                    "columns": -3
+                                }
+                            },
+                            "header": {
+                                "base": {
+                                    "height": 10000
                                 }
                             }
                         }
@@ -1157,8 +1167,8 @@
                     "code": "tokens.opacity.disabled.invalid"
                 },
                 {
-                    "path": "tokens.typography.h3",
-                    "code": "tokens.typography.h3.invalid"
+                    "path": "tokens.typography.h2",
+                    "code": "tokens.typography.h2.invalid"
                 },
                 {
                     "path": "components.card.base.padding",
@@ -1169,20 +1179,16 @@
                     "code": "components.card.base.radius.invalid"
                 },
                 {
-                    "path": "platforms.mobile_web.components.empty_state.base.padding_x",
-                    "code": "platforms.mobile_web.components.empty_state.base.padding_x.invalid"
+                    "path": "platforms.mobile_web.components.banner.base.columns",
+                    "code": "platforms.mobile_web.components.banner.base.columns.invalid"
                 },
                 {
-                    "path": "platforms.mobile_web.components.empty_state.base.min_height",
-                    "code": "platforms.mobile_web.components.empty_state.base.min_height.invalid"
+                    "path": "platforms.mobile_web.components.header.base.height",
+                    "code": "platforms.mobile_web.components.header.base.height.invalid"
                 },
                 {
-                    "path": "tokens.layout.page_gutter",
-                    "code": "tokens.layout.page_gutter.out_of_range"
-                },
-                {
-                    "path": "components.auth_form.scope.button.base.icon_gap",
-                    "code": "components.auth_form.scope.button.base.icon_gap.out_of_range"
+                    "path": "components.header.scope.button.base.icon_gap",
+                    "code": "components.header.scope.button.base.icon_gap.out_of_range"
                 }
             ],
             "valid": {
@@ -1192,32 +1198,32 @@
                         "sm": 0
                     },
                     "opacity": {
-                        "disabled": 1
+                        "disabled": 0.9
                     },
                     "layout": {
                         "mode": "original",
-                        "page_gutter": 80
+                        "page_gutter": 120
                     },
                     "typography": {
-                        "h3": {
-                            "size": 96,
+                        "h2": {
+                            "size": 72,
                             "line": 2,
                             "weight": 600,
-                            "letter_spacing": -20
+                            "letter_spacing": -2
                         }
                     }
                 },
                 "components": {
                     "card": {
                         "base": {
-                            "padding": 96
+                            "padding": 9999
                         }
                     },
-                    "auth_form": {
+                    "header": {
                         "scope": {
                             "button": {
                                 "base": {
-                                    "icon_gap": 96,
+                                    "icon_gap": 32,
                                     "radius": "{radius.sm}"
                                 }
                             }
@@ -1227,10 +1233,14 @@
                 "platforms": {
                     "mobile_web": {
                         "components": {
-                            "empty_state": {
+                            "banner": {
                                 "base": {
-                                    "padding_x": 0,
-                                    "min_height": 9999
+                                    "columns": 1
+                                }
+                            },
+                            "header": {
+                                "base": {
+                                    "height": 9999
                                 }
                             }
                         }
@@ -1240,33 +1250,46 @@
         },
         {
             "name": "image-formats",
-            "description": "An image's extension is one of its formats (`jpeg` is `jpg`, in any case, the query aside): the favicon takes no SVG and a key without formats no ICO; a URL without the extension of a known format says nothing.",
+            "description": "An image's extension is one of its formats (in any case, the query aside): the logotype takes SVG, the favicon does not, and a key without formats takes no ICO.",
             "values": {
                 "images": {
-                    "logo": "https://cdn.example.com/a/logo.SVG?w=2",
-                    "logo_mobile": "https://cdn.example.com/logo.jpeg",
-                    "logo_inverse": "https://cdn.example.com/image/upload/abc",
-                    "favicon": "https://cdn.example.com/favicon.svg",
-                    "home_hero": "https://cdn.example.com/hero.ico",
-                    "app_icon": "https://cdn.example.com/icon.v2/file"
+                    "logotype": "https://cdn.example.com/a/logo.SVG?w=2",
+                    "isotype": "https://cdn.example.com/hero.ico",
+                    "favicon": "https://cdn.example.com/favicon.svg"
                 }
             },
             "errors": [
                 {
-                    "path": "images.favicon",
-                    "code": "images.favicon.format"
+                    "path": "images.isotype",
+                    "code": "images.isotype.format"
                 },
                 {
-                    "path": "images.home_hero",
-                    "code": "images.home_hero.format"
+                    "path": "images.favicon",
+                    "code": "images.favicon.format"
                 }
             ],
             "valid": {
                 "images": {
-                    "logo": "https://cdn.example.com/a/logo.SVG?w=2",
-                    "logo_mobile": "https://cdn.example.com/logo.jpeg",
-                    "logo_inverse": "https://cdn.example.com/image/upload/abc",
-                    "app_icon": "https://cdn.example.com/icon.v2/file"
+                    "logotype": "https://cdn.example.com/a/logo.SVG?w=2"
+                }
+            }
+        },
+        {
+            "name": "image-formats-unnamed",
+            "description": "`jpeg` is `jpg`, and a URL without the extension of a known format says nothing of it.",
+            "values": {
+                "images": {
+                    "logotype": "https://cdn.example.com/image/upload/abc",
+                    "isotype": "https://cdn.example.com/logo.JPEG",
+                    "favicon": "https://cdn.example.com/icon.v2/file"
+                }
+            },
+            "errors": [],
+            "valid": {
+                "images": {
+                    "logotype": "https://cdn.example.com/image/upload/abc",
+                    "isotype": "https://cdn.example.com/logo.JPEG",
+                    "favicon": "https://cdn.example.com/icon.v2/file"
                 }
             }
         },
@@ -1331,6 +1354,10 @@
                     "code": "site.third_party_code.invalid"
                 },
                 {
+                    "path": "site.smart_banner.apple_id",
+                    "code": "site.smart_banner.apple_id.invalid"
+                },
+                {
                     "path": "site.smart_banner.nope",
                     "code": "site.smart_banner.nope.unknown"
                 },
@@ -1344,9 +1371,7 @@
                 }
             ],
             "valid": {
-                "smart_banner": {
-                    "apple_id": "123"
-                }
+                "smart_banner": []
             }
         },
         {

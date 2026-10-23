@@ -3,7 +3,7 @@ import {
   check, checkUpgrade, compile, cutDown, cutDownSettings, upgradeChain, upgradeSettingsChain, validate, validateShape,
   type Json, type JsonMap, type NodeSchema, type Rewrite,
 } from '../src/index.js'
-import { differences, json } from './fixtures.js'
+import { differences, json, reference } from './fixtures.js'
 
 /**
  * What the PHP ThemeUpgrades answers for each theme or site's settings
@@ -44,7 +44,7 @@ function apply<T>(document: T, ops: Op[]): T {
   return answer as T
 }
 
-/** The script's rewrite `test.bolder`: `small` becomes `caption` unless it is set, and every weight goes a step up. */
+/** The script's rewrite `test.bolder`: `small` becomes `label` unless it is set, and every weight goes a step up. */
 const bolder: Rewrite = (id, values, _previous, next) => {
   const declared = (next.upgrade as JsonMap | undefined)?.rewrite as JsonMap | undefined
   if (id !== 'test.bolder' || declared?.id !== id) {
@@ -55,7 +55,7 @@ const bolder: Rewrite = (id, values, _previous, next) => {
     return values
   }
   if (typeof styles.small === 'object' && styles.small !== null) {
-    styles.caption ??= styles.small
+    styles.label ??= styles.small
     delete styles.small
   }
   for (const typography of Object.values(styles)) {
@@ -69,7 +69,7 @@ const bolder: Rewrite = (id, values, _previous, next) => {
 
 describe("the upgrade between bases answers what api-core's ThemeUpgrades answers", () => {
   const fixture = json<{ schemas: Record<string, Op[]>; cases: UpgradeCase[] }>('upgrade.json')
-  const original = json<NodeSchema>('schema-26.0.nodes.json')
+  const original = reference()
   const bases = Object.fromEntries(Object.entries(fixture.schemas).map(([base, ops]) => [base, apply(original, ops)]))
 
   it('has cases of every kind: identity, moves, map, token aliases, type change, drop, rewrite, chain, settings and cut-down', () => {
@@ -92,40 +92,40 @@ describe("the upgrade between bases answers what api-core's ThemeUpgrades answer
 })
 
 describe('the upgrade block, as the PHP ThemeUpgradesTest', () => {
-  const schema = (version: string): NodeSchema => ({ ...json<NodeSchema>('schema-26.0.nodes.json'), version })
+  const schema = (version: string): NodeSchema => ({ ...reference(), version })
 
   it('passes the meta-schema with empty lists and a map by index, and not in another shape', () => {
-    const next = schema('27.0.0')
+    const next = schema('2.0.0')
     next.$extensions = {
       'co.ordering.migrate': [],
       'co.ordering.upgrade': {
-        from: 26,
+        from: 1,
         moves: [{ from: 'components.card.base.columns', to: 'components.card.base.columns', map: { 0: 'none', 1: 'two' } }],
         drop: [],
-        rewrite: { id: 'marketplace_website.27', paths: [] },
+        rewrite: { id: 'reference.2', paths: [] },
       },
     }
     expect(validateShape(next)).toEqual([])
-    next.$extensions = { 'co.ordering.upgrade': { from: '26', moves: [{ from: 'components', to: 'x.y', extra: 1 }] } }
+    next.$extensions = { 'co.ordering.upgrade': { from: '1', moves: [{ from: 'components', to: 'x.y', extra: 1 }] } }
     expect(validateShape(next)).not.toEqual([])
   })
 
   it('goes to the tuples with its shape checked', () => {
-    const block = { from: 26, moves: [], drop: ['visibility.footer'] }
-    const next = { ...schema('27.0.0'), $extensions: { 'co.ordering.upgrade': block } }
+    const block = { from: 1, moves: [], drop: ['visibility.footer'] }
+    const next = { ...schema('2.0.0'), $extensions: { 'co.ordering.upgrade': block } }
     const compiled = compile(next).schema
     expect(differences(compiled.upgrade, block)).toEqual([])
     expect(check(compiled).map((error) => error.code)).not.toContain('upgrade.invalid')
-    for (const invalid of [{}, { from: '26', moves: [], drop: [] }, { from: 26, moves: { a: 1 }, drop: [] }, { from: 26, moves: [] }]) {
+    for (const invalid of [{}, { from: '1', moves: [], drop: [] }, { from: 1, moves: { a: 1 }, drop: [] }, { from: 1, moves: [] }]) {
       compiled.upgrade = invalid as JsonMap
       expect(check(compiled).map((error) => error.code)).toContain('upgrade.invalid')
     }
   })
 
   it('names no previous base without one', () => {
-    const next = schema('27.0.0')
+    const next = schema('2.0.0')
     expect(checkUpgrade(next, null)).toEqual([])
-    next.$extensions = { 'co.ordering.upgrade': { from: 26, moves: [], drop: [] } }
+    next.$extensions = { 'co.ordering.upgrade': { from: 1, moves: [], drop: [] } }
     expect(checkUpgrade(next, null)).toEqual([{ path: 'upgrade.from', code: 'upgrade.from.invalid' }])
     expect(validate(next).errors.map((error) => error.code)).not.toContain('upgrade.from.invalid')
   })

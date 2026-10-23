@@ -48,8 +48,8 @@ class ThemeSchemaPublicationTest extends TestCase
 
         self::assertSame([
             'components.link.base.underline.option_removed',
-            'components.card.base.radius.type_changed',
             'components.card.base.padding.removed',
+            'components.card.base.radius.type_changed',
             'schema.migration_removed',
         ], $codes);
         // A new base starts over.
@@ -122,14 +122,14 @@ class ThemeSchemaPublicationTest extends TestCase
         ], $values);
 
         // Every reader goes through valid(): the moved value resolves.
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $schema['migrate'] = [ $migrations[0] ];
         self::assertSame('#FFF8E1', ThemeResolver::valid([ 'components' => [ 'card' => [ 'base' => [ 'bg' => '#FFF8E1' ] ] ] ], $schema)['components']['card']['base']['background']);
     }
 
     public function testAMigrationGoesFromAKeyTheSchemaNoLongerHasToOneItHas(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $schema['migrate'] = [
             [ 'from' => 'components.card.base.bg', 'to' => 'components.card.base.background' ],
             [ 'from' => 'components.card.base.padding', 'to' => 'components.card.base.background' ],
@@ -152,38 +152,38 @@ class ThemeSchemaPublicationTest extends TestCase
      */
     public function testVisibilityImagesAndPagesHaveTheKindOfTheSchemasOwnKeys(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $kinds = fn (array $paths) => array_map(fn (string $path) => ThemeSchemas::kindAt($schema, $path), $paths);
 
         self::assertSame(
             [ 'bool', 'bool', 'image', 'image', 'page', 'bool', 'sections', 'section' ],
-            $kinds([ 'visibility.footer', 'visibility.business.header.info', 'images.logo', 'images.empty.not_found', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero' ]),
+            $kinds([ 'visibility.footer', 'visibility.header.search', 'images.logotype', 'images.favicon', 'pages.home', 'pages.home.footer', 'pages.home.sections', 'pages.home.sections.hero' ]),
         );
         // What the schema does not have, or no theme stores.
         self::assertSame(
             array_fill(0, 9, null),
-            $kinds([ 'visibility', 'visibility.business', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.cards.sections.hero' ]),
+            $kinds([ 'visibility', 'visibility.header', 'images.nope', 'pages', 'pages.nope', 'pages.home.extra', 'pages.home.sections.nope', 'pages.home.sections.hero.visible', 'pages.checkout.sections.hero' ]),
         );
 
         // A version 1 path is a token's, a component's or a site setting's: the others carry theirs.
-        $schema['v1'] = [ 'visibility.footer' => 'some.hidden', 'images.logo' => 'some.image', 'pages.home.footer' => 'some.footer' ];
-        self::assertSame([ 'v1.visibility.footer.invalid', 'v1.images.logo.invalid', 'v1.pages.home.footer.invalid' ], array_column(ThemeSchemas::check($schema), 'code'));
+        $schema['v1'] = [ 'visibility.footer' => 'some.hidden', 'images.logotype' => 'some.image', 'pages.home.footer' => 'some.footer' ];
+        self::assertSame([ 'v1.visibility.footer.invalid', 'v1.images.logotype.invalid', 'v1.pages.home.footer.invalid' ], array_column(ThemeSchemas::check($schema), 'code'));
     }
 
     public function testAMigrationOfVisibilityImagesOrPagesKeepsTheKindOfWhatItMoves(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
+        $schema = ThemeSchemaFixture::compiled();
         $schema['migrate'] = [
-            [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.logo' ],
-            [ 'from' => 'images.brand_logo', 'to' => 'images.logo' ],
-            [ 'from' => 'pages.shop', 'to' => 'pages.business_listing' ],
+            [ 'from' => 'visibility.header.brand', 'to' => 'visibility.header.search' ],
+            [ 'from' => 'images.brand_logo', 'to' => 'images.logotype' ],
+            [ 'from' => 'pages.shop', 'to' => 'pages.checkout' ],
             [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.footer' ],
             [ 'from' => 'pages.shop.sections', 'to' => 'pages.home.sections' ],
-            [ 'from' => 'pages.home.sections.banner', 'to' => 'pages.home.sections.promo_banners' ],
+            [ 'from' => 'pages.home.sections.banner', 'to' => 'pages.home.sections.featured' ],
             // Invalid from here: a key that is no key, across sections, and kinds that differ.
-            [ 'from' => 'visibility.Header-Brand', 'to' => 'visibility.header.logo' ],
-            [ 'from' => 'images.', 'to' => 'images.logo' ],
-            [ 'from' => 'visibility.home.banner', 'to' => 'pages.home.sections.promo_banners' ],
+            [ 'from' => 'visibility.Header-Brand', 'to' => 'visibility.header.search' ],
+            [ 'from' => 'images.', 'to' => 'images.logotype' ],
+            [ 'from' => 'visibility.home.banner', 'to' => 'pages.home.sections.featured' ],
             [ 'from' => 'pages.shop.footer', 'to' => 'pages.home.sections.hero' ],
             [ 'from' => 'pages.shop', 'to' => 'pages.home.footer' ],
             [ 'from' => 'pages.shop.sections.hero', 'to' => 'pages.home' ],
@@ -272,8 +272,8 @@ class ThemeSchemaPublicationTest extends TestCase
      */
     public function testEveryTokenHasTheKindOfItsGroupByTheSchemasOwnNames(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
-        unset($schema['tokens']['typography']['overline']);
+        $schema = ThemeSchemaFixture::compiled();
+        unset($schema['tokens']['typography']['label']);
         $kinds = fn (array $paths) => array_map(fn (string $path) => ThemeSchemas::kindAt($schema, $path), $paths);
 
         self::assertSame(
@@ -283,7 +283,7 @@ class ThemeSchemaPublicationTest extends TestCase
         // A name the schema does not have (one it dropped, though the catalog has it), a group, or no token.
         self::assertSame(
             array_fill(0, 5, null),
-            $kinds([ 'tokens.typography.overline', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more' ]),
+            $kinds([ 'tokens.typography.label', 'tokens.typography.small', 'tokens.typography', 'tokens.nope.sm', 'tokens.radius.md.more' ]),
         );
     }
 
@@ -294,10 +294,10 @@ class ThemeSchemaPublicationTest extends TestCase
      */
     public function testATokenMigratesByItsGroupAndAGroupStillThereIsNoFrom(): void
     {
-        $schema = ThemeSchemaFixture::webMarketplace();
-        unset($schema['tokens']['typography']['overline']);
+        $schema = ThemeSchemaFixture::compiled();
+        unset($schema['tokens']['typography']['label']);
         $schema['migrate'] = [
-            [ 'from' => 'tokens.typography.overline', 'to' => 'tokens.typography.caption' ],
+            [ 'from' => 'tokens.typography.label', 'to' => 'tokens.typography.body_sm' ],
             [ 'from' => 'tokens.opacity.dim', 'to' => 'tokens.opacity.scrim' ],
             [ 'from' => 'tokens.color.brand', 'to' => 'tokens.color.primary' ],
             // Invalid from here: groups the schema still has.
@@ -352,6 +352,6 @@ class ThemeSchemaPublicationTest extends TestCase
      */
     private static function schema(string $version): array
     {
-        return [ 'version' => $version ] + ThemeSchemaFixture::webMarketplaceNodes();
+        return [ 'version' => $version ] + ThemeSchemaFixture::nodes();
     }
 }

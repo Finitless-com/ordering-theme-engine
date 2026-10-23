@@ -1,11 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { basename } from 'node:path'
-import type { Json, NodeSchema, ThemeValues } from '../src/index.js'
+import type { Json, NodeSchema, ThemeValues, V1Map } from '../src/index.js'
 
 /**
  * The fixtures the PHP engine produces (php/src, through
  * scripts/sync-fixtures.sh): the golden cases, the node schema they
- * resolve over, and the empty theme of the product's current schema.
+ * resolve over, and what it answers over the reference schema.
  */
 const directory = new URL('../fixtures/', import.meta.url)
 
@@ -30,6 +30,16 @@ export function cases(): Array<[string, Case]> {
 }
 
 export const goldenSchema = (): NodeSchema => json<NodeSchema>('schema.nodes.json')
+
+/** The reference schema (meta/reference/) at $version, in nodes. */
+export function reference(version = '1.0.0'): NodeSchema {
+  return JSON.parse(readFileSync(new URL(`../meta/reference/reference-${version}.json`, import.meta.url), 'utf8')) as NodeSchema
+}
+
+/** The version 1 map the reference's 1.0.0 is published with. */
+export function referenceV1Map(): V1Map {
+  return JSON.parse(readFileSync(new URL('../meta/reference/reference-1.0.0.v1-map.json', import.meta.url), 'utf8')) as V1Map
+}
 
 /**
  * $schema with the migrations a case declares (`co.ordering.migrate`, as
