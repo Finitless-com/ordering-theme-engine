@@ -3,6 +3,9 @@
 # Regenerates what fixtures/ derives from the PHP engine of this repository
 # (php/src), the reference the TypeScript engine is compared with:
 #
+# - meta/reference/reference-1.1.0.json and reference-2.0.0.json: the
+#   versions of the reference schema after 1.0.0, its text with replacements
+#   (scripts/reference-versions.php);
 # - fixtures/schema.tuples.json: the golden schema of the golden cases, the
 #   reference schema in the tuples of the format before nodes and without the
 #   rules it declares (scripts/golden-schema.php);
@@ -30,7 +33,7 @@
 #   scripts/php-strings.php).
 #
 # What it reads and never writes: the cases' `description`, `migrate` and
-# `values`, the reference schema and its version 1 map, and
+# `values`, the reference schema's 1.0.0 and its version 1 map, and
 # meta/theme-schema-1.json.
 #
 # It runs PHP in docker, pinned to the PHP 8.3 the fixtures record, so it
@@ -75,6 +78,10 @@ echo "PHP: $(php -r 'echo PHP_VERSION;') ($PHP_IMAGE), engine at $(git -C "$ROOT
 
 REFERENCE=meta/reference/reference-1.0.0.json
 REFERENCE_MAP=meta/reference/reference-1.0.0.v1-map.json
+
+# The reference schema's versions after 1.0.0.
+into "$ROOT/meta/reference/reference-1.1.0.json" php scripts/reference-versions.php "$REFERENCE" 1.1.0
+into "$ROOT/meta/reference/reference-2.0.0.json" php scripts/reference-versions.php "$REFERENCE" 2.0.0
 
 # The golden cases' schema, and their answers, written in place.
 into "$FIXTURES/schema.tuples.json" php scripts/golden-schema.php "$REFERENCE" "$REFERENCE_MAP"
