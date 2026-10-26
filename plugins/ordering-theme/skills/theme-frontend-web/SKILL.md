@@ -93,7 +93,9 @@ commit by phase or by batch.
 
 ### 1. Inventory (without touching code)
 
-Run the scripts (Node ≥ 18, no dependencies). `<skill>` is this skill's directory.
+Run the scripts (Node ≥ 18, no dependencies). `<skill>` is this skill's directory, the base
+directory Claude Code gives when it loads the skill (installed as a plugin, under
+`~/.claude/plugins/cache/`).
 
 ```sh
 node <skill>/scripts/inventory.mjs  <repo> --src src [--exclude '<regex>'] --out <repo>/.theme-audit

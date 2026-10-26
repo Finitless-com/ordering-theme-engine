@@ -1,0 +1,17 @@
+{
+  "name": "ordering-theme",
+  "version": "1.0.0",
+  "description": "Skills to make a frontend obey its product's theme schema with the Ordering theme engine: theme-frontend-web converts a web frontend (inventory, token scales, components, pages and visibility, the schema, the runtime and the code).",
+  "author": {
+    "name": "Ordering, Inc."
+  },
+  "homepage": "https://github.com/Finitless-com/ordering-theme-engine#converting-a-frontend-the-claude-code-plugin",
+  "repository": "https://github.com/Finitless-com/ordering-theme-engine",
+  "license": "MIT",
+  "keywords": [
+    "ordering",
+    "theme",
+    "design-tokens",
+    "skills"
+  ]
+}

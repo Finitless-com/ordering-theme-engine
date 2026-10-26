@@ -315,24 +315,50 @@ the same change. `php/tests/ReferenceSchemaTest.php` checks the versions in PHP.
 Its names and defaults are made up; they may change in a minor of the engine, never in a
 patch.
 
-## Converting a frontend: the Claude Code skill
+## Converting a frontend: the Claude Code plugin
 
-`.claude/skills/theme-frontend-web/` is a [Claude Code](https://claude.com/claude-code)
-skill that converts a web frontend so it obeys its product's schema: it
-inventories every element and hand-written value, groups the pieces that do the same
-thing, collapses near values into the token scales, classifies pages, sections,
-visibility, images and site settings, writes the schema, wires `complete()` and `toCss()`
-into the frontend and fixes the code in batches, with scripts (`scripts/*.mjs`, Node, no
-dependencies) for the inventory, the scales, the components, a CI guard against
-hand-written values and the schema keys no code reads. Its model is the conversion of
-`website-marketplace-v26` into `website-marketplace-theming`.
+This repository is also a [Claude Code](https://claude.com/claude-code) plugin
+marketplace (`.claude-plugin/marketplace.json`) with one plugin, `ordering-theme`
+(`plugins/ordering-theme/`). Its skill `theme-frontend-web` converts a web frontend so it
+obeys its product's schema: it inventories every element and hand-written value, groups
+the pieces that do the same thing, collapses near values into the token scales,
+classifies pages, sections, visibility, images and site settings, writes the schema,
+wires `complete()` and `toCss()` into the frontend and fixes the code in batches, with
+scripts (`scripts/*.mjs`, Node, no dependencies) for the inventory, the scales, the
+components, a CI guard against hand-written values and the schema keys no code reads. Its
+model is the conversion of `website-marketplace-v26` into `website-marketplace-theming`.
 
-It is not shipped in either package. To use it in another repository, link it into your
-Claude Code skills:
+Install it once per machine (Claude Code 2.1.275 or later), in a session:
+
+```text
+/plugin install ordering-theme --marketplace Finitless-com/ordering-theme-engine
+```
+
+or from a shell:
 
 ```sh
-ln -s "$PWD/.claude/skills/theme-frontend-web" ~/.claude/skills/theme-frontend-web
+claude plugin marketplace add Finitless-com/ordering-theme-engine
+claude plugin install ordering-theme@ordering-theme-engine
 ```
+
+The skill is then `/ordering-theme:theme-frontend-web`, and Claude also uses it on its own
+when asked to theme a frontend. `claude plugin update ordering-theme@ordering-theme-engine`
+brings a newer version; a change to the plugin bumps `version` in its `plugin.json`.
+
+A frontend's repository can offer it to whoever works on it, in `.claude/settings.json`
+(each person still confirms the install):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "ordering-theme-engine": { "source": { "source": "github", "repo": "Finitless-com/ordering-theme-engine" } }
+  },
+  "enabledPlugins": { "ordering-theme@ordering-theme-engine": true }
+}
+```
+
+Neither package ships the plugin. `claude plugin validate .` checks the marketplace and
+the plugin.
 
 ## PHP
 
