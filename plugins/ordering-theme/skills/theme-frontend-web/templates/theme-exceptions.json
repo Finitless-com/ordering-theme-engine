@@ -1,0 +1,6 @@
+[
+  { "file": "/icons?/|Illustration|/utils\\.js$", "category": "color", "reason": "Inline SVG illustrations: not themable UI" },
+  { "file": "components/(GoogleLogin|AppleLogin|FacebookLogin)/", "reason": "Third-party brand buttons: the brand sets their colors" },
+  { "file": "components/StripeElements/", "reason": "Style object Stripe paints in its iframe" },
+  { "file": "components/HomeHero/styles\\.js$", "value": "#FFFFFF", "category": "color", "reason": "Text over the hero photo (approved 2026-10-26)" }
+]
