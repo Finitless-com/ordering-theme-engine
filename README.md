@@ -319,14 +319,23 @@ patch.
 
 This repository is also a [Claude Code](https://claude.com/claude-code) plugin
 marketplace (`.claude-plugin/marketplace.json`) with one plugin, `ordering-theme`
-(`plugins/ordering-theme/`). Its skill `theme-frontend-web` converts a web frontend so it
-obeys its product's schema: it inventories every element and hand-written value, groups
-the pieces that do the same thing, collapses near values into the token scales,
-classifies pages, sections, visibility, images and site settings, writes the schema,
-wires `complete()` and `toCss()` into the frontend and fixes the code in batches, with
-scripts (`scripts/*.mjs`, Node, no dependencies) for the inventory, the scales, the
-components, a CI guard against hand-written values and the schema keys no code reads. Its
-model is the conversion of `website-marketplace-v26` into `website-marketplace-theming`.
+(`plugins/ordering-theme/`) with two skills that convert a frontend so it obeys its
+product's schema: they inventory every element and hand-written value, group the pieces
+that do the same thing, collapse near values into the token scales, classify pages,
+sections, visibility, images and site settings, write the schema, wire the engine into
+the frontend and fix the code in batches.
+
+- `theme-frontend-web`, for a web frontend: `complete()` and `toCss()`. Its model is the
+  conversion of `website-marketplace-v26` into `website-marketplace-theming`.
+- `theme-frontend-native`, for a React Native app: `complete()` and the app's own adapter
+  to React Native styles, the build's defaults in the binary, the served theme cached,
+  the catalog's fonts bundled, and a schema version every binary sends. It builds on the
+  web skill's method.
+
+Both use the plugin's scripts (`plugins/ordering-theme/scripts/*.mjs`, Node, no
+dependencies) for the inventory (CSS, styled-components, `StyleSheet`, style props,
+Tailwind), the scales, the components and screens, a CI guard against hand-written values
+and the schema keys no code reads.
 
 Install it once per machine (Claude Code 2.1.275 or later), in a session:
 
@@ -341,8 +350,9 @@ claude plugin marketplace add Finitless-com/ordering-theme-engine
 claude plugin install ordering-theme@ordering-theme-engine
 ```
 
-The skill is then `/ordering-theme:theme-frontend-web`, and Claude also uses it on its own
-when asked to theme a frontend. `claude plugin update ordering-theme@ordering-theme-engine`
+The skills are then `/ordering-theme:theme-frontend-web` and
+`/ordering-theme:theme-frontend-native`, and Claude also uses them on its own when asked
+to theme a frontend. `claude plugin update ordering-theme@ordering-theme-engine`
 brings a newer version; a change to the plugin bumps `version` in its `plugin.json`.
 
 A frontend's repository can offer it to whoever works on it, in `.claude/settings.json`

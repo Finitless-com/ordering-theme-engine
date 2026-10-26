@@ -22,7 +22,7 @@ import { scan, parseArgs } from './inventory.mjs'
 
 const args = parseArgs(process.argv.slice(2))
 const repo = path.resolve(args._[0] || '.')
-const categories = new Set((args.categories || 'color,space,radius,border,shadow,font_size,font_weight,font_family,line_height,letter_spacing,motion,opacity').split(','))
+const categories = new Set((args.categories || 'color,space,radius,border,shadow,shadow_part,font_size,font_weight,font_family,line_height,letter_spacing,motion,opacity').split(','))
 const allow = args.allow ? JSON.parse(fs.readFileSync(path.resolve(repo, args.allow), 'utf8')) : []
 for (const [i, a] of allow.entries()) if (!a.file || !a.reason) { console.error(`exception ${i}: needs "file" and "reason"`); process.exit(2) }
 const rules = allow.map(a => ({ ...a, re: new RegExp(a.file) }))

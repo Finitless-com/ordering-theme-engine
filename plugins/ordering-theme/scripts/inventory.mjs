@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// Inventory of the literal design values in a web frontend's source: colors,
-// lengths (space, radius, border widths, sizes), typography, shadows, motion,
-// opacity, z-index and breakpoints, each with file:line, component, selector
-// and CSS property. Reads CSS, SCSS, Less, styled-components / emotion
-// templates, JS style objects, JSX attributes and Tailwind classes.
+// Inventory of the literal design values in a frontend's source, web or React
+// Native: colors, lengths (space, radius, border widths, sizes), typography,
+// shadows (and React Native's shadow props and elevation), motion, opacity,
+// z-index and breakpoints, each with file:line, component, selector and
+// property. Reads CSS, SCSS, Less, styled-components / emotion templates
+// (styled-components/native too), JS style objects (StyleSheet.create, inline
+// style={{…}}), JSX attributes and Tailwind classes.
 //
 //   node inventory.mjs <repo> [--src src,app] [--out <dir>] [--exclude <regex>]
 //
@@ -38,7 +40,18 @@ const PROPS = {
   width: 'size', height: 'size', 'min-width': 'size', 'min-height': 'size', 'max-width': 'size', 'max-height': 'size',
   transition: 'motion', 'transition-duration': 'motion', animation: 'motion', 'animation-duration': 'motion',
   'transition-timing-function': 'motion',
-  opacity: 'opacity', 'z-index': 'z_index'
+  opacity: 'opacity', 'z-index': 'z_index',
+  // React Native: camelCase keys of a style object, unitless numbers in pt.
+  'padding-horizontal': 'space', 'padding-vertical': 'space', 'padding-start': 'space', 'padding-end': 'space',
+  'margin-horizontal': 'space', 'margin-vertical': 'space', 'margin-start': 'space', 'margin-end': 'space',
+  'border-top-width': 'border', 'border-bottom-width': 'border', 'border-left-width': 'border', 'border-right-width': 'border',
+  'border-start-width': 'border', 'border-end-width': 'border',
+  'border-top-start-radius': 'radius', 'border-top-end-radius': 'radius', 'border-bottom-start-radius': 'radius', 'border-bottom-end-radius': 'radius',
+  'border-start-color': 'color', 'border-end-color': 'color',
+  'shadow-color': 'color', 'tint-color': 'color', 'placeholder-text-color': 'color', 'selection-color': 'color',
+  'underline-color-android': 'color', 'text-shadow-color': 'color', 'overlay-color': 'color',
+  elevation: 'shadow_part', 'shadow-opacity': 'shadow_part', 'shadow-radius': 'shadow_part',
+  duration: 'motion', delay: 'motion'
 }
 
 const HEX = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g
@@ -46,8 +59,29 @@ const FUNC_COLOR = /\b(?:rgba?|hsla?)\([^()]*\)/g
 const NAMED = { white: '#FFFFFF', black: '#000000', red: '#FF0000', green: '#008000', blue: '#0000FF', gray: '#808080', grey: '#808080', yellow: '#FFFF00', orange: '#FFA500', purple: '#800080', pink: '#FFC0CB', silver: '#C0C0C0', lightgray: '#D3D3D3', lightgrey: '#D3D3D3', darkgray: '#A9A9A9', darkgrey: '#A9A9A9', whitesmoke: '#F5F5F5', gainsboro: '#DCDCDC', navy: '#000080', teal: '#008080', crimson: '#DC143C', gold: '#FFD700' }
 const NAMED_RE = new RegExp(`(?<![\\w.#-])(${Object.keys(NAMED).join('|')})(?![\\w-])`, 'gi')
 const NUMBER = /(-?\d*\.?\d+)(px|rem|em|%|vh|vw|vmin|vmax|pt|ms|s)?(?![\w.])/g
-const DECL = /(?:^|[\s{;(,])(-{0,2}[a-zA-Z][a-zA-Z-]*)\s*:\s*([^;{}\n]+)/g
-const ATTR = /\b(fill|stroke|color|width|height|size)\s*=\s*\{?\s*['"]([^'"]+)['"]/g
+// A value ends at `;`, a brace, the end of the line, or a comma before the next key of a
+// JS object ({ fontSize: 16, fontWeight: '600' }); commas inside CSS values stay.
+const DECL = /(?:^|[\s{;(,])(-{0,2}[a-zA-Z][a-zA-Z-]*)\s*:\s*([^;{}\n]+?)(?=\s*(?:[;{}\n]|$|,\s*['"]?-{0,2}[a-zA-Z][a-zA-Z-]*['"]?\s*:))/g
+const ATTR = /\b(fill|stroke|color|width|height|size|weight)\s*=\s*\{?\s*['"]([^'"]+)['"]/g
+// Numeric JSX props: <OText size={14} weight={600}>, <Icon size={24} />, activeOpacity={0.7}.
+const NUM_ATTR = /\b(size|width|height|iconSize|weight|lineHeight|activeOpacity)\s*=\s*\{\s*(\d*\.?\d+)\s*\}/g
+// react-native-vector-icons sets, whatever the import is called at the call site.
+const ICON_TAG = /Icon|Svg|^(AntDesign|MaterialCommunityIcons|MaterialIcons|Ionicons|Feather|FontAwesome\d?|SimpleLineIcons|Foundation|Entypo|EvilIcons|Octicons|Fontisto|Zocial)$/
+const JSX_TAG = /<([A-Za-z][\w.]*)/g
+// What a size or weight prop means depends on its element: `size` on a text is
+// typography, anywhere else an icon size (to check: most `size` props are icons');
+// `width`/`height` on an icon are an icon size, on anything else a box size.
+function attrCategory (name, tag) {
+  if (name === 'activeOpacity') return { category: 'opacity' }
+  if (name === 'weight') return { category: 'font_weight' }
+  if (name === 'lineHeight') return { category: 'line_height' }
+  if (name === 'fill' || name === 'stroke' || name === 'color') return { category: 'color' }
+  if (/^(size|iconSize)$/.test(name)) {
+    if (/Text|Label|Title|Heading/i.test(tag ?? '') && name === 'size' && !ICON_TAG.test(tag)) return { category: 'font_size' }
+    return { category: 'size', icon: true }
+  }
+  return { category: 'size', ...(ICON_TAG.test(tag ?? '') ? { icon: true } : {}) }
+}
 const CLASS_ATTR = /\b(?:className|class)\s*=\s*(?:\{\s*)?[`'"]([^`'"]+)[`'"]/g
 const TW = /^(-?)(p|px|py|pt|pb|pl|pr|ps|pe|m|mx|my|mt|mb|ml|mr|ms|me|gap|gap-x|gap-y|space-x|space-y|rounded|rounded-[trblse]{1,2}|text|bg|border|border-[trblxy]|ring|outline|shadow|font|leading|tracking|w|h|min-w|min-h|max-w|max-h|size|opacity|duration|z|from|to|via|fill|stroke)-(.+)$/
 // Tailwind's own palette: a color the theme does not give (bg-gray-200, text-white).
@@ -184,7 +218,8 @@ function record (entries, base, category, property, raw, extra = {}) {
     e.colors = e.layers.map(l => l.color).filter(Boolean)
     if (!e.layers.length) return
   } else if (category === 'motion') {
-    e.ms = durationsIn(raw)
+    // Animated.timing({ duration: 300 }) and Reanimated take bare milliseconds.
+    e.ms = extra.inlineObject && /^\s*\d+(\.\d+)?\s*$/.test(raw) ? [parseFloat(raw)] : durationsIn(raw)
     if (!e.ms.length) return
   } else if (category === 'font_weight') {
     const w = raw.match(/\b([1-9]00|bold|normal|lighter|bolder)\b/)
@@ -194,7 +229,7 @@ function record (entries, base, category, property, raw, extra = {}) {
     if (/inherit|var\(/.test(raw)) return
   } else if (category === 'text_transform') {
     if (!/uppercase|capitalize|lowercase/.test(raw)) return
-  } else if (category === 'opacity' || category === 'z_index') {
+  } else if (category === 'opacity' || category === 'z_index' || category === 'shadow_part') {
     const n = raw.match(/-?\d*\.?\d+/)
     if (!n) return
     e.n = parseFloat(n[0])
@@ -222,6 +257,10 @@ export function scanFile (file, rel) {
   const ext = path.extname(file)
   const isStyleFile = ['.css', '.scss', '.sass', '.less'].includes(ext)
   let component = null; const selectors = []; let inBlockComment = false
+  // React Native's shadowOffset: { width, height } is part of a shadow, not a size.
+  let inShadowOffset = false
+  // The last JSX element opened, for props written on the lines below its tag.
+  let lastTag = null
   text.split('\n').forEach((original, i) => {
     let line = original
     if (inBlockComment) { const end = line.indexOf('*/'); if (end < 0) return; line = line.slice(end + 2); inBlockComment = false }
@@ -242,23 +281,34 @@ export function scanFile (file, rel) {
       seen.add('media')
     }
     if (seen.has('media')) return
+    const offsetHere = /shadowOffset\s*:\s*\{/.test(literal)
+    if (offsetHere && !/shadowOffset\s*:\s*\{[^}]*\}/.test(literal)) inShadowOffset = true
+    const skipSize = offsetHere || inShadowOffset
+    if (inShadowOffset && !offsetHere && /\}/.test(literal)) inShadowOffset = false
     for (const m of literal.matchAll(DECL)) {
       const prop = kebab(m[1]); const category = PROPS[prop]
-      if (!category) continue
+      if (!category || (skipSize && (prop === 'width' || prop === 'height'))) continue
       let raw = m[2].replace(/\s*(?:!important)?\s*[,`'"]*\s*$/, '').replace(/^\s*['"`]/, '')
       // A JS style object (style={{ marginTop: 8 }}): camelCase key, or a bare number with no `;`.
       const ends = literal[m.index + m[0].length]
-      const inlineObject = !isStyleFile && ends !== ';' && (/[a-z][A-Z]/.test(m[1]) || /^\s*-?\d*\.?\d+\s*,\s*$/.test(m[2]))
+      const inlineObject = !isStyleFile && ends !== ';' && (/[a-z][A-Z]/.test(m[1]) || /^\s*-?\d*\.?\d+\s*,?\s*$/.test(m[2]))
       if (/^\s*(var\(|inherit|initial|unset|currentColor|auto|none\s*$)/i.test(raw) && category !== 'border') continue
       raw = raw.replace(/\s*\}\s*$/, '')
       record(entries, { ...base, fallback: fallback(m[2].trim()) }, category, prop, raw, { inlineObject })
       seen.add(m[2])
     }
+    const tags = [...literal.matchAll(JSX_TAG)]
+    const tagAt = (index) => tags.filter(t => t.index < index).at(-1)?.[1] ?? lastTag
     for (const m of literal.matchAll(ATTR)) {
-      const category = { fill: 'color', stroke: 'color', color: 'color', width: 'size', height: 'size', size: 'size' }[m[1]]
-      record(entries, base, category, `attr:${m[1]}`, m[2], { inlineObject: true })
+      const { category, icon } = attrCategory(m[1], tagAt(m.index))
+      record(entries, base, category, `attr:${m[1]}`, m[2], { inlineObject: true, ...(icon ? { icon } : {}) })
       seen.add(m[2])
     }
+    for (const m of literal.matchAll(NUM_ATTR)) {
+      const { category, icon } = attrCategory(m[1], tagAt(m.index))
+      record(entries, base, category, `attr:${m[1]}`, m[2], { inlineObject: true, ...(icon ? { icon } : {}) })
+    }
+    if (tags.length) lastTag = tags.at(-1)[1]
     for (const m of line.matchAll(CLASS_ATTR)) {
       for (const cls of m[1].split(/\s+/)) {
         // `rounded`, `border-t` and `shadow` alone are their default step.

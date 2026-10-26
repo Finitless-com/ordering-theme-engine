@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// Inventory of a web frontend's UI pieces: the routes (pages), the components
-// and styled elements it declares, grouped by role (button, card, modal,
-// input…) so pieces with the same function show up together, the native
-// elements it renders (button, a, img, input…), how often each component is
-// reused, and every image source (theme, asset import, url(), remote).
+// Inventory of a frontend's UI pieces, web or React Native: the routes or
+// screens (React Navigation's <X.Screen name>), the components and styled
+// elements it declares, grouped by role (button, card, modal, input…) so pieces
+// with the same function show up together, the native elements it renders
+// (button, a, img… or TouchableOpacity, Pressable, Image, TextInput…), how often
+// each component is reused, and every image source (asset import or require(),
+// url(), { uri }, remote).
 //
 //   node components.mjs <repo> [--src src,app] [--out <dir>] [--exclude <regex>]
 //
@@ -51,13 +53,20 @@ const ROLES = [
 ]
 const INTRINSIC = ['button', 'a', 'img', 'picture', 'svg', 'video', 'iframe', 'input', 'select', 'textarea', 'form', 'label', 'dialog', 'table', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'nav', 'header', 'footer', 'aside', 'main', 'section']
 
+// React Native's own elements, counted like the web's native tags.
+const RN_PRIMITIVES = ['View', 'Text', 'TouchableOpacity', 'TouchableHighlight', 'TouchableWithoutFeedback', 'Pressable', 'Image', 'ImageBackground', 'FastImage', 'TextInput', 'ScrollView', 'FlatList', 'SectionList', 'Modal', 'Switch', 'ActivityIndicator', 'SafeAreaView', 'KeyboardAvoidingView', 'RefreshControl']
+
 const LAYOUT_SUFFIX = /(Container|Wrapper|Content|Inner|Group|Section|Layout|Grid|Area|Holder|Block|Side|Column|Body)$/
-const NATIVE_ROLE = { button: 'button', a: 'link', img: 'image', input: 'input', textarea: 'input', select: 'select', h1: 'title', h2: 'title', h3: 'title', h4: 'title', h5: 'title', h6: 'title', hr: 'divider', dialog: 'modal', label: 'title' }
+const NATIVE_ROLE = {
+  button: 'button', a: 'link', img: 'image', input: 'input', textarea: 'input', select: 'select', h1: 'title', h2: 'title', h3: 'title', h4: 'title', h5: 'title', h6: 'title', hr: 'divider', dialog: 'modal', label: 'title',
+  TouchableOpacity: 'button', TouchableHighlight: 'button', TouchableWithoutFeedback: 'button', Pressable: 'button',
+  Image: 'image', ImageBackground: 'image', FastImage: 'image', TextInput: 'input', Modal: 'modal', Switch: 'toggle', ActivityIndicator: 'spinner'
+}
 // A styled wrapper (ButtonContainer = div) is layout, not the role its name mentions;
 // a styled native element (Foo = styled.button) takes that element's role.
 const roleOf = (name, base, owner) => {
   if (base && NATIVE_ROLE[base]) return NATIVE_ROLE[base]
-  if (name && LAYOUT_SUFFIX.test(name) && (!base || /^(div|section|span|ul|li|article|main|aside|nav|header|footer|form)$/.test(base))) return 'layout'
+  if (name && LAYOUT_SUFFIX.test(name) && (!base || /^(div|section|span|ul|li|article|main|aside|nav|header|footer|form|View|ScrollView|SafeAreaView|KeyboardAvoidingView)$/.test(base))) return 'layout'
   for (const n of [name, base, owner]) for (const [r, re] of ROLES) if (n && re.test(n)) return r
   return null
 }
@@ -104,6 +113,7 @@ for (const root of roots) {
           if (INTRINSIC.includes(tag)) { tags[tag] = tags[tag] || { count: 0, files: new Set() }; tags[tag].count++; tags[tag].files.add(rel) }
           if (/^h[1-6]$/.test(tag)) (headings[rel] = headings[rel] || []).push(tag)
         } else {
+          if (RN_PRIMITIVES.includes(tag)) { tags[tag] = tags[tag] || { count: 0, files: new Set() }; tags[tag].count++; tags[tag].files.add(rel) }
           const u = usage.get(tag) ?? { count: 0, files: new Set() }
           u.count++; u.files.add(rel); usage.set(tag, u)
         }
@@ -113,9 +123,17 @@ for (const root of roots) {
       for (const m of line.matchAll(/url\(\s*(['"]?)([^)'"]+)\1\s*\)/g)) if (!/^\$\{|^data:image\/svg/.test(m[2])) images.push({ loc, kind: 'css-url', source: m[2].slice(0, 120) })
       for (const m of line.matchAll(/(?:import\s+\w+\s+from|require\()\s*['"]([^'"]+\.(?:png|jpe?g|gif|webp|avif|svg|ico))['"]/g)) images.push({ loc, kind: 'asset', source: m[1] })
       for (const m of line.matchAll(/['"`](https?:\/\/[^'"`\s]+\.(?:png|jpe?g|gif|webp|avif|svg))['"`]/g)) images.push({ loc, kind: 'remote', source: m[1] })
+      for (const m of line.matchAll(/\bsource\s*=\s*\{\s*\{\s*uri\s*:\s*([^}]+)\}/g)) images.push({ loc, kind: 'uri', source: m[1].trim().slice(0, 120) })
       // Routes: react-router / vue-router / config objects.
       for (const m of line.matchAll(/\bpath\s*[:=]\s*\{?\s*['"`](\/[^'"`]*)['"`]/g)) routes.push({ path: m[1], loc })
     })
+    // React Navigation: <Stack.Screen name="Business" component={BusinessPage} />, over several lines.
+    for (const m of text.matchAll(/<(\w+)\.Screen\b([^>]*?)\/?>/g)) {
+      const name = m[2].match(/\bname\s*=\s*\{?\s*['"`]([^'"`]+)['"`]/)
+      if (!name) continue
+      const component = m[2].match(/\bcomponent\s*=\s*\{\s*([\w.]+)/)?.[1]
+      routes.push({ path: name[1], loc: `${rel}:${text.slice(0, m.index).split('\n').length}`, navigator: m[1], component, screen: true })
+    }
   }
 }
 // File-system routes (Next.js, Nuxt, SvelteKit, Astro, Remix).
@@ -134,7 +152,8 @@ for (const d of declared) if (d.role && d.role !== 'layout') (byRole[d.role] = b
 
 const result = {
   repo,
-  routes: [...new Map(routes.map(r => [r.path, r])).values()].sort((a, b) => a.path.localeCompare(b.path)),
+  // A screen name may repeat across navigators: keep one per navigator.
+  routes: [...new Map(routes.map(r => [`${r.navigator ?? ''}:${r.path}`, r])).values()].sort((a, b) => a.path.localeCompare(b.path)),
   roles: Object.fromEntries(Object.entries(byRole).map(([r, list]) => [r, list.map(({ name, kind, base, file, loc, uses }) => ({ name, kind, base, file, loc, uses }))])),
   intrinsic: Object.fromEntries(Object.entries(tags).map(([t, v]) => [t, { count: v.count, files: v.files.size }])),
   reused: [...usage.entries()].map(([name, u]) => ({ name, files: u.files.size, count: u.count })).sort((a, b) => b.files - a.files).slice(0, 80),
@@ -145,7 +164,7 @@ fs.mkdirSync(out, { recursive: true })
 fs.writeFileSync(path.join(out, 'components.json'), JSON.stringify(result, null, 1))
 
 const md = ['# Component inventory', '', `Source: \`${repo}\`. A heuristic on names and tags: confirm each group by reading the code.`, '']
-md.push(`## Routes (${result.routes.length})`, '', ...result.routes.map(r => `- \`${r.path}\` — \`${r.loc}\``), '')
+md.push(`## Routes and screens (${result.routes.length})`, '', ...result.routes.map(r => `- \`${r.path}\`${r.screen ? ` (${r.navigator}.Screen${r.component ? ` → ${r.component}` : ''})` : ''} — \`${r.loc}\``), '')
 md.push('## Native elements', '', '| tag | uses | files |', '| --- | --- | --- |', ...Object.entries(result.intrinsic).sort((a, b) => b[1].count - a[1].count).map(([t, v]) => `| \`<${t}>\` | ${v.count} | ${v.files} |`), '')
 md.push('## By function (candidates to group into one theme component)', '')
 for (const [r, list] of Object.entries(byRole).sort((a, b) => b[1].length - a[1].length)) {
