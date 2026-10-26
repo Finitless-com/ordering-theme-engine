@@ -144,23 +144,23 @@ const result = {
 fs.mkdirSync(out, { recursive: true })
 fs.writeFileSync(path.join(out, 'components.json'), JSON.stringify(result, null, 1))
 
-const md = ['# Inventario de componentes', '', `Fuente: \`${repo}\`. Heurístico por nombres y etiquetas: confirmar cada grupo leyendo el código.`, '']
-md.push(`## Rutas (${result.routes.length})`, '', ...result.routes.map(r => `- \`${r.path}\` — \`${r.loc}\``), '')
-md.push('## Elementos nativos', '', '| etiqueta | usos | archivos |', '| --- | --- | --- |', ...Object.entries(result.intrinsic).sort((a, b) => b[1].count - a[1].count).map(([t, v]) => `| \`<${t}>\` | ${v.count} | ${v.files} |`), '')
-md.push('## Por función (candidatos a agrupar en un mismo componente del tema)', '')
+const md = ['# Component inventory', '', `Source: \`${repo}\`. A heuristic on names and tags: confirm each group by reading the code.`, '']
+md.push(`## Routes (${result.routes.length})`, '', ...result.routes.map(r => `- \`${r.path}\` — \`${r.loc}\``), '')
+md.push('## Native elements', '', '| tag | uses | files |', '| --- | --- | --- |', ...Object.entries(result.intrinsic).sort((a, b) => b[1].count - a[1].count).map(([t, v]) => `| \`<${t}>\` | ${v.count} | ${v.files} |`), '')
+md.push('## By function (candidates to group into one theme component)', '')
 for (const [r, list] of Object.entries(byRole).sort((a, b) => b[1].length - a[1].length)) {
   const styled = list.filter(d => d.kind === 'styled'); const comps = list.filter(d => d.kind === 'component')
-  md.push(`### ${r} — ${comps.length} componentes, ${styled.length} estilos propios`, '')
-  if (comps.length) md.push('Componentes: ' + comps.sort((a, b) => b.uses - a.uses).map(d => `\`${d.name}\` (${d.uses} archivos, \`${d.loc}\`)`).join(', '), '')
+  md.push(`### ${r} — ${comps.length} components, ${styled.length} own styles`, '')
+  if (comps.length) md.push('Components: ' + comps.sort((a, b) => b.uses - a.uses).map(d => `\`${d.name}\` (${d.uses} files, \`${d.loc}\`)`).join(', '), '')
   const bases = {}; for (const d of styled) if (d.base) bases[d.base] = (bases[d.base] || 0) + 1
-  if (styled.length) md.push('Bases de los estilos propios: ' + Object.entries(bases).sort((x, y) => y[1] - x[1]).map(([b, n]) => `${b} ${n}`).join(', '), '')
-  if (styled.length) md.push('Estilos propios: ' + styled.slice(0, 40).map(d => `\`${d.name}\`${d.base ? `=${d.base}` : ''} (\`${d.loc}\`)`).join(', ') + (styled.length > 40 ? `… y ${styled.length - 40} más` : ''), '')
+  if (styled.length) md.push('Bases of the own styles: ' + Object.entries(bases).sort((x, y) => y[1] - x[1]).map(([b, n]) => `${b} ${n}`).join(', '), '')
+  if (styled.length) md.push('Own styles: ' + styled.slice(0, 40).map(d => `\`${d.name}\`${d.base ? `=${d.base}` : ''} (\`${d.loc}\`)`).join(', ') + (styled.length > 40 ? `… and ${styled.length - 40} more` : ''), '')
 }
-md.push('## Más reutilizados (primitivas probables)', '', ...result.reused.slice(0, 40).map(u => `- \`${u.name}\`: ${u.files} archivos, ${u.count} usos`), '')
-md.push(`## Imágenes (${images.length})`, '')
+md.push('## Most reused (likely primitives)', '', ...result.reused.slice(0, 40).map(u => `- \`${u.name}\`: ${u.files} files, ${u.count} uses`), '')
+md.push(`## Images (${images.length})`, '')
 const byKind = {}; for (const im of images) (byKind[im.kind] = byKind[im.kind] || []).push(im)
 for (const [k, list] of Object.entries(byKind)) md.push(`### ${k} (${list.length})`, '', ...list.slice(0, 60).map(im => `- \`${im.loc}\` ${im.source}`), '')
-md.push('## Encabezados por archivo', '', ...Object.entries(headings).map(([f, h]) => `- \`${f}\`: ${h.join(' ')}`), '')
+md.push('## Headings by file', '', ...Object.entries(headings).map(([f, h]) => `- \`${f}\`: ${h.join(' ')}`), '')
 fs.writeFileSync(path.join(out, 'components.md'), md.join('\n') + '\n')
 
 console.log(`components → ${path.join(out, 'components.md')}`)

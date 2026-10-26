@@ -318,7 +318,7 @@ patch.
 ## Converting a frontend: the Claude Code skill
 
 `.claude/skills/theme-frontend-web/` is a [Claude Code](https://claude.com/claude-code)
-skill (in Spanish) that converts a web frontend so it obeys its product's schema: it
+skill that converts a web frontend so it obeys its product's schema: it
 inventories every element and hand-written value, groups the pieces that do the same
 thing, collapses near values into the token scales, classifies pages, sections,
 visibility, images and site settings, writes the schema, wires `complete()` and `toCss()`

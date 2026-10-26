@@ -1,30 +1,30 @@
-# Escribir el product schema
+# Writing the product schema
 
-La fuente de verdad del formato son las docs del engine en la versión fijada:
-`docs/creating-a-schema.md` (CaS) y `docs/schema-format.md` (SF), en
-`node_modules/@orderingco/ordering-theme-engine/docs/` o en `docs/` del repo del engine
-(Finitless-com/ordering-theme-engine). Este archivo resume lo que más se usa
-y no las sustituye. Ante una duda, abre la sección citada.
+The source of truth for the format is the engine's docs at the pinned version:
+`docs/creating-a-schema.md` (CaS) and `docs/schema-format.md` (SF), in
+`node_modules/@orderingco/ordering-theme-engine/docs/` or in `docs/` of the engine's repo
+(Finitless-com/ordering-theme-engine). This file summarizes what is used most
+and does not replace them. When in doubt, open the cited section.
 
-Ejemplos:
+Examples:
 
-- el esquema de referencia con cada forma del formato:
-  `meta/reference/reference-1.0.0.json` del engine;
-- un schema real completo: `product.schema.json` de Finitless-com/website-marketplace-theming
-  (75 componentes, 197 claves de visibilidad, 39 imágenes, 26 páginas). Léelo con `jq` o
-  `node`; tiene 48 000 líneas.
+- the reference schema with every shape of the format:
+  the engine's `meta/reference/reference-1.0.0.json`;
+- a complete real schema: `product.schema.json` of Finitless-com/website-marketplace-theming
+  (75 components, 197 visibility keys, 39 images, 26 pages). Read it with `jq` or
+  `node`; it has 48 000 lines.
 
-## 1. Esqueleto
+## 1. Skeleton
 
 ```json
 {
   "$schema": "urn:ordering:theme-schema:1",
-  "product_type": "<de la lista de SF §1>",
+  "product_type": "<from the list in SF §1>",
   "version": "1.0.0",
   "format": 2,
   "platforms": ["mobile_web"],
   "editor": { "section_groups": [], "sections": [], "parts": [], "labels": {}, "props": {} },
-  "tokens": { "…": "las escalas obligatorias de §2; vacío no valida" },
+  "tokens": { "…": "the required scales of §2; empty does not validate" },
   "components": {},
   "visibility": { "$type": "boolean" },
   "images": { "$type": "image" },
@@ -33,113 +33,113 @@ Ejemplos:
 }
 ```
 
-- **`$schema`** es exactamente esa URN. No es una URL, así que editores como VS Code no
-  autocompletan: ignoran una asociación de archivo mientras `$schema` tiene la URN. Solo
-  sirve en editores que priorizan la asociación con `meta/theme-schema-1.json`. La
-  referencia es `ordering-theme validate` (CaS §3).
-- **Nodos y grupos:** un nodo tiene `$value` y puede tener `$type`, `$description`,
-  `$deprecated` y `$extensions`; un grupo es cualquier otro objeto. El `$type` en el grupo
-  vale para sus hojas.
-- **Nombres:** `^[a-z0-9_]+$`. Las claves de `visibility` e `images` admiten puntos, hasta
-  8 segmentos.
-- **Alias:** `{grupo.nombre}` (`{color.primary}`, `{space.md}`). Solo en componentes,
-  páginas y `site`, nunca en `tokens`.
-- **`$extensions["co.ordering"]`** es lo que lee el engine: `scale`, `options`,
+- **`$schema`** is exactly that URN. It is not a URL, so editors such as VS Code do not
+  autocomplete: they ignore a file association while `$schema` holds the URN. It only
+  works in editors that give priority to the association with `meta/theme-schema-1.json`. The
+  reference is `ordering-theme validate` (CaS §3).
+- **Nodes and groups:** a node has `$value` and can have `$type`, `$description`,
+  `$deprecated` and `$extensions`; a group is any other object. The `$type` on the group
+  applies to its leaves.
+- **Names:** `^[a-z0-9_]+$`. The keys of `visibility` and `images` allow dots, up to
+  8 segments.
+- **Aliases:** `{group.name}` (`{color.primary}`, `{space.md}`). Only in components,
+  pages and `site`, never in `tokens`.
+- **`$extensions["co.ordering"]`** is what the engine reads: `scale`, `options`,
   `inherits`, `follows`, `derive`, `matrix`, `platforms`, `formats`, `hints`,
-  `max_length`, `pattern`. **`$extensions["co.ordering.editor"]`** es lo que lee el editor
+  `max_length`, `pattern`. **`$extensions["co.ordering.editor"]`** is what the editor reads
   (§3).
-- **Tipos de propiedad** (SF §3): `color`, `role`, `dimension` (con `scale`: `space`,
-  `radius`, `size` o `icon`), `number`, `duration`, `opacity`, `typography`, `fontRole`,
-  `border`, `shadow`, `image`, `boolean`, `option`/`layout` (con `options`), `sections`,
-  `slot`, `string`, `html` e `id`. Una `dimension` sin `scale` en una propiedad no es
-  válida: usa `number`.
+- **Property types** (SF §3): `color`, `role`, `dimension` (with `scale`: `space`,
+  `radius`, `size` or `icon`), `number`, `duration`, `opacity`, `typography`, `fontRole`,
+  `border`, `shadow`, `image`, `boolean`, `option`/`layout` (with `options`), `sections`,
+  `slot`, `string`, `html` and `id`. A `dimension` without `scale` on a property is not
+  valid: use `number`.
 
 ## 2. Tokens
 
-Copia las escalas completas de CaS §8 (font, radius, size, icon, space, layout, motion,
-border, shadow) y pon los valores aprobados en la fase 3. Las reglas:
+Copy the complete scales from CaS §8 (font, radius, size, icon, space, layout, motion,
+border, shadow) and set the values approved in phase 3. The rules:
 
-- Cada token con el `$type` exacto del catálogo, y en `font` las 10 `options` en el orden
-  del catálogo.
-- Valores literales y sin unidades: px en web.
-- Solo los colores, tipografías y opacidades que el código lee; al menos uno de cada.
-- Los grupos de Identidad (`shadow_style`, `border_style`, `motion_style`, `focus_ring`,
-  `scrollbar`) se añaden si el editor los ofrece, y las propiedades que los siguen llevan
+- Each token with the exact `$type` of the catalog, and in `font` the 10 `options` in the
+  catalog's order.
+- Literal values without units: px on the web.
+- Only the colors, typographies and opacities the code reads; at least one of each.
+- The Identity groups (`shadow_style`, `border_style`, `motion_style`, `focus_ring`,
+  `scrollbar`) are added if the editor offers them, and the properties that follow them carry
   `follows`.
-- **Declara tus propias reglas:**
-  - `derive` en los colores derivados (`shade`, `mix`, `legible`, `same`, con `when`);
-  - `follows` en las propiedades;
-  - `derive`/`matrix` en los componentes.
+- **Declare your own rules:**
+  - `derive` on derived colors (`shade`, `mix`, `legible`, `same`, with `when`);
+  - `follows` on properties;
+  - `derive`/`matrix` on components.
 
-  Si una categoría no declara ninguna regla, el engine aplica las suyas heredadas y añade
-  colores que tu schema no tiene (SF §11.5).
-- Los colores derivados que el autor no debe tocar llevan `hidden: true` en el editor.
-- Un color translúcido lleva `alpha: true` en el editor (`alpha_required`).
+  If a category declares no rule, the engine applies its own inherited ones and adds
+  colors your schema does not have (SF §11.5).
+- Derived colors the author must not touch carry `hidden: true` in the editor.
+- A translucent color carries `alpha: true` in the editor (`alpha_required`).
 
-## 3. Metadatos del editor (SF §12)
+## 3. Editor metadata (SF §12)
 
-Por nodo, en `co.ordering.editor`:
+Per node, in `co.ordering.editor`:
 
-- **`label`:** `{ "key": "BUILDER_THEME_…", "default": "English text" }`, y opcionalmente
-  `info` con la misma forma. Las claves siguen un patrón por tipo:
+- **`label`:** `{ "key": "BUILDER_THEME_…", "default": "English text" }`, and optionally
+  `info` with the same shape. The keys follow a pattern per type:
   `BUILDER_THEME_COMPONENT_<C>`, `BUILDER_THEME_PROP_<P>`, `BUILDER_THEME_VIS_<K>`,
   `BUILDER_THEME_PAGE_<P>`, `BUILDER_THEME_COLOR_<C>`, `BUILDER_THEME_OPTION_<O>`,
-  `BUILDER_THEME_GROUP_<G>`. Las etiquetas compartidas de propiedades van en
-  `editor.props`. **Lista cada clave nueva con su texto inglés para el Dashboard**, que
-  traduce desde su catálogo.
-- **`group` y `order`:** dentro de un componente, `order` sigue la secuencia caja (fondo,
-  borde, radio, sombra, padding) → disposición → textos (cada color justo después de su
-  texto) → tamaños → animación. Si el componente tiene tarjetas (`groups`), **todo** nodo
-  lleva `order`, y los `paths` de cada tarjeta van en orden creciente.
-- **`control`:** `color`, `level` (escalas), `range`, `select`, `segmented`, `toggle`,
+  `BUILDER_THEME_GROUP_<G>`. Shared property labels go in
+  `editor.props`. **List each new key with its English text for the Dashboard**, which
+  translates from its catalog.
+- **`group` and `order`:** within a component, `order` follows the sequence box (background,
+  border, radius, shadow, padding) → layout → texts (each color right after its
+  text) → sizes → animation. If the component has cards (`groups`), **every** node
+  carries `order`, and the `paths` of each card go in increasing order.
+- **`control`:** `color`, `level` (scales), `range`, `select`, `segmented`, `toggle`,
   `border`, `shadow`, `typography`, `font`, `image`, `sortable_sections`, `text`, `html`,
-  `matrix`, `cards` o `scope`.
-- **`min`, `max`, `step` y `unit`** (`px`, `ms`, `%`, `x`) en todo número. Salen de lo que
-  la web aguanta, y el default debe caer dentro. **Atan los valores:** un default fuera de
-  rango es `default_out_of_range` y un valor guardado fuera de rango se recorta al leerlo.
-- **Otras claves:** `visible_if`/`disabled_if` (`{ path, op, value }`), `hidden`,
-  `readonly`, `related` (claves relacionadas que el editor enlaza) y `custom` (tipografía
-  propia en un control `level`).
-- **Escalas:** `ordered` (`ascending`/`descending`) en la tarjeta del editor que lista los
-  niveles (`editor.sections[].groups[]`), para que el editor exija que sean monótonos.
+  `matrix`, `cards` or `scope`.
+- **`min`, `max`, `step` and `unit`** (`px`, `ms`, `%`, `x`) on every number. They come from what
+  the web can take, and the default must fall inside. **They bind the values:** a default out of
+  range is `default_out_of_range` and a stored value out of range is clamped when read.
+- **Other keys:** `visible_if`/`disabled_if` (`{ path, op, value }`), `hidden`,
+  `readonly`, `related` (related keys the editor links) and `custom` (the component's own
+  typography in a `level` control).
+- **Scales:** `ordered` (`ascending`/`descending`) on the editor card that lists the
+  levels (`editor.sections[].groups[]`), so that the editor requires them to be monotonic.
 
-Bloque `editor` de la raíz, con la estructura que funcionó en el marketplace:
+The root `editor` block, with the structure that worked in the marketplace:
 
 | `section_groups` | `sections` (key → parent, layout) |
 |---|---|
 | `identity` | `colors`, `typography`, `border`, `shadows`, `sizes`, `layout`, `motion` → identity, cards |
-| `advanced` | `components` → advanced, list (grupos: controles y partes del sitio) |
-| `website` | `site` (`store: "site"`), `pages` (list), `visibility` (cards, un grupo por zona), `images` (cards) → website |
+| `advanced` | `components` → advanced, list (groups: controls and parts of the site) |
+| `website` | `site` (`store: "site"`), `pages` (list), `visibility` (cards, one group per zone), `images` (cards) → website |
 
-Una sección que restablece algo lleva `reset` con los paths, por ejemplo
-`["visibility", "platforms.{platform}.visibility"]`. `editor.parts` da nombre a las
-pestañas de las partes de un componente (`base`, `colors`, `variants`, `sizes`, `shapes`,
+A section that resets something carries `reset` with the paths, for example
+`["visibility", "platforms.{platform}.visibility"]`. `editor.parts` names the
+tabs of a component's parts (`base`, `colors`, `variants`, `sizes`, `shapes`,
 `slots`, `scope`, `platforms`).
 
-Las reglas del editor que más fallan (§12.3), con su código:
+The editor rules that fail most (§12.3), with their code:
 
-| Código | Causa |
+| Code | Cause |
 |---|---|
-| `in_no_editor_group`, `in_several_editor_groups` | una clave de visibilidad no está en un solo grupo |
-| `order_missing`, `order_repeated`, `order_decreasing`, `order_not_consecutive` | `order` incompleto, repetido o desordenado |
-| `group_mismatch` | el `group` del nodo no coincide con la tarjeta o el grupo que lo lista |
-| `in_no_card` | un nodo de `base` declara un `group` que ninguna tarjeta lista |
-| `limits_required`, `min_over_max`, `default_out_of_range` | falta `min`/`max` o el default queda fuera |
-| `alpha_required` | default translúcido sin `alpha: true` |
-| `section_groups_required`, `_mismatch`, `alone_in_group` | grupos de secciones de una página |
-| `custom_required` | una tipografía de componente con control `level` sin `custom: true` |
-| `font_unlisted`, `font_listed_twice` | `options` del control de fuente |
+| `in_no_editor_group`, `in_several_editor_groups` | a visibility key is not in exactly one group |
+| `order_missing`, `order_repeated`, `order_decreasing`, `order_not_consecutive` | `order` incomplete, repeated or out of order |
+| `group_mismatch` | the node's `group` does not match the card or the group that lists it |
+| `in_no_card` | a `base` node declares a `group` that no card lists |
+| `limits_required`, `min_over_max`, `default_out_of_range` | `min`/`max` missing or the default falls outside |
+| `alpha_required` | translucent default without `alpha: true` |
+| `section_groups_required`, `_mismatch`, `alone_in_group` | section groups of a page |
+| `custom_required` | a component typography with a `level` control without `custom: true` |
+| `font_unlisted`, `font_listed_twice` | `options` of the font control |
 
-## 4. Componentes, visibilidad, páginas, imágenes y `site`
+## 4. Components, visibility, pages, images and `site`
 
-- **Componentes:** `componentes.md` y SF §5, §11. Un ejemplo con tarjetas, orden, toggle,
-  slots, scope y plataformas es el `header` del esquema de referencia; uno con
-  `colors` × `appearances` y `matrix` es su `button`.
-- **Visibilidad, páginas, imágenes y `site`:** `paginas-y-visibilidad.md`, y SF §6–§9.
-- **Principio (CaS §2, al final):** todo lo que el código lee del tema está en el schema
-  con su default; un tema guarda solo lo que cambia.
+- **Components:** `components.md` and SF §5, §11. An example with cards, order, toggle,
+  slots, scope and platforms is the reference schema's `header`; one with
+  `colors` × `appearances` and `matrix` is its `button`.
+- **Visibility, pages, images and `site`:** `pages-and-visibility.md`, and SF §6–§9.
+- **Principle (CaS §2, at the end):** everything the code reads from the theme is in the schema
+  with its default; a theme stores only what changes.
 
-## 5. CLI y scripts del repo
+## 5. CLI and repo scripts
 
 ```jsonc
 // package.json
@@ -150,54 +150,54 @@ Las reglas del editor que más fallan (§12.3), con su código:
 "theme:publish:dry": "ordering-theme publish product.schema.json --dry-run"
 ```
 
-- **Mapa v1:** si el producto tiene temas v1, añade `--v1-map <mapa.json>` a validate,
-  compile y publish.
-- **`compile`:** escribe la forma compilada (defaults, reglas, unidades CSS,
-  `product_type`, `version`) que leen `complete()` y `toCss()`. Se versiona, y
-  `theme:verify` falla si quedó vieja.
-- **Otros comandos:** `defaults` (el tema vacío resuelto) y `rules` (reglas para un
-  cliente sin schema). La lista completa está en el README del engine, sección "The
+- **v1 map:** if the product has v1 themes, add `--v1-map <map.json>` to validate,
+  compile and publish.
+- **`compile`:** writes the compiled form (defaults, rules, CSS units,
+  `product_type`, `version`) that `complete()` and `toCss()` read. It is committed, and
+  `theme:verify` fails if it is stale.
+- **Other commands:** `defaults` (the resolved empty theme) and `rules` (rules for a
+  client without a schema). The complete list is in the engine's README, section "The
   `ordering-theme` CLI".
-- **Publicar:**
-  - `publish` necesita `THEME_PUBLISH_API` y `THEME_PUBLISH_KEY`;
-  - sin ellas se salta con salida 0, salvo con `--required`;
-  - en CI, `--dry-run --required` en cada PR (si no, el paso pasa en silencio sin el
-    secreto) y `--required` en el deploy, cada entorno con su API y su clave;
-  - publicar de verdad solo con autorización del usuario.
-- **Salida:** 0 ok, 1 schema inválido o archivo viejo, 2 uso incorrecto.
+- **Publishing:**
+  - `publish` needs `THEME_PUBLISH_API` and `THEME_PUBLISH_KEY`;
+  - without them it is skipped with exit 0, unless `--required` is passed;
+  - in CI, `--dry-run --required` on every PR (otherwise the step passes silently without the
+    secret) and `--required` on deploy, each environment with its API and its key;
+  - publish for real only with the user's authorization.
+- **Exit:** 0 ok, 1 invalid schema or stale file, 2 incorrect usage.
 
-## 6. Versiones (CaS §6, SF §13–15)
+## 6. Versions (CaS §6, SF §13–15)
 
-- Un schema nuevo empieza en **`1.0.0`**, sin bloques `migrate` ni `upgrade`.
-- Una versión **publicada es inmutable** (409 `schema.version_exists`). Se sube solo
-  cuando la actual ya está en producción.
-- **Patch:** textos y metadatos del editor que no validan nada.
+- A new schema starts at **`1.0.0`**, without `migrate` or `upgrade` blocks.
+- A **published version is immutable** (409 `schema.version_exists`). Bump it only
+  when the current one is already in production.
+- **Patch:** texts and editor metadata that validate nothing.
 - **Minor:**
-  - añadir una clave, un componente, una opción, una sección o `alpha`;
-  - cambiar defaults;
-  - ajustar `max_length`, `pattern` o `min`/`max`;
-  - cambiar el `hideable` o el `group` de una sección;
-  - marcar `$deprecated`, o quitar una clave que la versión anterior ya marcó así;
-  - renombrar o mover dentro de su sección vía `co.ordering.migrate`.
-- **Nueva base (major):** lo que un minor prohíbe:
-  - quitar una clave no deprecada;
-  - cambiar el tipo o la escala;
-  - quitar una opción, `alpha` o `custom`;
-  - quitar una migración.
+  - adding a key, a component, an option, a section or `alpha`;
+  - changing defaults;
+  - adjusting `max_length`, `pattern` or `min`/`max`;
+  - changing a section's `hideable` or `group`;
+  - marking `$deprecated`, or removing a key the previous version already marked so;
+  - renaming or moving within its section via `co.ordering.migrate`.
+- **New base (major):** what a minor forbids:
+  - removing a non-deprecated key;
+  - changing the type or the scale;
+  - removing an option, `alpha` or `custom`;
+  - removing a migration.
 
-  Lleva `co.ordering.upgrade`, que dice adónde va cada clave anterior (SF §13–15).
-- **`--development`:** convierte los rechazos de versión en avisos mientras se itera.
-- **Mapa v1:** solo para productos con temas v1. Es un JSON `ruta v2 → ruta v1` por
-  sección, fuera del schema vivo, con el que api-core migra los temas viejos. Varias
-  claves v2 del mismo tipo pueden compartir una ruta v1. Una clave sin entrada toma su
-  default al migrar.
+  It carries `co.ordering.upgrade`, which says where each previous key goes (SF §13–15).
+- **`--development`:** turns version rejections into warnings while iterating.
+- **v1 map:** only for products with v1 themes. It is a JSON `v2 path → v1 path` per
+  section, outside the live schema, with which api-core migrates old themes. Several
+  v2 keys of the same type can share a v1 path. A key without an entry takes its
+  default when migrated.
 
-## 7. Al añadir algo más adelante
+## 7. When adding something later
 
-1. Añade el nodo con `$type`, default (alias a token), `scale`/`follows`/`alpha`.
-2. Añade sus metadatos del editor.
-3. Añade su entrada en el mapa v1, si tiene equivalente.
-4. Sube la versión, si la actual ya está publicada.
-5. Corre `theme:compile`, `theme:validate` y `theme:verify`.
-6. Conecta su lector, mediante un helper, y su test.
-7. Actualiza `docs/THEMING.md` si cambia algo de lo que describe.
+1. Add the node with `$type`, default (alias to a token), `scale`/`follows`/`alpha`.
+2. Add its editor metadata.
+3. Add its entry in the v1 map, if it has an equivalent.
+4. Bump the version, if the current one is already published.
+5. Run `theme:compile`, `theme:validate` and `theme:verify`.
+6. Connect its reader, through a helper, and its test.
+7. Update `docs/THEMING.md` if anything it describes changes.

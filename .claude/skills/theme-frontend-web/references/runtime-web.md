@@ -1,160 +1,160 @@
-# El tema en el frontend web
+# The theme in the web frontend
 
-Se construye **una vez y antes de tocar componentes**: la tubería que lleva el tema
-servido hasta los estilos, más los helpers con los que cada componente lo lee. Montarla
-al final obliga a reescribir todos los lotes.
+Build it **once and before touching components**: the pipeline that carries the served
+theme to the styles, plus the helpers with which each component reads it. Setting it up
+at the end forces you to rewrite every batch.
 
-## 1. Tubería
+## 1. Pipeline
 
 ```
-product.schema.json ──ordering-theme compile──▶ src/theme.compiled.json (versionado; theme:verify)
+product.schema.json ──ordering-theme compile──▶ src/theme.compiled.json (committed; theme:verify)
                                                         │
-tema servido (API / first load) ──▶ complete(compiled, values)  ← @orderingco/ordering-theme-engine/runtime
-                                                        │  todas las claves, valores entendidos, números recortados
+served theme (API / first load) ──▶ complete(compiled, values)  ← @orderingco/ordering-theme-engine/runtime
+                                                        │  every key, understood values, clamped numbers
                                                         ▼
                                           toCss(compiled, values)  ← @orderingco/ordering-theme-engine/css
-                                                        │  la vista CSS: tokens, identity, components, platforms, fonts
+                                                        │  the CSS view: tokens, identity, components, platforms, fonts
                                                         ▼
-                         app theme = { values, css, meta }  →  provider  →  helpers  →  estilos
+                         app theme = { values, css, meta }  →  provider  →  helpers  →  styles
 ```
 
-- **`THEME_DEFAULTS = complete(compiled, null)`**: los defaults, para pintar antes de que
-  llegue el tema y en tests.
-- **Construcción:** el tema de la app se construye una sola vez por tema servido (caché
-  con `WeakMap`). Ante cualquier excepción vuelve a los defaults; nunca deja la app sin
-  tema.
-- **La petición** del tema envía el `product_type` y la `version` del schema, leídos del
-  compilado y nunca escritos a mano. api-core recorta un tema de un schema más nuevo a esa
-  versión.
-- **Las imágenes vacías** (`''`) se completan con las del bundle, en un único módulo.
-- **El tema llega completo y válido.** Los lectores no revalidan opciones ni rangos y no
-  escriben fallbacks que dupliquen un default. Solo manejan lo que el schema deja ser
-  null: un borde, una sombra, una imagen vacía, el eje de un slot, una override de
-  plataforma.
-- **Nunca se construye un tema esparciendo valores** (`{ ...theme, values }`): su vista CSS
-  quedaría vieja. Se reconstruye con la función de construcción, también en tests.
-- **Se pinta desde la vista** (`theme.css`); `theme.values` se lee solo para calcular
-  (sumas, comparaciones, nulls, opciones). Nunca se convierte un valor a CSS en un
-  componente (`${value}px`, una sombra armada a mano).
+- **`THEME_DEFAULTS = complete(compiled, null)`**: the defaults, to render before the
+  theme arrives and in tests.
+- **Construction:** the app theme is built only once per served theme (cached
+  with `WeakMap`). On any exception it falls back to the defaults; it never leaves the app
+  without a theme.
+- **The theme request** sends the schema's `product_type` and `version`, read from the
+  compiled file and never written by hand. api-core trims a theme from a newer schema to that
+  version.
+- **Empty images** (`''`) are filled with the bundle's, in a single module.
+- **The theme arrives complete and valid.** Readers do not revalidate options or ranges and do
+  not write fallbacks that duplicate a default. They only handle what the schema lets be
+  null: a border, a shadow, an empty image, a slot's axis, a platform
+  override.
+- **Never build a theme by spreading values** (`{ ...theme, values }`): its CSS view
+  would be stale. Rebuild it with the construction function, in tests too.
+- **Render from the view** (`theme.css`); read `theme.values` only to compute
+  (sums, comparisons, nulls, options). Never convert a value to CSS in a
+  component (`${value}px`, a shadow assembled by hand).
 
 ## 2. Helpers
 
-Un archivo por familia, y ningún componente lee `theme.values.tokens…` en línea. Nombres
-del marketplace, que conviene mantener entre productos:
+One file per family, and no component reads `theme.values.tokens…` inline. Names
+from the marketplace, worth keeping across products:
 
-| Necesidad | Helper |
+| Need | Helper |
 |---|---|
-| Un componente como CSS / sus valores | `getThemeCss(theme, c)`, `getThemeMobileCss(theme, c)`, `getThemeComponent(theme, c)` |
-| Propiedades de un componente | `themePart(theme, c, { 'css-prop': 'base.path' })` (CSS), `themeValue(theme, c, path)` (valor) |
+| A component as CSS / its values | `getThemeCss(theme, c)`, `getThemeMobileCss(theme, c)`, `getThemeComponent(theme, c)` |
+| Properties of a component | `themePart(theme, c, { 'css-prop': 'base.path' })` (CSS), `themeValue(theme, c, path)` (value) |
 | Color | `themeColor(theme, 'surface')`, `withAlpha`, `isTransparent` |
-| Espacio | `themeSpace(theme, 'md')`, `pageGutter(theme)` |
-| Radio, sombra, borde (aplican la Identidad) | `themeRadius(theme, level, component?)`, `themeShadow(theme, level, opts?)`, `themeBorderWidth(theme, level, opts?)`, `themeBorderStyle`; en sombra y borde, `{ fixed: true }` conserva el nivel |
-| Texto | `themeText(theme, 'body', { component, props, weight })`, `headingText(theme, level)`, `themePartText(theme, c, path)` |
-| Tamaños | `themeIconSize`, `themeControlHeight(theme, c, size)`, `themeSize` |
-| Opacidad, velo | `themeOpacity`, `themeScrim` |
-| Movimiento | `themeMotion`, `motionCss`, `stateMotionCss` (respetan reduced motion; usan `transition()`/`animation()` del engine) |
-| Grupos y slots | `scopedTheme(theme, group)`, `themeSlot`, `slotButtonProps` |
-| Visibilidad | `themeVisible(theme, key)`, `themeHidden` |
-| Secciones | `pageSections(theme, page)`, el hook `usePageSections(page)` → `{ sections, isVisible, render }` |
-| Imágenes | `themeImage(theme, key)`; las imágenes del bundle, en su propio módulo |
-| Ajustes del sitio | `siteSetting(...)` en su módulo |
-| Fuentes | `fonts(theme.css, extra)` del engine → hojas de Google Fonts, una por familia |
+| Space | `themeSpace(theme, 'md')`, `pageGutter(theme)` |
+| Radius, shadow, border (apply the Identity) | `themeRadius(theme, level, component?)`, `themeShadow(theme, level, opts?)`, `themeBorderWidth(theme, level, opts?)`, `themeBorderStyle`; on shadow and border, `{ fixed: true }` keeps the level |
+| Text | `themeText(theme, 'body', { component, props, weight })`, `headingText(theme, level)`, `themePartText(theme, c, path)` |
+| Sizes | `themeIconSize`, `themeControlHeight(theme, c, size)`, `themeSize` |
+| Opacity, scrim | `themeOpacity`, `themeScrim` |
+| Motion | `themeMotion`, `motionCss`, `stateMotionCss` (respect reduced motion; use the engine's `transition()`/`animation()`) |
+| Groups and slots | `scopedTheme(theme, group)`, `themeSlot`, `slotButtonProps` |
+| Visibility | `themeVisible(theme, key)`, `themeHidden` |
+| Sections | `pageSections(theme, page)`, the hook `usePageSections(page)` → `{ sections, isVisible, render }` |
+| Images | `themeImage(theme, key)`; the bundle's images, in their own module |
+| Site settings | `siteSetting(...)` in its module |
+| Fonts | the engine's `fonts(theme.css, extra)` → Google Fonts sheets, one per family |
 
-Si falta un helper para un grupo de tokens, se añade junto a sus hermanos.
+If a helper is missing for a token group, add it next to its siblings.
 
-Implementación de referencia en Finitless-com/website-marketplace-theming (clónalo junto al
-repo que conviertes):
+Reference implementation in Finitless-com/website-marketplace-theming (clone it next to the
+repo you are converting):
 
-| Pieza | Archivo |
+| Piece | File |
 |---|---|
-| Construcción del tema | `src/utils/appTheme.js` |
-| Carga del tema servido | `src/utils/remoteTheme.js` |
-| Vista CSS | `src/utils/themeCss.js` |
+| Theme construction | `src/utils/appTheme.js` |
+| Loading the served theme | `src/utils/remoteTheme.js` |
+| CSS view | `src/utils/themeCss.js` |
 | Tokens | `src/utils/themeTokens.js`, `themeColors.js` |
-| Movimiento | `themeMotion.js` |
-| Visibilidad y secciones | `themeVisibility.js`, `themePages.js` |
-| Grupos y slots | `themeGroups.js` |
-| Ajustes del sitio e imágenes del bundle | `siteSettings.js`, `bundledImages.js` |
-| Lectura del schema | `themeSchema.js` (solo tests y scripts) |
+| Motion | `themeMotion.js` |
+| Visibility and sections | `themeVisibility.js`, `themePages.js` |
+| Groups and slots | `themeGroups.js` |
+| Site settings and bundle images | `siteSettings.js`, `bundledImages.js` |
+| Reading the schema | `themeSchema.js` (tests and scripts only) |
 | Hooks | `src/ui/hooks/usePageSections.js`, `useThemePlatform.js` |
 | Provider | `src/ui/contexts/ThemeContext/index.js` |
-| Scope de grupos | `src/ui/src/styles/ComponentScope/` |
-| Primitivas | `src/ui/src/styles/*` (Button, Card, Box, Divider, Chip, Choice, Chevron, Focus, Layer, Link…) |
-| Utilidades de test | `src/ui/src/styles/__tests__/themeTestUtils.jsx` |
-| Sincronía de defaults | `src/utils/__tests__/themeDefaults.test.js` |
+| Group scope | `src/ui/src/styles/ComponentScope/` |
+| Primitives | `src/ui/src/styles/*` (Button, Card, Box, Divider, Chip, Choice, Chevron, Focus, Layer, Link…) |
+| Test utilities | `src/ui/src/styles/__tests__/themeTestUtils.jsx` |
+| Defaults sync | `src/utils/__tests__/themeDefaults.test.js` |
 
-## 3. Según la tecnología de estilos
+## 3. By styling technology
 
-**styled-components o emotion** (el caso del marketplace):
+**styled-components or emotion** (the marketplace's case):
 
-- los helpers devuelven strings CSS y se interpolan:
+- the helpers return CSS strings and are interpolated:
   `` border-radius: ${p => themeRadius(p.theme, 'md', 'card')}; ``;
-- el `ThemeProvider` recibe el tema de la app. Si el tema cambia en runtime, el provider
-  debe seguir su prop, no copiarla una sola vez;
-- un `GlobalStyle` creado dentro del render se vuelve a montar en cada render: créalo
-  fuera;
-- un `styled(Primitive)` no repinta la caja: solo añade layout.
+- the `ThemeProvider` receives the app theme. If the theme changes at runtime, the provider
+  must follow its prop, not copy it only once;
+- a `GlobalStyle` created inside the render is remounted on every render: create it
+  outside;
+- a `styled(Primitive)` does not repaint the box: it only adds layout.
 
-**CSS Modules, SCSS, CSS plano o Vue/Svelte con `<style>`:**
+**CSS Modules, SCSS, plain CSS or Vue/Svelte with `<style>`:**
 
-- publica la vista como **variables CSS** en `:root`, una por valor:
-  - tokens: `--space-md`, `--color-surface`, `--radius-md` (el de Identidad),
-    `--shadow-sm`, `--text-body` (con sus partes: `--text-body-size`…);
-  - componentes: `--button-base-background`…;
-- genera las variables con una función pequeña que recorre `toCss()` y escribe un
-  `<style>` cuando cambia el tema;
-- las overrides de `platforms.mobile_web` van en el mismo `<style>`, dentro de
+- publish the view as **CSS variables** on `:root`, one per value:
+  - tokens: `--space-md`, `--color-surface`, `--radius-md` (the Identity one),
+    `--shadow-sm`, `--text-body` (with its parts: `--text-body-size`…);
+  - components: `--button-base-background`…;
+- generate the variables with a small function that walks `toCss()` and writes a
+  `<style>` when the theme changes;
+- the `platforms.mobile_web` overrides go in the same `<style>`, inside
   `@media (max-width: <breakpoint - 1>px)`;
-- los estilos solo usan `var(--…)`, y el guard prohíbe literales.
+- the styles only use `var(--…)`, and the guard forbids literals.
 
 **Tailwind:**
 
-- mapea el `theme` de `tailwind.config` a esas variables (`spacing: { md: 'var(--space-md)' }`,
+- map the `theme` of `tailwind.config` to those variables (`spacing: { md: 'var(--space-md)' }`,
   `colors: { surface: 'var(--color-surface)' }`, `borderRadius`, `boxShadow`, `fontSize`);
-- prohíbe los valores arbitrarios (`p-[13px]`, `text-[#333]`) y la paleta por defecto
-  (`bg-gray-100`). `inventory.mjs` los detecta como `tw:*`. Con el config ya mapeado,
-  corre el guard con `--tailwind-mapped`: deja pasar `p-4` o `bg-surface` y solo falla con
-  valores arbitrarios y con la paleta propia de Tailwind;
-- para un componente con muchas propiedades, usa una clase propia que lea sus variables.
+- forbid arbitrary values (`p-[13px]`, `text-[#333]`) and the default palette
+  (`bg-gray-100`). `inventory.mjs` detects them as `tw:*`. With the config already mapped,
+  run the guard with `--tailwind-mapped`: it lets `p-4` or `bg-surface` through and only fails on
+  arbitrary values and on Tailwind's own palette;
+- for a component with many properties, use a class of its own that reads its variables.
 
-**En todos los casos:**
+**In every case:**
 
-- un único breakpoint de teléfono, leído de una constante;
-- la plataforma (`mobile_web`) se decide por ancho en un hook, y los helpers la aplican.
+- a single phone breakpoint, read from a constant;
+- the platform (`mobile_web`) is decided by width in a hook, and the helpers apply it.
 
-## 4. Secciones y visibilidad en el código
+## 4. Sections and visibility in the code
 
 ```jsx
 const { render, isVisible } = usePageSections('home')
 return (
   <>
-    <Hero />                                   {/* hideable: false, group: null → fijo */}
+    <Hero />                                   {/* hideable: false, group: null → fixed */}
     {render({
       featured:      () => <Featured />,
       promo_banners: () => <PromoBanners />
-    }, { group: 'main' })}                     {/* en el orden y la visibilidad del tema */}
+    }, { group: 'main' })}                     {/* in the theme's order and visibility */}
   </>
 )
 
-const showFee = themeVisible(theme, 'business_card.fee')  // la override de teléfono gana debajo del breakpoint
+const showFee = themeVisible(theme, 'business_card.fee')  // the phone override wins below the breakpoint
 ```
 
-`render` recorre las secciones visibles del grupo en el orden del tema. Si el tema
-reordena, ignora claves desconocidas o duplicadas, deja en su sitio las que faltan y
-fuerza visibles las que tienen `hideable: false`.
+`render` walks the group's visible sections in the theme's order. If the theme
+reorders, it ignores unknown or duplicate keys, leaves the missing ones in place and
+forces visible those that have `hideable: false`.
 
-## 5. Robustez
+## 5. Robustness
 
-- **Valores seguros:** la vista del engine ya anula un string con `{ } ; < > ' "`. Si el
-  código compone CSS propio, usa `cssBorder`, `cssShadow` y `cssText` del engine.
-- **Colores calculados:** nada de `darken`, `lighten` ni `polished` sobre valores del
-  tema. Los derivados llegan servidos, y los colores ajenos al tema pasan por
+- **Safe values:** the engine's view already nulls a string with `{ } ; < > ' "`. If the
+  code composes its own CSS, use the engine's `cssBorder`, `cssShadow` and `cssText`.
+- **Computed colors:** no `darken`, `lighten` or `polished` on theme
+  values. Derived colors arrive served, and colors outside the theme go through
   `@orderingco/ordering-theme-engine/colors`.
-- **`url()`:** siempre entre comillas, porque los SVG en data URI rompen sin ellas.
-- **Recortes:** `overflow: hidden` recorta sombras y anillos de foco. Deja sitio (una
-  primitiva `Focus` con su margen) o mueve la sombra al contenedor exterior.
-- **Barras a todo el ancho:** la sombra se proyecta solo hacia abajo o hacia arriba
-  (`shadow.down`/`up` de la vista).
-- **Capas:** una barra dentro de una capa flotante pinta el fondo de su capa (variable
+- **`url()`:** always quoted, because SVGs in data URIs break without quotes.
+- **Clipping:** `overflow: hidden` clips shadows and focus rings. Leave room (a
+  `Focus` primitive with its margin) or move the shadow to the outer container.
+- **Full-width bars:** the shadow is cast only downward or upward
+  (`shadow.down`/`up` of the view).
+- **Layers:** a bar inside a floating layer paints its layer's background (variable
   `--layer-background`).
-- **Skeletons:** su color se pone una vez, global (`border` con brillo `surface_alt`).
+- **Skeletons:** their color is set once, globally (`border` with `surface_alt` shine).

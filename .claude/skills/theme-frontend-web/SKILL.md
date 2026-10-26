@@ -1,97 +1,99 @@
 ---
 name: theme-frontend-web
 description: >-
-  Revisa un frontend web completo y lo convierte en un template editable por tema con el
-  Ordering theme engine (@orderingco/ordering-theme-engine): inventario de todos los
-  elementos (botones, imágenes, cards, inputs, modales…), agrupación de los que cumplen la
-  misma función, unificación de colores, bordes, espaciados y tamaños parecidos en una
-  escala corta de tokens, corrección del código para que lea todo del tema, clasificación
-  de páginas, secciones, visibilidad, componentes y variantes para el editor, y el product
-  schema (product.schema.json) al que el frontend obedece por completo. Úsalo cuando pidan
-  tematizar, "templatizar" o hacer editable un frontend web (React, Vue, Svelte, Next…),
-  crear o completar el schema de un producto, o auditar sus estilos contra el tema. Para
-  React Native hay un skill aparte.
+  Reviews a whole web frontend and turns it into a template a theme can edit, with the
+  Ordering theme engine (@orderingco/ordering-theme-engine): an inventory of every element
+  (buttons, images, cards, inputs, modals…), the pieces that do the same thing grouped
+  together, near colors, borders, spacing and sizes collapsed into a short token scale,
+  the code fixed to read everything from the theme, pages, sections, visibility,
+  components and variants classified for the editor, and the product schema
+  (product.schema.json) the frontend then obeys completely. Use it when asked to theme,
+  "templatize" or make editable a web frontend (React, Vue, Svelte, Next…), to create or
+  complete a product's schema, or to audit its styles against the theme. React Native has
+  its own skill.
 ---
 
-# Tematizar un frontend web con el Ordering theme engine
+# Theming a web frontend with the Ordering theme engine
 
-**Objetivo:** el frontend toma el schema de su producto y le hace caso **por completo**.
-Todo valor visual (color, espacio, radio, borde, sombra, tipografía, tamaño, opacidad,
-movimiento, imagen) y todo lo que se muestra, se oculta o se ordena sale del tema; el
-editor (Dashboard) puede cambiarlo sin tocar código.
+**Goal:** the frontend takes its product's schema and obeys it **completely**. Every
+visual value (color, space, radius, border, shadow, typography, size, opacity, motion,
+image) and everything that is shown, hidden or ordered comes from the theme; the editor
+(the Dashboard) can change it without touching code.
 
-Modelo terminado: Finitless-com/website-marketplace-v26 (original) →
-Finitless-com/website-marketplace-theming (tematizado). Cuando dudes de cómo se resuelve algo, mira cómo quedó allí (rutas en
-`references/runtime-web.md`), pero no copies sus valores ni sus nombres de producto.
+Finished model: Finitless-com/website-marketplace-v26 (original) →
+Finitless-com/website-marketplace-theming (themed). When in doubt about how something is
+solved, look at how it ended up there (paths in `references/runtime-web.md`), but do not
+copy its values or its product names.
 
-## Definición de terminado
+## Definition of done
 
-1. `product.schema.json` en la raíz del repo, válido con `ordering-theme validate`, compilado
-   (`ordering-theme compile`) y con su dry run de publicación en CI.
-2. El código lee **todo** del tema a través de helpers. El guard
-   (`scripts/guard.mjs`) pasa en CI sin baseline, o con una baseline que solo puede bajar;
-   cada literal que queda es una excepción registrada con su motivo.
-3. Cada clave del schema tiene un lector (`scripts/keys.mjs` sin faltantes confirmados) y
-   un test; no hay dos controles para lo mismo.
-4. Cada página declara sus secciones (orden, ocultables, grupos) y cada pieza ocultable
-   tiene su clave de `visibility`.
-5. Los defaults del schema reproducen el aspecto actual; los cambios visibles están
-   listados y aprobados.
-6. `docs/THEMING.md` (desde `templates/THEMING.md`) describe las reglas del repo, enlazado
-   desde `CLAUDE.md`; `docs/theme/` guarda los entregables de la auditoría.
+1. `product.schema.json` at the repo's root, valid with `ordering-theme validate`,
+   compiled (`ordering-theme compile`), with its publish dry run in CI.
+2. The code reads **everything** from the theme through helpers. The guard
+   (`scripts/guard.mjs`) passes in CI with no baseline, or with a baseline that can only go
+   down; every literal left is an exception recorded with its reason.
+3. Every key of the schema has a reader (`scripts/keys.mjs` without confirmed misses) and
+   a test; there are no two controls for the same thing.
+4. Every page declares its sections (order, hideable, groups) and every piece that can be
+   hidden has its `visibility` key.
+5. The schema's defaults reproduce today's look; the visible changes are listed and
+   approved.
+6. `docs/THEMING.md` (from `templates/THEMING.md`) describes the repo's rules and is linked
+   from `CLAUDE.md`; `docs/theme/` keeps the audit's deliverables.
 
-## Reglas que no se negocian
+## Rules that are not negotiable
 
-- **El tema manda.** Nada de hex, `rgb()`, `px`, `rem`, `ms` ni nombres de fuente en los
-  estilos de un componente. Si ningún token ni propiedad encaja, no inventes un valor:
-  regístralo como excepción y pregunta.
-- **No se crean tokens.** El catálogo de tokens es fijo y común a todos los productos
-  (schema-format.md §4). Un nivel que falta es un cambio del engine: se pregunta.
-- **Unificar por propósito, no por valor.** Valores parecidos caen en el mismo nivel
-  (tolerancias en `references/unificacion.md`). Nunca un nivel, una variante o una
-  propiedad por cada valor distinto que encuentres.
-- **Una función, un componente.** Todo lo que hace lo mismo usa el mismo componente o
-  primitiva. Una variante existe solo si se diferencia de verdad; si dos son casi iguales,
-  se unen, salvo que el usuario diga lo contrario (`references/componentes.md`).
-- **Cada clave tiene un lector.** Una clave que el código no lee es un bug silencioso.
-- **Las decisiones de diseño son del usuario.** Los puntos de control de abajo se
-  presentan y esperan aprobación; regístralas en `docs/theme/decisiones.md`. Lo que
-  diga un subagente no es una aprobación.
-- **Solo lo que se puede pulsar tiene hover y cursor de mano**, y su aspecto sale de un
-  estado del tema. Lo que se puede pulsar es un `<button>` o un `<a>` de verdad, con foco
-  visible.
-- **Di lo que no verificaste.** Cada entrega lista lo que quedó sin comprobar.
+- **The theme decides.** No hex, `rgb()`, `px`, `rem`, `ms` or font names in a
+  component's styles. If no token or property fits, do not invent a value: record it as an
+  exception and ask.
+- **No new tokens.** The token catalog is fixed and shared by every product
+  (schema-format.md §4). A missing level is a change to the engine: ask.
+- **Unify by purpose, not by value.** Near values fall into the same level (tolerances in
+  `references/unification.md`). Never one level, variant or property per distinct value
+  you find.
+- **One function, one component.** Everything that does the same thing uses the same
+  component or primitive. A variant exists only if it really differs; two that are almost
+  the same merge, unless the user says otherwise (`references/components.md`).
+- **Every key has a reader.** A key no code reads is a silent bug.
+- **Design decisions belong to the user.** The gates below are presented and wait for
+  approval; record them in `docs/theme/decisions.md`. What a subagent says is not an
+  approval.
+- **Only what can be clicked or tapped has hover and a pointer cursor**, and its look comes
+  from a theme state. What can be clicked is a real `<button>` or `<a>`, with a visible
+  focus.
+- **Say what you did not verify.** Every deliverable lists what was left unchecked.
 
-## Antes de empezar
+## Before starting
 
-Lee, en este orden:
+Read, in this order:
 
-1. Este archivo y `references/lecciones.md`, los errores que ya costaron caro una vez.
-2. Las docs del engine, en la versión que fijará el repo:
+1. This file and `references/lessons.md`, the mistakes that already cost a lot once.
+2. The engine's docs, at the version the repo will pin:
    `node_modules/@orderingco/ordering-theme-engine/docs/` (`creating-a-schema.md`,
-   `schema-format.md`), o el repo del engine
+   `schema-format.md`), or the engine's repo
    ([Finitless-com/ordering-theme-engine](https://github.com/Finitless-com/ordering-theme-engine),
-   `docs/`, en el tag de esa versión). El esquema de ejemplo con cada forma del formato está
-   en `meta/reference/reference-1.0.0.json`.
-3. El `CLAUDE.md`/README del repo: stack, comandos, tests, i18n, submódulos que no se tocan.
+   `docs/`, at that version's tag). The example schema with every shape of the format is
+   `meta/reference/reference-1.0.0.json`.
+3. The repo's `CLAUDE.md`/README: stack, commands, tests, i18n, submodules not to touch.
 
-Pregunta al usuario lo que no se puede deducir (una sola ronda, con `AskUserQuestion`):
+Ask the user what cannot be deduced (one round, with `AskUserQuestion`):
 
-- el `product_type` (lista cerrada en schema-format.md §1; uno nuevo exige un cambio en
-  api-core y en el engine);
-- si existe un tema v1 que migrar (entonces hace falta un mapa v1, creating-a-schema.md §5–6);
-- el breakpoint de teléfono y si hace falta la plataforma `mobile_web`;
-- qué zonas quedan fuera (pantallas internas, integraciones de terceros, ilustraciones);
-- dónde viven los entregables (por defecto `docs/theme/`) y la rama de trabajo.
+- the `product_type` (closed list in schema-format.md §1; a new one needs a change in
+  api-core and in the engine);
+- whether there is a version 1 theme to migrate (then a v1 map is needed,
+  creating-a-schema.md §5–6);
+- the phone breakpoint, and whether the `mobile_web` platform is needed;
+- which areas are left out (internal screens, third-party integrations, illustrations);
+- where the deliverables live (by default `docs/theme/`) and the working branch.
 
-## Fases
+## Phases
 
-Cada fase deja un entregable en `docs/theme/` y termina en una puerta de control. Trabaja
-en una rama; los commits, por fase o por lote.
+Each phase leaves a deliverable in `docs/theme/` and ends at a gate. Work on a branch;
+commit by phase or by batch.
 
-### 1. Inventario (sin tocar código)
+### 1. Inventory (without touching code)
 
-Corre los scripts (Node ≥ 18, sin dependencias). `<skill>` es el directorio de este skill.
+Run the scripts (Node ≥ 18, no dependencies). `<skill>` is this skill's directory.
 
 ```sh
 node <skill>/scripts/inventory.mjs  <repo> --src src [--exclude '<regex>'] --out <repo>/.theme-audit
@@ -99,164 +101,164 @@ node <skill>/scripts/scales.mjs     <repo>/.theme-audit/inventory.json
 node <skill>/scripts/components.mjs <repo> --src src --out <repo>/.theme-audit
 ```
 
-- `inventory.json`/`.csv`: cada literal de diseño con `archivo:línea`, componente, selector,
-  propiedad y valor normalizado.
-- `scales.md`: cómo caen esos valores en los niveles del catálogo, los niveles ajustados a
-  lo que usa el código, lo que queda fuera de escala y los colores en familias con sus roles.
-- `components.md`: rutas, componentes y estilos propios agrupados por función, elementos
-  nativos, componentes más reutilizados e imágenes por origen.
+- `inventory.json`/`.csv`: every design literal with `file:line`, component, selector,
+  property and normalized value.
+- `scales.md`: how those values fall into the catalog's levels, the levels fitted to what
+  the code uses, what is off the scale, and the colors in families with their roles.
+- `components.md`: routes, components and own styles grouped by function, native
+  elements, the most reused components and images by origin.
 
-Añade `.theme-audit/` al `.gitignore`.
+Add `.theme-audit/` to `.gitignore`.
 
-Los scripts encuentran candidatos; **la auditoría la hacen agentes leyendo pantallas**.
-Reparte el frontend en áreas (por ejemplo: primitivas y layout, home y listados, detalle,
-carrito y checkout, pedidos, cuenta y login, el resto) y lanza un agente por área en
-paralelo, con el checklist de `references/inventario.md`. Consolida sus informes en
-`docs/theme/inventario.md`: elementos por pantalla con todos sus estados, imágenes con su
-tamaño pintado y lo que hoy ya es configurable.
+The scripts find candidates; **agents reading screens do the audit**. Split the frontend
+into areas (for example: primitives and layout, home and listings, detail, cart and
+checkout, orders, account and login, the rest) and launch one agent per area in parallel,
+with the checklist of `references/inventory.md`. Consolidate their reports in
+`docs/theme/inventory.md`: elements per screen with all their states, images with their
+painted size, and what is already configurable today.
 
-**Puerta:** el inventario cubre todas las rutas y pantallas condicionales (flags, layouts
-alternativos, sesión iniciada o no, vacíos, errores).
+**Gate:** the inventory covers every route and conditional screen (flags, alternative
+layouts, signed in or not, empty states, errors).
 
-### 2. Agrupar por función y decidir variantes
+### 2. Group by function and decide variants
 
-Con `components.md` y los informes por área, agrupa todo lo que cumple la misma función
-(los botones hechos a mano, las cajas de aviso, los separadores, las listas seleccionables…)
-y asígnale un componente del tema y una primitiva de código. Decide los ejes de cada
-componente (`variants`, `appearances`, `sizes`, `shapes`, `colors`, `slots`, `scope`,
-`inherits`) con los criterios de `references/componentes.md`.
+With `components.md` and the area reports, group everything that does the same thing
+(hand-made buttons, notice boxes, separators, selectable lists…) and give it a theme
+component and a code primitive. Decide each component's axes (`variants`, `appearances`,
+`sizes`, `shapes`, `colors`, `slots`, `scope`, `inherits`) with the criteria of
+`references/components.md`.
 
-Entregable: `docs/theme/componentes.md`, una tabla de *grupo → componente del tema →
-primitiva → variantes que se quedan → variantes que se unen (con su cambio visible)*.
+Deliverable: `docs/theme/components.md`, a table of *group → theme component → primitive →
+variants kept → variants merged (with their visible change)*.
 
-**Puerta: aprobación del usuario.**
+**Gate: the user's approval.**
 
-### 3. Unificar escalas y colores
+### 3. Unify scales and colors
 
-Con `scales.md` decide el valor de cada nivel (el del catálogo o el ajustado a lo que usa
-el código), qué colores del catálogo usa el producto y a qué rol va cada familia, y qué
-queda como excepción. Sigue `references/unificacion.md`: tolerancias, color por rol (no
-por cercanía), lo que sigue a la Identidad y lo que queda fijo, y una segunda pasada que
-une los tokens que comparten propósito.
+With `scales.md`, decide each level's value (the catalog's, or the one fitted to what the
+code uses), which catalog colors the product uses and which role each family goes to, and
+what stays an exception. Follow `references/unification.md`: tolerances, color by role
+(not by closeness), what follows Identity and what stays fixed, and a second pass that
+merges the tokens sharing a purpose.
 
-Entregables: `docs/theme/tokens.md` (cada nivel con su valor y lo que absorbe, los cambios
-visibles) y `theme-exceptions.json` en la raíz (formato en `templates/`).
+Deliverables: `docs/theme/tokens.md` (each level with its value and what it absorbs, the
+visible changes) and `theme-exceptions.json` at the root (format in `templates/`).
 
-**Puerta: aprobación del usuario** de la paleta, las escalas y los cambios visibles.
+**Gate: the user's approval** of the palette, the scales and the visible changes.
 
-### 4. Clasificar páginas, secciones, visibilidad, imágenes y ajustes del sitio
+### 4. Classify pages, sections, visibility, images and site settings
 
-Aplica `references/paginas-y-visibilidad.md`: un **bloque** de una página es una sección
-(se ordena y se oculta); una **pieza** dentro de un bloque o de un componente compartido es
-una clave de `visibility`; lo que es pura decoración va en `components`; lo que es del
-sitio y no del tema va en `site`; cada imagen configurable es una clave de `images` con
-sus `hints`. Marca lo que no puede ocultarse ni moverse, y por qué.
+Apply `references/pages-and-visibility.md`: a **block** of a page is a section (it is
+ordered and hidden); a **piece** inside a block or inside a shared component is a
+`visibility` key; what is pure decoration goes in `components`; what belongs to the site
+and not the theme goes in `site`; each configurable image is an `images` key with its
+`hints`. Mark what cannot be hidden or moved, and why.
 
-Entregable: `docs/theme/paginas-y-visibilidad.md` (tabla de páginas → secciones con
-`hideable`/`group`, claves de visibilidad por grupo del editor con lo que ocultan,
-imágenes con su tamaño ideal).
+Deliverable: `docs/theme/pages-and-visibility.md` (a table of pages → sections with
+`hideable`/`group`, visibility keys by editor group with what they hide, images with their
+ideal size).
 
-**Puerta: aprobación del usuario.**
+**Gate: the user's approval.**
 
-### 5. Escribir el schema
+### 5. Write the schema
 
-Escribe `product.schema.json` según `references/schema.md`: tokens con las escalas
-aprobadas, componentes, visibilidad, imágenes, páginas, `site` y los metadatos del editor.
-Declara tus propias reglas `derive`/`follows`/`matrix` (si no, el engine aplica las suyas;
-schema-format.md §11.5). Empieza en `1.0.0`.
+Write `product.schema.json` following `references/schema.md`: tokens with the approved
+scales, components, visibility, images, pages, `site` and the editor's metadata. Declare
+your own `derive`/`follows`/`matrix` rules (otherwise the engine applies its own;
+schema-format.md §11.5). Start at `1.0.0`.
 
-Instala el engine fijado (`pnpm add -D -E @orderingco/ordering-theme-engine`) y añade los
-scripts `theme:validate`, `theme:compile`, `theme:verify` y `theme:publish`
-(`references/schema.md`). **Puerta:** `theme:validate` y `theme:verify` pasan.
+Install the pinned engine (`pnpm add -D -E @orderingco/ordering-theme-engine`) and add
+the `theme:validate`, `theme:compile`, `theme:verify` and `theme:publish` scripts
+(`references/schema.md`). **Gate:** `theme:validate` and `theme:verify` pass.
 
-### 6. Integrar el runtime en el frontend
+### 6. Wire the runtime into the frontend
 
-Construye la tubería una sola vez, antes de tocar componentes: tema servido → `complete()`
-→ `toCss()` → provider → helpers; plataforma por breakpoint, hook de secciones, helper de
-visibilidad, imágenes con su fallback del bundle, ajustes del sitio y fuentes. Cómo hacerlo
-según la tecnología de estilos (styled-components/emotion, CSS Modules/SCSS, Tailwind) en
-`references/runtime-web.md`. Escribe `docs/THEMING.md` desde `templates/THEMING.md`, con
-los nombres reales de los helpers, y enlázalo desde `CLAUDE.md`.
+Build the pipeline once, before touching components: served theme → `complete()` →
+`toCss()` → provider → helpers; the platform by breakpoint, the sections hook, the
+visibility helper, images with their bundled fallback, site settings and fonts. How to do
+it for each styling technology (styled-components/emotion, CSS Modules/SCSS, Tailwind) is
+in `references/runtime-web.md`. Write `docs/THEMING.md` from `templates/THEMING.md`, with
+the helpers' real names, and link it from `CLAUDE.md`.
 
-**Puerta:** los tests de los helpers pasan y la app arranca con los defaults sin cambios
-visibles fuera de los aprobados.
+**Gate:** the helpers' tests pass and the app starts with the defaults, with no visible
+changes beyond the approved ones.
 
-### 7. Corregir el código, por lotes
+### 7. Fix the code, in batches
 
-Orden: primero las primitivas (botón, input, card, divider, chip, tabs, modal…), después
-las áreas. Para cada lote:
+Order: the primitives first (button, input, card, divider, chip, tabs, modal…), then the
+areas. For each batch:
 
-1. Reemplaza los componentes duplicados por su primitiva (fase 2) y los literales por
-   helpers (fase 3).
-2. Conecta secciones y visibilidad (fase 4) e imágenes.
-3. Corre `guard.mjs` con baseline (solo puede bajar), lint y tests.
-4. Haz commit del lote.
+1. Replace the duplicated components with their primitive (phase 2) and the literals with
+   helpers (phase 3).
+2. Wire sections and visibility (phase 4) and images.
+3. Run `guard.mjs` with a baseline (it can only go down), lint and tests.
+4. Commit the batch.
 
-Paraleliza con un agente por área. Cada agente es dueño de un conjunto de archivos
-**disjunto** y lee `docs/THEMING.md` y `references/lecciones.md`; las primitivas compartidas
-las toca solo el agente principal. Revisa los diffs de los agentes antes de aceptarlos.
+Parallelize with one agent per area. Each agent owns a **disjoint** set of files and reads
+`docs/THEMING.md` and `references/lessons.md`; only the main agent touches the shared
+primitives. Review the agents' diffs before accepting them.
 
 ```sh
-node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json --write-baseline   # una vez, al empezar
-node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json                   # en cada lote
+node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json --write-baseline   # once, at the start
+node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json                   # every batch
 ```
 
-### 8. Lectores y limpieza
+### 8. Readers and cleanup
 
 ```sh
 node <skill>/scripts/keys.mjs <repo> --schema product.schema.json --src src
 ```
 
-Cada clave sin lector se conecta o se quita del schema. Quita también los controles
-duplicados (dos claves para lo mismo, `*_mobile` en lugar de `platforms.mobile_web`,
-interruptores de ocultar dentro de un componente en lugar de `visibility`).
+Every key without a reader is wired or removed from the schema. Also remove duplicated
+controls (two keys for the same thing, `*_mobile` instead of `platforms.mobile_web`, hide
+switches inside a component instead of `visibility`).
 
-### 9. Verificar
+### 9. Verify
 
-Aplica `references/verificacion.md`:
+Apply `references/verification.md`:
 
-- tests de sincronía de defaults, robustez, por componente, por visibilidad y por secciones;
-- temas extremos (cuadrado, píldora, oscuro, primario claro, primario oscuro) en escritorio
-  y a 390 px, midiendo contraste, foco y desbordes;
-- el guard en CI.
+- tests for defaults sync, robustness, per component, per visibility key and per sections;
+- extreme themes (square, pill, dark, light primary, dark primary) on desktop and at
+  390 px, measuring contrast, focus and overflow;
+- the guard in CI.
 
-Informe final: métricas antes/después (literales por categoría, componentes unificados,
-claves del schema), excepciones y lo que no se verificó.
+Final report: before/after metrics (literals by category, components unified, schema
+keys), exceptions and what was not verified.
 
-### 10. Publicar y entregar
+### 10. Publish and hand over
 
-- CI: `theme:validate`, `theme:verify`, el guard y el dry run de publicación.
-- Las claves nuevas de etiquetas del editor (`BUILDER_THEME_…`) con su texto en inglés,
-  listadas para el Dashboard.
-- El mapa v1, si lo hay.
-- Un PR por fase grande o uno final con el resumen y los enlaces a `docs/theme/`.
+- CI: `theme:validate`, `theme:verify`, the guard and the publish dry run.
+- The new editor label keys (`BUILDER_THEME_…`) with their English text, listed for the
+  Dashboard.
+- The v1 map, if there is one.
+- A PR per large phase, or a final one with the summary and links to `docs/theme/`.
 
-Publicar fuera del dry run solo con autorización explícita del usuario.
+Publish beyond the dry run only with the user's explicit authorization.
 
-## Cómo usar agentes
+## Using agents
 
-- **Inventario y verificación:** en abanico, un agente por área, de solo lectura, con el
-  checklist y el formato de salida exactos; tú consolidas.
-- **Corrección de código:** un agente por área con archivos disjuntos. Ninguno toca
-  `product.schema.json` ni las primitivas compartidas: piden el cambio y tú lo haces, para
-  que el schema tenga un solo autor.
-- **Brief de cada agente:** el objetivo, la lista de archivos, las referencias que debe leer
-  y el formato de su informe (`archivo:línea`, propuesta, cambio visible).
-- **Antes de aceptar sus resultados:** verifica lo que afirman con el guard, `keys.mjs`, los
-  tests y el diff.
+- **Inventory and verification:** fan out, one read-only agent per area, with the exact
+  checklist and output format; you consolidate.
+- **Fixing code:** one agent per area with disjoint files. None of them touches
+  `product.schema.json` or the shared primitives: they ask for the change and you make it,
+  so the schema has a single author.
+- **Each agent's brief:** the goal, the list of files, the references it must read and the
+  format of its report (`file:line`, proposal, visible change).
+- **Before accepting their results:** check what they claim with the guard, `keys.mjs`,
+  the tests and the diff.
 
-## Referencias
+## References
 
-| Archivo | Para qué |
+| File | What for |
 |---|---|
-| `references/inventario.md` | Checklist de auditoría por pantalla, formato de los informes, inventario de imágenes |
-| `references/unificacion.md` | Cómo colapsar valores en niveles: tolerancias, color por rol, Identidad, excepciones |
-| `references/componentes.md` | Agrupar por función, ejes de un componente, cuándo una variante sí y cuándo se une |
-| `references/paginas-y-visibilidad.md` | Secciones, visibilidad, imágenes y `site`: qué va dónde y qué no se oculta |
-| `references/schema.md` | Escribir el schema: esqueleto, editor, errores frecuentes, versiones, CLI |
-| `references/runtime-web.md` | La tubería del tema en el frontend y los helpers, según la tecnología de estilos |
-| `references/verificacion.md` | Tests, temas extremos, contraste, guard, métricas finales |
-| `references/lecciones.md` | Errores de la conversión del marketplace que no hay que repetir |
-| `templates/THEMING.md` | Reglas del repo tematizado, para `docs/THEMING.md` |
-| `templates/theme-exceptions.json` | Formato de las excepciones registradas |
-| `templates/decisiones.md` | Registro de decisiones del usuario |
+| `references/inventory.md` | The per-screen audit checklist, the reports' format, the image inventory |
+| `references/unification.md` | How to collapse values into levels: tolerances, color by role, Identity, exceptions |
+| `references/components.md` | Grouping by function, a component's axes, when a variant stays and when it merges |
+| `references/pages-and-visibility.md` | Sections, visibility, images and `site`: what goes where and what is not hidden |
+| `references/schema.md` | Writing the schema: skeleton, editor, frequent errors, versions, CLI |
+| `references/runtime-web.md` | The theme's pipeline in the frontend and the helpers, per styling technology |
+| `references/verification.md` | Tests, extreme themes, contrast, guard, final metrics |
+| `references/lessons.md` | Mistakes from the marketplace's conversion not to repeat |
+| `templates/THEMING.md` | The themed repo's rules, for `docs/THEMING.md` |
+| `templates/theme-exceptions.json` | The format of the recorded exceptions |
+| `templates/decisions.md` | The log of the user's decisions |

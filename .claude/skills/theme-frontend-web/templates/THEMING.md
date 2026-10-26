@@ -86,7 +86,7 @@ Never create a new **token**: the catalog is fixed and shared by every product.
 
 <The purpose → token table of this product: surfaces, text and lines, color on color,
 translucency, typography roles, sizes, interaction, motion. Start from the skill's
-references/unificacion.md §3 and keep only the tokens this schema has.>
+references/unification.md §3 and keep only the tokens this schema has.>
 
 Only what can be clicked or tapped has hover and a pointer cursor, and only with a look
 that comes from a theme state. Everything else stays still.

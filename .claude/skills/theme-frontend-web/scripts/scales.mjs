@@ -9,7 +9,7 @@
 //   node scales.mjs <inventory.json> [--out <dir>] [--levels levels.json] [--delta 5]
 //
 // Writes scales.json and scales.md next to the inventory (or in --out).
-// Suggestions only: the agent decides by purpose (references/unificacion.md).
+// Suggestions only: the agent decides by purpose (references/unification.md).
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -236,25 +236,25 @@ fs.writeFileSync(path.join(out, 'scales.json'), JSON.stringify(report, null, 1))
 // Markdown ---------------------------------------------------------------------
 const md = []
 const row = (cells) => `| ${cells.join(' | ')} |`
-md.push('# Propuesta de escalas', '', `Fuente: \`${input}\` (sin fallbacks). Sugerencias: cada valor se decide por propósito.`, '')
+md.push('# Proposed scales', '', `Source: \`${input}\` (fallbacks left out). Suggestions only: each value is decided by its purpose.`, '')
 for (const [scale, r] of Object.entries(scales)) {
-  md.push(`## ${scale}`, '', `${r.total} usos; ${r.fits} (${r.coverage}%) caben en un nivel con tolerancia ±${CATALOG[scale].tolerance}.`, '')
-  if (r.fitted && r.fitted.coverage > r.coverage) md.push(`Con los niveles movidos a los valores que usa el código (columna «ajustado») cabría el ${r.fitted.coverage}%: el tema por defecto reproduciría el aspecto actual con menos cambios visibles.`, '')
-  md.push(row(['nivel', 'catálogo', 'ajustado', 'valor más usado', 'usos', 'valores que absorbe']), row(['---', '---', '---', '---', '---', '---']))
+  md.push(`## ${scale}`, '', `${r.total} uses; ${r.fits} (${r.coverage}%) fit a level within ±${CATALOG[scale].tolerance}.`, '')
+  if (r.fitted && r.fitted.coverage > r.coverage) md.push(`With the levels moved to the values the code uses (column "fitted"), ${r.fitted.coverage}% would fit: the default theme would reproduce today's look with fewer visible changes.`, '')
+  md.push(row(['level', 'catalog', 'fitted', 'most used', 'uses', 'values it absorbs']), row(['---', '---', '---', '---', '---', '---']))
   for (const [n, l] of Object.entries(r.levels)) md.push(row([n, l.catalog, r.fitted?.levels[n] ?? l.catalog, l.mode ?? '—', l.used, Object.entries(l.values).map(([v, c]) => `${v}×${c}`).join(' ')]))
   if (r.outliers.length) {
-    md.push('', 'Fuera de escala (decidir: nivel más cercano con cambio visible, ajustar el valor del nivel, o excepción registrada):', '')
-    md.push(row(['valor', 'usos', 'componentes', 'nivel más cercano', 'ejemplo']), row(['---', '---', '---', '---', '---']))
+    md.push('', 'Off the scale (decide: the nearest level with a visible change, move the level\'s value, or a recorded exception):', '')
+    md.push(row(['value', 'uses', 'components', 'nearest level', 'example']), row(['---', '---', '---', '---', '---']))
     for (const o of r.outliers.slice(0, 20)) md.push(row([o.value, o.count, o.components, o.nearest, `\`${o.sample}\``]))
   }
   md.push('')
 }
-md.push('## shadow', '', `${shadow.total} box-shadow; ${shadow.fits} caben (d ≤ 6): ${Object.entries(shadow.levels).map(([k, v]) => `${k} ${v}`).join(', ')}. Fijas: ${Object.entries(shadow.fixed).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '')
+md.push('## shadow', '', `${shadow.total} box-shadow; ${shadow.fits} fit (d ≤ 6): ${Object.entries(shadow.levels).map(([k, v]) => `${k} ${v}`).join(', ')}. Fixed: ${Object.entries(shadow.fixed).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '')
 for (const u of shadow.unfit.slice(0, 10)) md.push(`- \`${u.loc}\` \`${u.value}\` → ${u.nearest} (d ${u.distance})`)
-md.push('', '## Colores', '', `${colorUse.size} colores distintos en ${colorFamilies.length} familias (ΔE76 < ${delta}). El token se elige por rol (propiedad y contexto), no por cercanía: la sugerencia es solo un punto de partida.`, '')
-md.push(row(['familia', 'usos', 'distintos', 'archivos', 'roles', 'sugerencia', 'miembros']), row(['---', '---', '---', '---', '---', '---', '---']))
+md.push('', '## Colors', '', `${colorUse.size} distinct colors in ${colorFamilies.length} families (ΔE76 < ${delta}). The token is chosen by role (property and context), not by closeness: the suggestion is only a starting point.`, '')
+md.push(row(['family', 'uses', 'distinct', 'files', 'roles', 'suggestion', 'members']), row(['---', '---', '---', '---', '---', '---', '---']))
 for (const f of colorFamilies.slice(0, 60)) md.push(row([f.lead, f.count, f.distinct, f.files, Object.entries(f.roles).map(([r, c]) => `${r} ${c}`).join(', '), f.suggestion, f.members.slice(0, 8).map(m => `${m.hex}×${m.count}`).join(' ')]))
-md.push('', '## Otros', '')
+md.push('', '## Other', '')
 for (const [k, h] of Object.entries(other)) md.push(`- **${k}**: ${h.slice(0, 20).map(([v, c]) => `${v}×${c}`).join(', ') || '—'}`)
 fs.writeFileSync(path.join(out, 'scales.md'), md.join('\n') + '\n')
 
