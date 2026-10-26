@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-// Proposes how the literals of inventory.json collapse into the theme's levels:
-// for each scale (space, radius, border, font size, icon, control height,
-// motion, shadow) how many fit the engine's catalog within tolerance, the value
-// each level should take to keep today's look, and the outliers that need a
-// decision; and the colors grouped into families by perceptual distance, with
-// the roles they play (text, background, border, icon, shadow).
+// Proposes how the literals of inventory.json (web or React Native) collapse
+// into the theme's levels: for each scale (space, radius, border, font size,
+// icon, control height, motion, shadow) how many fit the engine's catalog
+// within tolerance, the value each level should take to keep today's look, and
+// the outliers that need a decision; and the colors grouped into families by
+// perceptual distance, with the roles they play (text, background, border,
+// icon, shadow).
 //
 //   node scales.mjs <inventory.json> [--out <dir>] [--levels levels.json] [--delta 5]
 //
 // Writes scales.json and scales.md next to the inventory (or in --out).
-// Suggestions only: the agent decides by purpose (references/unification.md).
+// Suggestions only: the agent decides by purpose (each skill's
+// references/unification.md).
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -223,6 +225,10 @@ const other = {
   opacity: plain('opacity', 'n'),
   z_index: plain('z_index', 'n'),
   breakpoint: plain('breakpoint', 'px'),
+  // React Native splits a shadow into props: Android's elevation, iOS's radius and opacity.
+  elevation: histogram(entries.filter(e => e.property === 'elevation').map(e => ({ v: e.n }))),
+  shadow_radius: histogram(entries.filter(e => e.property === 'shadow-radius').map(e => ({ v: e.n }))),
+  shadow_opacity: histogram(entries.filter(e => e.property === 'shadow-opacity').map(e => ({ v: e.n }))),
   // Tailwind color classes carry no hex: Tailwind's palette (bg-gray-200) is a literal,
   // a semantic class mapped to a CSS variable (text-muted-foreground) is already a token.
   tailwind_palette: histogram(entries.filter(e => e.tailwind && e.palette).map(e => ({ v: e.value.split(':').pop() }))),

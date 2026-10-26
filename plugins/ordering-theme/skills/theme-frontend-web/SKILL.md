@@ -30,9 +30,9 @@ copy its values or its product names.
 1. `product.schema.json` at the repo's root, valid with `ordering-theme validate`,
    compiled (`ordering-theme compile`), with its publish dry run in CI.
 2. The code reads **everything** from the theme through helpers. The guard
-   (`scripts/guard.mjs`) passes in CI with no baseline, or with a baseline that can only go
+   (`<scripts>/guard.mjs`) passes in CI with no baseline, or with a baseline that can only go
    down; every literal left is an exception recorded with its reason.
-3. Every key of the schema has a reader (`scripts/keys.mjs` without confirmed misses) and
+3. Every key of the schema has a reader (`<scripts>/keys.mjs` without confirmed misses) and
    a test; there are no two controls for the same thing.
 4. Every page declares its sections (order, hideable, groups) and every piece that can be
    hidden has its `visibility` key.
@@ -93,14 +93,14 @@ commit by phase or by batch.
 
 ### 1. Inventory (without touching code)
 
-Run the scripts (Node ≥ 18, no dependencies). `<skill>` is this skill's directory, the base
-directory Claude Code gives when it loads the skill (installed as a plugin, under
-`~/.claude/plugins/cache/`).
+Run the scripts (Node ≥ 18, no dependencies). They are the plugin's, shared with
+`theme-frontend-native`: `<scripts>` is `${CLAUDE_PLUGIN_ROOT}/scripts`, two levels above
+this skill's base directory (`<skill>/../../scripts`).
 
 ```sh
-node <skill>/scripts/inventory.mjs  <repo> --src src [--exclude '<regex>'] --out <repo>/.theme-audit
-node <skill>/scripts/scales.mjs     <repo>/.theme-audit/inventory.json
-node <skill>/scripts/components.mjs <repo> --src src --out <repo>/.theme-audit
+node <scripts>/inventory.mjs  <repo> --src src [--exclude '<regex>'] --out <repo>/.theme-audit
+node <scripts>/scales.mjs     <repo>/.theme-audit/inventory.json
+node <scripts>/components.mjs <repo> --src src --out <repo>/.theme-audit
 ```
 
 - `inventory.json`/`.csv`: every design literal with `file:line`, component, selector,
@@ -201,14 +201,14 @@ Parallelize with one agent per area. Each agent owns a **disjoint** set of files
 primitives. Review the agents' diffs before accepting them.
 
 ```sh
-node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json --write-baseline   # once, at the start
-node <skill>/scripts/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json                   # every batch
+node <scripts>/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json --write-baseline   # once, at the start
+node <scripts>/guard.mjs <repo> --src src --allow theme-exceptions.json --baseline .theme-audit/baseline.json                   # every batch
 ```
 
 ### 8. Readers and cleanup
 
 ```sh
-node <skill>/scripts/keys.mjs <repo> --schema product.schema.json --src src
+node <scripts>/keys.mjs <repo> --schema product.schema.json --src src
 ```
 
 Every key without a reader is wired or removed from the schema. Also remove duplicated

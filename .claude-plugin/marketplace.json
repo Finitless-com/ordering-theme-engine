@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "ordering-theme",
-      "description": "Skills to make a frontend obey its product's theme schema: theme-frontend-web converts a web frontend.",
+      "description": "Skills to make a frontend obey its product's theme schema: theme-frontend-web converts a web frontend, theme-frontend-native a React Native app.",
       "source": "./plugins/ordering-theme",
       "category": "development"
     }
