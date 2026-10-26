@@ -69,7 +69,7 @@ Contents:
   `driver_app`, `kiosk_app`, `call_center`, `dashboard`). Otherwise, `product_type.invalid`.
 - **`version`**: the meta-schema accepts one to three parts (`26`, `26.0`, `26.0.0`),
   but publishing requires three (`version.semver`). The first part is the **base**: the
-  product's major version (§13).
+  schema's own major version, not the app's (§13).
 - **`format`**: always `2` (`format.invalid`).
 - **`platforms`**: a list of names (`^[a-z0-9_]+$`, no repeats). Only the platforms in
   this list can have their own values in a component (§5) or in a visibility key (§6).
@@ -878,7 +878,10 @@ base's: `px` and `ms` as they are, `%` a percentage unless its range lies within
 
 ## 13. Versions and compatibility
 
-`version` is `base.minor.patch`. The **base** is the product's major version (26). A
+`version` is `base.minor.patch`. The **base** is the schema's own major version, not the
+app's: it says nothing about which release of the app reads it (the reference schema
+starts at `1.0.0`), and it goes up only for a change that needs a new base (§15). The
+examples use 26 and 27. A
 product type has one **current version**: the last one published (a deploy that
 publishes an older version again, a rollback, makes it the current one again). The
 Ordering.co API resolves every theme of the product type with its current version,
@@ -955,8 +958,8 @@ same.
 | Change | Version | How saved themes follow it |
 |---|---|---|
 | Texts, labels, editor metadata that validates no value | patch | nothing to do |
-| Add a key, a component, an option, a page's section; change a default | minor | a theme that does not set it gets the default |
-| Tighten `max_length`, `pattern`, `min`/`max`; make a section not `hideable` | minor | what no longer fits is left out on reading: the default shows |
+| Add a key, a component, an option, a page's section, `alpha` to a color; change a default | minor | a theme that does not set it gets the default |
+| Tighten `max_length`, `pattern`, `min`/`max`; make a section not `hideable`, or move it to another `group` | minor | what no longer fits is left out on reading: the default shows |
 | Mark a key `$deprecated`; later remove it | minor | its value is left out on reading |
 | Rename or move a key, keeping its section and kind | minor | `co.ordering.migrate` (§14) |
 | Remove a key that is not deprecated, change a type or a scale, remove an option, `alpha` or `custom`, turn a key into one of another section, change what a stored value means | major: a new base | `co.ordering.upgrade` (§15) |
