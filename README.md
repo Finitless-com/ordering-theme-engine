@@ -315,6 +315,25 @@ the same change. `php/tests/ReferenceSchemaTest.php` checks the versions in PHP.
 Its names and defaults are made up; they may change in a minor of the engine, never in a
 patch.
 
+## Converting a frontend: the Claude Code skill
+
+`.claude/skills/theme-frontend-web/` is a [Claude Code](https://claude.com/claude-code)
+skill (in Spanish) that converts a web frontend so it obeys its product's schema: it
+inventories every element and hand-written value, groups the pieces that do the same
+thing, collapses near values into the token scales, classifies pages, sections,
+visibility, images and site settings, writes the schema, wires `complete()` and `toCss()`
+into the frontend and fixes the code in batches, with scripts (`scripts/*.mjs`, Node, no
+dependencies) for the inventory, the scales, the components, a CI guard against
+hand-written values and the schema keys no code reads. Its model is the conversion of
+`website-marketplace-v26` into `website-marketplace-theming`.
+
+It is not shipped in either package. To use it in another repository, link it into your
+Claude Code skills:
+
+```sh
+ln -s "$PWD/.claude/skills/theme-frontend-web" ~/.claude/skills/theme-frontend-web
+```
+
 ## PHP
 
 ```sh

@@ -1,0 +1,6 @@
+[
+  { "file": "/icons?/|Illustration|/utils\\.js$", "category": "color", "reason": "Ilustraciones SVG en línea: no son UI tematizable" },
+  { "file": "components/(GoogleLogin|AppleLogin|FacebookLogin)/", "reason": "Botones de marca de terceros: sus colores los fija la marca" },
+  { "file": "components/StripeElements/", "reason": "Objeto de estilo que Stripe pinta en su iframe" },
+  { "file": "components/HomeHero/styles\\.js$", "value": "#FFFFFF", "category": "color", "reason": "Texto sobre la foto del héroe (aprobado 2026-10-26)" }
+]
