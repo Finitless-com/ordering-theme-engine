@@ -223,8 +223,10 @@ lists the published versions (`{ version, sha256, created_at }`) and
 
 ## 6. Versions, migrations and new bases
 
-`version` is `base.minor.patch`. The base is the product's major version (for example
-`26` for the v26 apps). The Ordering.co API resolves **every theme of the product type
+`version` is `base.minor.patch`. The base is the schema's own major version, not the
+app's: it says nothing about which release of the app reads it (the reference schema
+starts at `1.0.0`), and it goes up only for a change the last row of the table below
+lists. The examples use 26 and 27. The Ordering.co API resolves **every theme of the product type
 with its current version**, the last one published: a theme saved with an earlier
 version is read through the steps that version left declared, and saved with the
 current version the next time someone edits it. So publishing `26.3.0` changes what
@@ -236,7 +238,7 @@ In short:
 | Change | Version | What you declare |
 |---|---|---|
 | Texts, labels and editor metadata that validates no value (not `alpha`, `custom`, `min`, `max`) | patch | nothing |
-| Add a key, a component, an option, a page's section; change a default | minor | nothing: themes that do not set it get the default |
+| Add a key, a component, an option, a page's section, `alpha` to a color; change a default | minor | nothing: themes that do not set it get the default |
 | Tighten a `max_length`, a `pattern` or an editor's `min`/`max`; make a section not `hideable`, or move it to another `group` | minor | nothing: a saved value that no longer fits is left out, and its default shows |
 | Mark a key `$deprecated`; remove one the previous version already marked | minor | nothing: its value is left out |
 | Rename or move a token (within its group), a component property, a visibility key, an image, a page or one of its sections, keeping its section and kind | minor | a migration, `co.ordering.migrate` ([§14](schema-format.md#14-migrations-within-a-base-coorderingmigrate)) |
