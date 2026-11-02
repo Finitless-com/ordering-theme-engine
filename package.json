@@ -1,6 +1,6 @@
 {
   "name": "@orderingco/ordering-theme-engine",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "The Ordering.co API's theme engine (version 2 themes) in TypeScript, with its PHP implementation in the same repo: the same schema, the same rules, the same answer.",
   "license": "MIT",
   "author": "Ordering, Inc.",
@@ -37,19 +37,28 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./runtime": {
       "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js"
+      "import": "./dist/runtime.js",
+      "default": "./dist/runtime.js"
     },
     "./css": {
       "types": "./dist/css.d.ts",
-      "import": "./dist/css.js"
+      "import": "./dist/css.js",
+      "default": "./dist/css.js"
+    },
+    "./native": {
+      "types": "./dist/native.d.ts",
+      "import": "./dist/native.js",
+      "default": "./dist/native.js"
     },
     "./colors": {
       "types": "./dist/palette.d.ts",
-      "import": "./dist/palette.js"
+      "import": "./dist/palette.js",
+      "default": "./dist/palette.js"
     },
     "./meta/theme-schema-1.json": "./meta/theme-schema-1.json",
     "./meta/reference/*": "./meta/reference/*"

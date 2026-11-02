@@ -273,6 +273,42 @@ and in a `CssText`'s `css`. The conversions are also exported for the CSS a clie
 writes itself: `cssBorder()`, `cssShadow()`, `cssText()`, `alpha(color, a)`,
 `isTransparent()`, `snapWeight(font, weight)`.
 
+### Native (React Native)
+
+`@orderingco/ordering-theme-engine/native` is the `css` entry for a React Native client:
+`toNative(compiled, values)` turns the values `complete()` answers into what a React
+Native style takes, once per theme (the tokens, `identity` and `fonts` at once, each
+component the first time it is read). ESM, no dependencies, `sideEffects: false`; every
+entry also has a `default` export condition, so Metro and Jest resolve it.
+
+```ts
+import { complete } from '@orderingco/ordering-theme-engine/runtime'
+import { toNative } from '@orderingco/ordering-theme-engine/native'
+
+const values = complete(compiled, served?.values ?? null)
+const native = toNative(compiled, values)        // the same values give the same view
+
+native.tokens.space.md                           // 15 (pt)
+native.tokens.typography.body                    // { fontFamily: 'Poppins-Regular', fontSize: 14, lineHeight: 20, weight: 400 }
+native.components.card.base.shadow               // { shadowColor, shadowOpacity, shadowRadius, shadowOffset, elevation, boxShadow }
+native.components.card.base.border               // { borderWidth: 0 } or { borderWidth, borderStyle, borderColor }
+native.identity.radius.md                        // the level as Identity paints it
+native.fonts.body                                // { id: 'poppins', name: 'Poppins', files: { 400: 'Poppins-Regular', … } }
+native.easing                                    // [0, 0, 0.58, 1] for Easing.bezier
+```
+
+Each value is converted by its type in the schema, never by its name: a number stays a
+number (pt, ms or a ratio); a color as it is; a border a `NativeBorder`; a shadow a
+`NativeShadow` (iOS `shadow*` with `shadowRadius` = blur / 2, Android `elevation`, and
+`boxShadow` for the new architecture: one level, every platform); a typography style a
+`NativeText` with the **file** of the nearest bundled weight as `fontFamily` (static
+fonts, one file per weight: never `fontWeight`, which fakes bold on Android) and an
+absolute `lineHeight` (size × ratio, rounded). The bundled weights default to
+`DEFAULT_WEIGHTS` (400, 500, 600, 700) and the files to Google Fonts' names
+(`fontFile('open_sans', 600)` → `OpenSans-SemiBold`); `toNative(compiled, values,
+{ weights, fontFile })` changes either. The conversions are exported too:
+`nativeBorder()`, `nativeShadow()`, `nativeText()`, `nearestWeight()`, `fontFile()`.
+
 ### Colors (browser)
 
 For a color a client gets at run time and not from the theme (a business's ribbon, a
