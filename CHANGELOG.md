@@ -5,6 +5,25 @@ the Composer package (`orderingco/ordering-theme-engine`). A minor can change wh
 resolved or validated, because the engine follows the Ordering.co API; **API** marks a
 change to the public API.
 
+## 0.14.0 (2026-11-04)
+
+Nothing changes in what is resolved or validated, in TypeScript or in PHP.
+
+- **API** `@orderingco/ordering-theme-engine/native`: `toNative(compiled, values, options?)`
+  turns the values `complete()` answers into React Native style values, as `toCss()` does
+  for the web (numbers in pt, `NativeBorder`, `NativeShadow` with iOS `shadow*`, Android
+  `elevation` and `boxShadow`, `NativeText` with the file of the nearest bundled weight and
+  an absolute line height, the fonts' files, Identity and the easing as bezier points),
+  with `nativeBorder()`, `nativeShadow()`, `nativeText()`, `nearestWeight()`, `fontFile()`,
+  `DEFAULT_WEIGHTS`, `NATIVE_FORMAT` (the compiled form's units it reads) and its types
+  (`NativeTheme`, `NativeComponent`, `NativeMap`, `NativeBorder`, `NativeShadow`,
+  `NativeText`, `NativeFont`, `NativeMotion`, `NativeOptions`). The marketplace's React
+  Native app paints with it.
+- Docs: the README lists the `native` entry with the others; schema-format.md §7 says
+  which image formats a React Native client paints, and how a native product sizes them.
+- Every export has a `default` condition next to `import`, so Metro and Jest (which do
+  not ask for `import`) resolve the package's entries.
+
 ## 0.13.0 (2026-10-23)
 
 Nothing changes in what is resolved or validated, in TypeScript or in PHP.
