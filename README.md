@@ -11,10 +11,12 @@ The v2 theme engine, in two implementations that answer the same:
   preview, CI artifacts. No runtime dependencies. Strict TypeScript, Node 22, ESM only:
   `exports` has no `require` condition, so CommonJS loads it with `await import()`. It
   ships a CLI, `ordering-theme`, that validates a schema, computes its defaults and the
-  rules a client checks a served theme with, and publishes it; and three browser entries:
+  rules a client checks a served theme with, and publishes it; and four client entries:
   `@orderingco/ordering-theme-engine/runtime`, that completes a served theme with
-  them ([Runtime](#runtime-browser)), and `@orderingco/ordering-theme-engine/css`, that
-  turns it into CSS once per theme ([CSS](#css-browser)), and
+  them ([Runtime](#runtime-browser)), `@orderingco/ordering-theme-engine/css`, that
+  turns it into CSS once per theme ([CSS](#css-browser)),
+  `@orderingco/ordering-theme-engine/native`, that turns it into React Native style
+  values ([Native](#native-react-native)), and
   `@orderingco/ordering-theme-engine/colors`, its color operations for colors a client
   gets at run time ([Colors](#colors-browser)).
 
@@ -89,6 +91,11 @@ alone.
 - `@orderingco/ordering-theme-engine/css`: `toCss(compiled, values)`, a completed theme
   as CSS, `fonts(view, extra?)`, its Google Fonts stylesheets, `transition()` and the
   conversions apart ([below](#css-browser)).
+- `@orderingco/ordering-theme-engine/native`: `toNative(compiled, values, options?)`, a
+  completed theme as React Native style values (`NativeTheme`), and the conversions apart:
+  `nativeBorder()`, `nativeShadow()`, `nativeText()`, `nearestWeight()`, `fontFile()`,
+  with `DEFAULT_WEIGHTS` and `NATIVE_FORMAT`, the compiled form's units it reads
+  ([below](#native-react-native)).
 - `@orderingco/ordering-theme-engine/colors`: `rgbOf()`, `contrast()`, `isLight()`,
   `onColor()`, `shade()`, `mix()`, `legible()` ([below](#colors-browser)).
 - `compile(schema, v1Map?)`: the node schema as the tuples the engine reads

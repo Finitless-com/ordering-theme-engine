@@ -344,6 +344,12 @@ nothing changes.
   extension of a format the engine knows (`jpeg` counts as `jpg`, in any case, the query
   aside) that is not among the key's is `images.<key>.format`, and is left out on
   reading. A URL without such an extension says nothing of its format and is taken.
+- A React Native client paints `jpg`, `png` and `webp` on both platforms (React Native's
+  `Image` and FastImage, iOS 15.1+ and Android); not `svg` nor `ico`, and `avif` only on
+  Android 12+ and recent iOS. A native product's schema lists the formats it paints
+  (`png` and `webp` alone when the image needs transparency), since without `formats`
+  api-core also accepts `avif`; its `hints.size` is 3× the largest box the phone paints
+  (pt).
 - `hints`: what the editor recommends on upload. All optional:
   - `size`: `[width, height]` in px, integers from 1 to 10 000;
   - `ratio`: the aspect ratio, `"w:h"` (integers from 1 to 9999);
