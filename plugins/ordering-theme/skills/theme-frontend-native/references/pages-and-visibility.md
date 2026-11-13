@@ -29,6 +29,10 @@ The rules are the web skill's: read `../theme-frontend-web/references/pages-and-
   infinitely.
 - `stickyHeaderIndices` computed from conditional children breaks when a section is
   hidden or moved: compute it from the rendered sections.
+- Sections are **direct children** of the scroll: a `Fragment` around a sticky one is
+  given a style by the scroll view and React rejects it.
+- A section owns no outer margin, and one with nothing to show renders no view: the gap
+  between sections is the page's, so a hidden or empty section leaves no blank band.
 - Render through one hook (`usePageSections(page).render({...}, { group })`, the web's
   shape) so the order and visibility come from the theme.
 
@@ -40,7 +44,13 @@ The rules are the web skill's: read `../theme-frontend-web/references/pages-and-
   in the v1 map (`schema.md` §4). Read by the helper, never by optional chains on the
   theme.
 - Bottom tabs: each tab can be a key (`tab_bar.offers`), but the tab that holds the main
-  flow is not hideable.
+  flow is not hideable, and neither is the bar itself: a key that cuts the navigation is
+  not added, even when the web's schema has it.
+- When a website of the product is themed, compare the visibility keys one by one
+  (`harmony.md` §2): a piece the app draws takes the web's key name and group; the
+  default of a key the web hides by default is the user's decision.
+- A pair of keys that leaves a screen empty when both are hidden hides the way to that
+  screen too (the row and the route).
 - An older binary never receives the keys its version lacks (the cut-down leaves them
   out, `schema.md` §1); for the keys it knows, what the theme leaves out or what cannot
   be moved back shows its compiled default. So each key's default must look right in
@@ -51,10 +61,20 @@ The rules are the web skill's: read `../theme-frontend-web/references/pages-and-
 - A theme image is an `https` URL or `''`. On native it renders with `{ uri }` (FastImage
   or `Image`), and `''` falls back to the bundled asset (`require`), in one module.
 - **Hints:** the painted size is in pt; the ideal upload is the largest painted size × 3
-  (phones are 2x–3x), and the safe zone matters more because the same image is cropped
-  to many aspect ratios across phone widths.
-- **Formats:** `svg` needs `react-native-svg` to render remotely; leave it out of an
-  image's `formats` unless the app renders SVG URIs.
+  (phones are 2x–3x) on the largest phone (430 × 932 pt), and the safe zone matters more
+  because the same image is cropped to many aspect ratios across phone widths.
+- **Formats:** only what both platforms paint with the app's image component: `jpg`,
+  `png` and `webp` (`png`/`webp` alone when the image needs transparency). `avif`
+  paints on Android 12+ only and not in FastImage on iOS; `svg` needs `react-native-svg`
+  to render remotely: leave both out (schema-format.md §7).
+- **A theme image wins over the bundled one everywhere it is painted.** Check each key's
+  every painter: a bundled artwork per price hid the theme's gift card image, and a map
+  marker was painted as a URL string instead of `{ uri }`.
+- **Bundled images weigh in every binary.** Opaque photos as PNG were 29.8 MB of a 30 MB
+  image set; as JPEG at the widest phone's 3x they were 3.5 MB. Remove the bundled
+  entries nothing paints.
+- **Served images at the size they are shown:** when the image CDN resizes, ask for the
+  painted box × the screen's density, not the upload (a 2 134 px logo for a 60 pt box).
 - **Not themable at run time:** the native splash screen and the app icon (they are in
   the binary); a JS splash after it can read a theme image.
 - **Icons are not images:** PNG icon manifests (`theme.images.general.arrow_down`,

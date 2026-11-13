@@ -28,7 +28,9 @@ What follows for every later change:
 - a new key never reaches old binaries: the defaults compiled into each binary must look
   right on their own;
 - the compiled file is part of the binary: changing the schema changes nothing in
-  installed apps until a new build.
+  installed apps until a new build;
+- versions are spent from the first merge that publishes, long before the product
+  opens: decide how they are handled until then (`shipping.md` §2).
 
 ## 2. Product type and platforms
 
@@ -54,7 +56,9 @@ What follows for every later change:
   and the components use. The runtime's fallback to the default family is a safety net
   for a missing file, not a way to skip fonts.
 - Keep the set of weights small (as the web's kept weights): each weight of each family is
-  a file in the binary. Decide it with the typography tokens.
+  a file in the binary. Decide it with the typography tokens. The engine's `toNative`
+  defaults to 400, 500, 600 and 700 and to Google Fonts' static file names
+  (`runtime-native.md` §4).
 - Brand fonts outside the catalog (a kiosk's) need the font added to the engine's catalog
   first (a format change), not a custom token.
 
@@ -70,6 +74,10 @@ the merchants' customizations; the web's map
 shows the shape and many of the same paths. A value the v1 theme serves but the app
 ignores today (served colors thrown away by the merge, for example) is a product decision:
 migrating it changes what merchants see.
+
+Not having a v1 map is also a decision: the marketplace app has none. What a project set
+in version 1 does not reach the themed app, which paints the build's defaults until the
+project saves a version 2 theme. Record it with what stops applying.
 
 ## 5. What the schema does not hold
 

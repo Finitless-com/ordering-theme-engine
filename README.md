@@ -370,15 +370,18 @@ the frontend and fix the code in batches.
 
 - `theme-frontend-web`, for a web frontend: `complete()` and `toCss()`. Its model is the
   conversion of `website-marketplace-v26` into `website-marketplace-theming`.
-- `theme-frontend-native`, for a React Native app: `complete()` and the app's own adapter
-  to React Native styles, the build's defaults in the binary, the served theme cached,
-  the catalog's fonts bundled, and a schema version every binary sends. It builds on the
-  web skill's method.
+- `theme-frontend-native`, for a React Native app: `complete()` and `toNative()`, the
+  build's defaults in the binary, the served theme cached, the catalog's fonts bundled,
+  and a schema version every binary sends; then the pass that makes the same role look
+  the same on every screen, the publish workflow and the way to a build. It builds on the
+  web skill's method. Its model is the conversion of `ordering-app-marketplace-v26` into
+  `ordering-app-marketplace-theming`.
 
 Both use the plugin's scripts (`plugins/ordering-theme/scripts/*.mjs`, Node, no
 dependencies) for the inventory (CSS, styled-components, `StyleSheet`, style props,
 Tailwind), the scales, the components and screens, a CI guard against hand-written values
-and the schema keys no code reads.
+and the schema keys no code reads, each with a file of recorded exceptions so it can fail
+in CI.
 
 Install it once per machine (Claude Code 2.1.275 or later), in a session:
 

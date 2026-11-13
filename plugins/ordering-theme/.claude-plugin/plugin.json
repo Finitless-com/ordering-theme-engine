@@ -1,7 +1,7 @@
 {
   "name": "ordering-theme",
-  "version": "1.1.0",
-  "description": "Skills to make a frontend obey its product's theme schema with the Ordering theme engine: theme-frontend-web converts a web frontend and theme-frontend-native a React Native app (inventory, token scales, components, pages and visibility, the schema, the runtime and the code), with shared scripts for the inventory, the scales, the components, a CI guard and the keys no code reads.",
+  "version": "1.2.0",
+  "description": "Skills to make a frontend obey its product's theme schema with the Ordering theme engine: theme-frontend-web converts a web frontend and theme-frontend-native a React Native app (inventory, token scales, components, pages and visibility, the schema, the runtime and the code, then one look per role, publishing and reaching a build), with shared scripts for the inventory, the scales, the components, a CI guard and the keys no code reads.",
   "author": {
     "name": "Ordering, Inc."
   },

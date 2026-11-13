@@ -14,7 +14,10 @@
 // values (p-[13px], text-[#333]) and Tailwind's own palette (bg-gray-200) fail.
 //
 // theme-exceptions.json: [{ "file": "<regex>", "value"?: "<substring>",
-//   "category"?: "color", "reason": "text over the hero photo" }]
+//   "category"?: "color", "property"?: "attr:weight", "reason": "text over the hero photo" }]
+// `property` is the one the guard prints for a literal (`padding`, `attr:size`): an
+// exception can then allow one prop of a primitive everywhere without allowing the
+// category.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -27,7 +30,7 @@ const allow = args.allow ? JSON.parse(fs.readFileSync(path.resolve(repo, args.al
 for (const [i, a] of allow.entries()) if (!a.file || !a.reason) { console.error(`exception ${i}: needs "file" and "reason"`); process.exit(2) }
 const rules = allow.map(a => ({ ...a, re: new RegExp(a.file) }))
 
-const allowed = (e) => rules.some(r => r.re.test(e.file) && (!r.category || r.category === e.category) && (!r.value || e.value.includes(r.value)))
+const allowed = (e) => rules.some(r => r.re.test(e.file) && (!r.category || r.category === e.category) && (!r.property || r.property === e.property) && (!r.value || e.value.includes(r.value)))
 const entries = scan(repo, { src: args.src?.split(','), exclude: args.exclude })
   .filter(e => categories.has(e.category) && !e.fallback && !allowed(e))
   // A line height given as a ratio is what the theme stores, not a literal size.

@@ -7,7 +7,7 @@
 | `theme:validate` | the schema against the meta-schema, api-core's rules and the editor's |
 | `theme:verify` | `theme.compiled.json` is not what the current schema compiles to |
 | `guard.mjs --allow theme-exceptions.json [--baseline …]` | new design literals in the code |
-| `keys.mjs` | schema keys without a reader (confirm doubtful hits by hand) |
+| `keys.mjs [--allow theme-readers.json]` | schema keys without a reader (confirm doubtful hits by hand; record the keys read through a variable with their reader, so only a real miss fails) |
 | `theme:publish:dry --required` | what api-core would reject on publish; fails without the secret |
 | lint, tests, i18n | the usual |
 
