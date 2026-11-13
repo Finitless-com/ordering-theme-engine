@@ -1,0 +1,67 @@
+# Template for .github/workflows/theme-publish.yml in a themed React Native app.
+# Replace every <…>; the commands are pnpm's (use the app's package manager).
+# references/shipping.md explains each step.
+name: Theme schema publish
+
+# What the main branch hands to production on every push, in this order:
+#
+# 1. Publishes product.schema.json (product type <product_type>) to api-core.
+#    Installed apps ask for the schema version they were built with, so a version
+#    must be published before the build that ships it. Never publish by hand.
+#    The same version with the same content answers `unchanged`.
+# 2. Has the Builder take the new code (its base cloned again), only after the
+#    schema is published: add that job with `needs: production`, as the marketplace
+#    app does (Finitless-com/ordering-app-marketplace-theming).
+#
+# Settings (organization or repository):
+#   THEME_PUBLISH_API_PRODUCTION  variable: the API with its version
+#   THEME_PUBLISH_KEY_PRODUCTION  secret; the pull requests' dry run uses it too
+# A missing one fails the job (`--required`): it never passes silently.
+#
+# A published version is immutable: the same version with other content is refused
+# (409 schema.version_exists). Bump `version` first.
+
+on:
+  push:
+    branches: ["<main>"]
+  # The first publish (or a retry) is run by hand from the Actions tab.
+  workflow_dispatch:
+
+concurrency:
+  group: theme-schema-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    name: Publish to production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: <the app's Node version>
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Schema is valid and compiled
+        run: |
+          pnpm theme:validate
+          pnpm theme:verify
+      - name: Publish
+        # package.json: "theme:publish": "ordering-theme publish product.schema.json"
+        run: pnpm theme:publish --required
+        env:
+          THEME_PUBLISH_API: ${{ vars.THEME_PUBLISH_API_PRODUCTION }}
+          THEME_PUBLISH_KEY: ${{ secrets.THEME_PUBLISH_KEY_PRODUCTION }}
+
+# In the quality gate of pull requests (ci.yml), after theme:validate, theme:verify,
+# the guard, theme:extremes and the readers check:
+#
+#   - name: Theme schema publish (dry run)
+#     env:
+#       THEME_PUBLISH_API: ${{ vars.THEME_PUBLISH_API_PRODUCTION }}
+#       THEME_PUBLISH_KEY: ${{ secrets.THEME_PUBLISH_KEY_PRODUCTION }}
+#     run: pnpm theme:publish:dry --required

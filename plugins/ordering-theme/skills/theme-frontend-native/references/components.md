@@ -28,6 +28,16 @@ onto them. Typical groupings:
 | `Alert.alert`, toasts, notice boxes | `toast`, `alert` (system alerts stay system: not themable) |
 | Spinners | `spinner` (sizes) |
 | Inputs (own, react-native-paper, phone, digit/OTP, search) | `input` + `field`, `search_bar` inheriting `input` |
+| Picker libraries, in-place dropdowns, the country modal, the native date dialog | one select that opens as a `sheet` with `menu` rows (search for long lists); a date wheel inside the same sheet |
+| Radios and checks drawn per screen | one mark (`radio` for one choice, `checkbox` for several) and one row of a list of choices |
+| Back buttons, section titles, a business's logo frame, separators between sections | one component each (`harmony.md` §4) |
+
+**Libraries that paint their own UI** (pickers, dropdowns, skeleton and spinner overlays,
+pagers and sliders, a phone field, a chat thread, a calendar strip) cannot read the
+theme. Each becomes a primitive of the app, or a library that takes styles; plan them in
+this phase, as their own commits, with the dependency removed. What the platform or a
+provider paints stays out: maps, payment sheets, WebViews, system alerts, the platform's
+date wheel itself.
 
 ## 2. Press feedback and states
 
@@ -44,7 +54,10 @@ onto them. Typical groupings:
 
 An app may already switch whole layouts at run time (for example
 `app_design.components.layout.type`: `original` | `maweja`, with forked folders per screen and inline
-ternaries like `isMaweja ? 180 : 162`). Do not flatten them:
+ternaries like `isMaweja ? 180 : 162`). Do not flatten one silently. Each variant either
+stays, as below, or is deleted whole (its folders, branches, props and the behaviour that
+only it had) because its clients stay on the original repository: the marketplace app
+deleted its second layout. When one stays:
 
 - a variant that changes the **structure** of screens is a `layout` property
   (`$type: layout`, options = the variants the code has) on each component that forks
@@ -57,7 +70,8 @@ ternaries like `isMaweja ? 180 : 162`). Do not flatten them:
   changes values merges into the base and leaves its values to the theme;
 - a component duplicated per variant (two `CartBadge`, two `AddressPill`) becomes one.
 
-Ask the user which variants stay: it is a product decision.
+Ask the user which variants stay: it is a product decision. A deleted one goes in the
+decision log with what its clients lose, so later work does not bring it back.
 
 ## 4. Styles that cannot see the theme
 
@@ -67,6 +81,9 @@ Ask the user which variants stay: it is a product decision.
 - Inline `style={{ … }}` with literals moves to the component's styles, reading helpers.
 - `defaultProps` on function components is ignored by React 19: defaults go in the
   destructuring.
+- An icon inside a button takes the button's size and ink when it sets none of its own;
+  icon sets are reduced to the ones the app keeps, one glyph per function (the web's,
+  when a website of the product exists), with the list of replaced glyphs for review.
 
 ## 5. Platform differences
 

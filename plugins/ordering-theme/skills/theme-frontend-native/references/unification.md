@@ -4,6 +4,12 @@ The rules are the web skill's: read `../theme-frontend-web/references/unificatio
 (the fixed catalog, tolerances, color by role, Identity, exceptions, visible changes).
 This file is what changes on React Native.
 
+When a website of the same product is already themed, ask whether the app follows its
+role model and values (colors, radii, shadow levels, motion): the marketplace app did,
+and its primary color, button radius and card shadow changed with it — a large visible
+change to approve as one decision. Sizes never transfer: the web's are a desktop's
+(`harmony.md` §1).
+
 ## 1. Units
 
 Every dimension in the schema is a unitless number: **pt on native** (density-independent
@@ -23,6 +29,11 @@ are the same 20 pt.
   to the nearest style of its group (title or text) as on the web; a component that
   passes a size for each instance becomes a component property or a `preset`/style name
   that reads a typography token.
+- **By role, not by nearest size.** Mapping each text to its nearest preset left card
+  titles in three styles and section titles in three sizes. Decide the roles first
+  (screen title, section title, card title, metadata, body) and give each one place of
+  the theme (`harmony.md` §3); a role whose weight no preset has keeps it with a custom
+  style.
 - **Weights:** normalize `'bold'`, `'600'`, `600` and platform ternaries to numbers; the
   runtime picks the font file for the weight (`runtime-native.md` §4). A platform ternary
   of weights (`ios ? '600' : 'bold'`) is a font-file problem, not a theme value: with one
@@ -49,6 +60,9 @@ level: read them together.
   the runtime removes: both come from the same token.
 - A colored shadow, a shadow used as a border, or `elevation: 99999` used for stacking
   order is not a shadow level (it is an exception, a border, or `zIndex`).
+- A shadow is painted only on a box with an opaque background, and Android's elevation
+  paints nothing above the box: a card with a shadow and no border has no top edge there.
+  Decide the cards' default border with that in mind (`harmony.md` §6).
 
 ## 4. Borders and radii
 

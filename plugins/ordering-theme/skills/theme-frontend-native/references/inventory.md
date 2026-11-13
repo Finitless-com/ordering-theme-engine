@@ -70,7 +70,14 @@ The scripts cannot see these; the area agents report them:
 - **Skeletons and placeholders** (`rn-placeholder`, custom ones) and their sizes.
 - **Third-party UI** the theme cannot paint or paints only partly: maps, Stripe sheets,
   WebViews, native date pickers, react-native-paper inputs, system alerts
-  (`Alert.alert`).
+  (`Alert.alert`). Apart, the **libraries that draw app UI** with their own styles
+  (pickers, dropdowns, skeletons, pagers, phone and code fields, chat): each one is a
+  primitive to write in phase 2 (`components.md` §1).
+- **Bundled images:** every `require`d image with its file size and whether anything
+  paints it; opaque photos stored as PNG.
+- **What the build system expects of the repository** (placeholders it replaces as text,
+  fixed file names, the package it renames): the conversion must not move them
+  (`shipping.md` §3).
 
 ## 3. Going through the screens
 
@@ -87,3 +94,7 @@ in render order.
 As on the web, plus: inline `style={{` count, `StyleSheet.create` count, `size={N}`
 literals on text and on icons, hard-coded `fontFamily`, `Platform.OS` branches that
 change the look, and keys read but not defined.
+
+Also the state of the checks before any change: TypeScript errors, lint errors, tests
+passing, the release bundle's size and the bundled images' weight. Without the starting
+number, "no new type errors" cannot be shown at the end.

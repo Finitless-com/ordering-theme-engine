@@ -208,10 +208,13 @@ node <scripts>/guard.mjs <repo> --src src --allow theme-exceptions.json --baseli
 ### 8. Readers and cleanup
 
 ```sh
-node <scripts>/keys.mjs <repo> --schema product.schema.json --src src
+node <scripts>/keys.mjs <repo> --schema product.schema.json --src src [--allow theme-readers.json]
 ```
 
-Every key without a reader is wired or removed from the schema. Also remove duplicated
+Every key without a reader is wired or removed from the schema. The search matches names
+as text: a key the code reads through a variable or as a whole look is recorded with its
+reader in `theme-readers.json` (`templates/theme-readers.json`) and passed with
+`--allow`, so the check can run in CI and only a real miss fails. Also remove duplicated
 controls (two keys for the same thing, `*_mobile` instead of `platforms.mobile_web`, hide
 switches inside a component instead of `visibility`).
 
@@ -247,7 +250,12 @@ Publish beyond the dry run only with the user's explicit authorization.
 - **Each agent's brief:** the goal, the list of files, the references it must read and the
   format of its report (`file:line`, proposal, visible change).
 - **Before accepting their results:** check what they claim with the guard, `keys.mjs`,
-  the tests and the diff.
+  the tests and the diff, and open the screenshots yourself. Nothing is told to the user
+  as verified on an agent's word.
+- **Agents commit locally** and never push or open a pull request: you review, then push
+  once.
+- **Decisions already in the log are not reopened** by an agent or a later round: each
+  brief names the ones its work touches; a collision is a question for the user.
 
 ## References
 
@@ -262,5 +270,6 @@ Publish beyond the dry run only with the user's explicit authorization.
 | `references/verification.md` | Tests, extreme themes, contrast, guard, final metrics |
 | `references/lessons.md` | Mistakes from the marketplace's conversion not to repeat |
 | `templates/THEMING.md` | The themed repo's rules, for `docs/THEMING.md` |
-| `templates/theme-exceptions.json` | The format of the recorded exceptions |
+| `templates/theme-exceptions.json` | The format of the recorded exceptions (`guard.mjs --allow`) |
+| `templates/theme-readers.json` | The format of the recorded readers (`keys.mjs --allow`) |
 | `templates/decisions.md` | The log of the user's decisions |

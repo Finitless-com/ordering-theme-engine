@@ -1,0 +1,4 @@
+[
+  { "key": "^button\\.colors\\.", "reader": "components/Button reads button.variants.<color>.<appearance>, which the engine builds from these tones" },
+  { "key": "^alert\\.variants\\.[a-z]+\\.icon_color$", "reader": "components/Notice reads the variant's whole look (look.icon_color)" }
+]

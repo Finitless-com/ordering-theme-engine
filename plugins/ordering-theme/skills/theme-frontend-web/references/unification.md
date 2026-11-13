@@ -155,7 +155,10 @@ and what does not auditable.
 ## 5. Exceptions
 
 An exception is a literal that stays on purpose. It goes in `theme-exceptions.json` with
-its reason (format in `templates/`); the guard allows them. Common categories:
+its reason (format in `templates/`); the guard allows them. An entry narrows by `file`
+(a regex), and optionally by `category`, `value` and `property` (the property the guard
+prints for the literal, such as `padding` or `attr:weight`: one prop of a primitive
+allowed everywhere, without allowing its whole category). Common categories:
 
 - not a color (`transparent`, `currentColor`, `inherit`);
 - a fallback that is never seen: it is deleted instead of recorded;

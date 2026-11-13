@@ -6,6 +6,13 @@
 // source; a hit is a candidate reader to confirm, a miss is almost always real.
 //
 //   node keys.mjs <repo> [--schema product.schema.json] [--src src] [--exclude <regex>]
+//                 [--allow theme-readers.json]
+//
+// theme-readers.json records the keys the text search cannot see because the code
+// reads them through a variable or as a whole look, each with where it is read:
+// [{ "key": "<regex>", "reader": "shared/OButton.tsx reads the variants built from these" }]
+// `key` is matched against the key as this script prints it (`button.colors.primary.on`).
+// With it the check can run in CI: only a key with no reader and no record fails.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -15,6 +22,10 @@ const args = parseArgs(process.argv.slice(2))
 const repo = path.resolve(args._[0] || '.')
 const schema = JSON.parse(fs.readFileSync(path.resolve(repo, args.schema || 'product.schema.json'), 'utf8'))
 const exclude = args.exclude ? new RegExp(`${DEFAULT_EXCLUDE.source}|${args.exclude}`) : DEFAULT_EXCLUDE
+const allow = args.allow ? JSON.parse(fs.readFileSync(path.resolve(repo, args.allow), 'utf8')) : []
+for (const [i, a] of allow.entries()) if (!a.key || !a.reader) { console.error(`reader ${i}: needs "key" and "reader"`); process.exit(2) }
+const records = allow.map(a => ({ ...a, re: new RegExp(a.key), used: false }))
+const recorded = (key) => { const hits = records.filter(r => r.re.test(key)); for (const r of hits) r.used = true; return hits.length > 0 }
 const roots = (args.src ? args.src.split(',') : ['src']).map(d => path.resolve(repo, d))
 
 const sources = []
@@ -66,11 +77,20 @@ for (const [page, def] of Object.entries(schema.pages ?? {})) {
 for (const p of leaves(schema.site)) if (!filesWith(p.at(-1)).length) missing.site.push(p.join('.'))
 
 let total = 0
-for (const [kind, list] of Object.entries(missing)) {
+let known = 0
+for (const [kind, all] of Object.entries(missing)) {
+  const list = all.filter(k => !recorded(k))
+  known += all.length - list.length
   if (!list.length) continue
   total += list.length
   console.log(`\n${kind} without a reader (${list.length}):`)
   for (const k of list) console.log(`  ${k}`)
 }
-console.log(total ? `\n${total} keys without a reader: wire them or remove them from the schema.` : 'every key has a candidate reader')
+if (known) console.log(`\n${known} keys read through a variable, recorded in ${args.allow}.`)
+const stale = records.filter(r => !r.used)
+if (stale.length) {
+  console.log(`\n${stale.length} records of ${args.allow} match no key the search misses: remove them (a record left behind would hide the key the day it loses its reader).`)
+  for (const r of stale) console.log(`  ${r.key}`)
+}
+console.log(total ? `\n${total} keys without a reader: wire them, remove them from the schema, or record the reader the search cannot see${args.allow ? '' : ' (--allow theme-readers.json)'}.` : 'every key has a candidate reader')
 process.exit(total ? 1 : 0)
